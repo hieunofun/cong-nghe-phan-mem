@@ -1,258 +1,151 @@
-# CVMS Recruitment
+# JobLink — Nền tảng tuyển dụng nhân sự
 
-Ứng dụng quản lý tuyển dụng, hồ sơ CV và quy trình xét duyệt ứng viên cho doanh nghiệp.
+Một nền tảng tuyển dụng kiểu TopCV, xây dựng bằng **Node.js / Express / MySQL** cho backend và **HTML / CSS / JavaScript thuần** cho frontend. Hỗ trợ 3 vai trò: **Ứng viên**, **Doanh nghiệp**, **Quản trị viên (Admin)**.
 
-Dự án đã có giao diện web, mobile app bằng Capacitor, backend API bằng Node.js và database Supabase/SQLite. Khi cấu hình Supabase trong `.env`, dữ liệu sẽ lưu trên Supabase; nếu chưa cấu hình thì app tự fallback về SQLite local. `localStorage` chỉ còn dùng để giữ phiên đăng nhập trên trình duyệt.
+## Tính năng chính
 
-## Chức năng chính
+**Ứng viên:** đăng ký/đăng nhập, cập nhật hồ sơ (kỹ năng, kinh nghiệm, học vấn), tải lên CV và ảnh đại diện, tìm kiếm/lọc việc làm, ứng tuyển, lưu tin yêu thích, theo dõi trạng thái ứng tuyển.
 
-- Trang giới thiệu doanh nghiệp và danh sách việc làm.
-- Đăng ký, đăng nhập ứng viên và tài khoản admin/HR.
-- Admin quản lý tin tuyển dụng.
-- Ứng viên nộp đơn vào vị trí tuyển dụng.
-- Admin quản lý danh sách ứng viên.
-- Pipeline tuyển dụng theo từng giai đoạn.
-- Báo cáo tổng quan.
-- Hồ sơ ứng viên và upload/lưu CV vào database.
-- Thông báo nội bộ cho admin và ứng viên.
-- Phân tích CV bằng Claude API khi cấu hình `ANTHROPIC_API_KEY`.
-- Chatbot AI theo ngữ cảnh ứng viên/admin: ứng viên được tư vấn nghề nghiệp đa ngành, admin/HR được hỗ trợ quản lý và chấm CV.
-- Chatbot có gợi ý câu hỏi nhanh, lưu/xóa lịch sử phiên, nhận diện tiếng Việt có dấu/không dấu và có phản hồi dự phòng khi chưa cấu hình key hoặc API lỗi.
+**Doanh nghiệp:** đăng ký hồ sơ công ty (cần Admin duyệt), đăng/sửa/xoá/đóng tin tuyển dụng, quản lý ứng viên theo dạng pipeline (Mới ứng tuyển → Đang xem xét → Phỏng vấn → Đã nhận/Đã từ chối), cập nhật hồ sơ công ty + logo.
 
-## Tài khoản mặc định
+**Admin:** duyệt/từ chối hồ sơ doanh nghiệp, khoá/mở khoá tài khoản, quản lý toàn bộ tin tuyển dụng, quản lý danh mục ngành nghề, xem thống kê tổng quan hệ thống.
 
-Admin:
+## Công nghệ sử dụng
 
-```text
-Email: admincv@gmail.com
-Mật khẩu: 123456
+- **Backend:** Node.js, Express, MySQL (mysql2), JWT (jsonwebtoken), bcryptjs, multer (upload file)
+- **Frontend:** HTML/CSS/JavaScript thuần (không dùng framework), thiết kế responsive
+- **Database:** MySQL 8.0
+- **AI chatbot:** Flask AI service, Groq API, RAG từ FAQ nội bộ + dữ liệu JobLink realtime trong MySQL
+
+## Yêu cầu hệ thống
+
+- Node.js >= 18
+- MySQL >= 8.0 (hoặc MariaDB tương thích)
+- npm
+
+## Hướng dẫn cài đặt
+
+### 1. Cài đặt MySQL và tạo database
+
+Nếu chưa có MySQL, cài đặt theo hệ điều hành của bạn rồi đăng nhập vào MySQL với quyền root:
+
+```bash
+mysql -u root -p
 ```
 
-Ứng viên đăng ký trực tiếp tại:
+Tạo database và user riêng cho dự án (có thể đổi mật khẩu nếu muốn):
 
-```text
-login.html
+```sql
+CREATE DATABASE joblink_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'joblink_user'@'localhost' IDENTIFIED BY 'joblink_password';
+GRANT ALL PRIVILEGES ON joblink_db.* TO 'joblink_user'@'localhost';
+FLUSH PRIVILEGES;
+EXIT;
 ```
 
-## Cài đặt
+Sau đó import schema (tạo bảng + seed sẵn 8 ngành nghề):
 
-Cài dependencies:
-
-```powershell
-npm.cmd install
+```bash
+mysql -u joblink_user -p joblink_db < database/schema.sql
 ```
 
-Tạo file `.env` từ mẫu:
+### 2. Cấu hình biến môi trường
 
-```powershell
-Copy-Item .env.example .env
+Sao chép file mẫu và chỉnh sửa nếu cần (đặc biệt nếu bạn đổi mật khẩu DB ở bước trên):
+
+```bash
+cp .env.example .env
 ```
 
-Nội dung `.env`:
+Nội dung `.env` mặc định:
 
-```text
-PORT=4173
-SUPABASE_URL=
-SUPABASE_SERVICE_ROLE_KEY=
-GROQ_API_KEY=
+```
+PORT=3000
+DB_HOST=localhost
+DB_USER=joblink_user
+DB_PASSWORD=joblink_password
+DB_NAME=joblink_db
+JWT_SECRET=doi_thanh_mot_chuoi_bi_mat_rieng_cua_ban
+JWT_EXPIRES_IN=7d
+AI_SERVICE_URL=http://localhost:5000
+GROQ_API_KEY=your_groq_api_key
 GROQ_MODEL=llama-3.3-70b-versatile
-ANTHROPIC_API_KEY=
-GOOGLE_CLIENT_ID=
-GOOGLE_CLIENT_SECRET=
-GITHUB_CLIENT_ID=
-GITHUB_CLIENT_SECRET=
-FACEBOOK_CLIENT_ID=
-FACEBOOK_CLIENT_SECRET=
 ```
 
-`SUPABASE_URL` và `SUPABASE_SERVICE_ROLE_KEY` lấy trong Supabase Project Settings. `SERVICE_ROLE_KEY` chỉ được để ở backend `.env`, không đưa lên frontend hoặc GitHub.
+**Lưu ý:** Hãy đổi `JWT_SECRET` thành một chuỗi ngẫu nhiên riêng nếu triển khai thực tế.
 
-`ANTHROPIC_API_KEY` chỉ cần điền nếu muốn dùng tính năng AI phân tích CV.
+### 3. Cài đặt dependencies
 
-`GROQ_API_KEY` dùng cho chatbot AI. Key chỉ cấu hình ở backend qua `.env` hoặc hằng `CODE_KEYS` trong `scripts/serve.mjs`; giao diện không hiển thị ô nhập API key. Nếu chưa cấu hình key hoặc Groq API lỗi, chatbot vẫn trả lời bằng chế độ dự phòng dựa trên dữ liệu tuyển dụng CVMS.
-
-Google/GitHub/Facebook OAuth dùng cho đăng ký/đăng nhập nhanh. Callback URL khi chạy local:
-
-```text
-http://localhost:4173/api/auth/oauth/google/callback
-http://localhost:4173/api/auth/oauth/github/callback
-http://localhost:4173/api/auth/oauth/facebook/callback
+```bash
+npm install
 ```
 
-Nếu chạy bằng port khác, thay `4173` bằng port đang dùng.
+### 4. Tạo dữ liệu mẫu (admin, doanh nghiệp, ứng viên, tin tuyển dụng demo)
 
-## Chạy local
-
-```powershell
-npm.cmd run dev
+```bash
+npm run seed
 ```
 
-Mở:
+Lệnh này sẽ tự động tạo các tài khoản demo (xem danh sách bên dưới) nếu chưa tồn tại — chạy lại nhiều lần không gây lỗi trùng dữ liệu.
 
-```text
-http://localhost:4173
+### 5. Khởi động server
+
+```bash
+npm start
 ```
 
-Server sẽ chạy cả web static và API backend.
+Hoặc chạy ở chế độ phát triển (tự khởi động lại khi sửa code) nếu đã cài `nodemon`:
 
-## Database Supabase
-
-Để dùng Supabase:
-
-1. Tạo project trên Supabase.
-2. Vào SQL Editor.
-3. Chạy toàn bộ file:
-
-```text
-supabase/schema.sql
+```bash
+npm run dev
 ```
 
-4. Điền `.env`:
+Server sẽ chạy tại: **http://localhost:3000**
 
-```text
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-```
+## Tài khoản demo
 
-5. Chạy lại server:
-
-```powershell
-npm.cmd run dev
-```
-
-Kiểm tra API:
-
-```text
-http://localhost:4173/api/health
-```
-
-Nếu trả về `"database":"supabase"` là đã dùng Supabase.
-
-## Migrate SQLite lên Supabase
-
-Nếu đã có dữ liệu local trong SQLite và muốn đẩy lên Supabase, chạy:
-
-```powershell
-npm.cmd run db:migrate:supabase
-```
-
-Lệnh này đọc `data/cvms.sqlite` và upsert vào các bảng Supabase.
-
-## Database SQLite fallback
-
-Database SQLite được tự tạo tại:
-
-```text
-data/cvms.sqlite
-```
-
-Các bảng chính:
-
-```text
-users
-jobs
-applications
-notifications
-cvs
-```
-
-Thư mục `data/` không commit lên Git để tránh đưa dữ liệu thật lên repository.
-
-## API chính
-
-```text
-GET    /api/health
-GET    /api/jobs
-POST   /api/jobs
-PATCH  /api/jobs/:id
-POST   /api/jobs/:id/close
-GET    /api/applications
-POST   /api/applications
-PATCH  /api/applications/:id/status
-PATCH  /api/applications/:id/pipeline
-POST   /api/applications/ai-assess-batch
-GET    /api/notifications
-POST   /api/notifications/read
-POST   /api/auth/register
-POST   /api/auth/login
-PATCH  /api/users/profile
-GET    /api/cvs
-GET    /api/cvs/:email
-PUT    /api/cvs/:email
-DELETE /api/cvs/:email
-POST   /api/analyze-cv
-POST   /api/chat
-```
-
-## Mobile app
-
-Mobile app dùng Capacitor. Mặc định app Android emulator gọi backend qua:
-
-```text
-http://10.0.2.2:4173
-```
-
-Nếu chạy trên máy thật hoặc server khác, đặt biến:
-
-```powershell
-$env:CAPACITOR_SERVER_URL="http://IP_MAY_CHU:4173"
-npm.cmd run mobile:sync
-```
-
-Đồng bộ web assets và native project:
-
-```powershell
-npm.cmd run mobile:sync
-```
-
-Mở Android project:
-
-```powershell
-npm.cmd run mobile:android
-```
-
-Cần Android Studio và JDK 17 hoặc mới hơn để build APK.
+| Vai trò | Email | Mật khẩu | Ghi chú |
+|---|---|---|---|
+| Admin | admin@joblink.vn | Admin@123 | Quản trị toàn hệ thống |
+| Doanh nghiệp | hr@vietsoft.vn | Company@123 | VietSoft Solutions — đã được duyệt |
+| Doanh nghiệp | tuyendung@greenmart.vn | Company@123 | GreenMart Retail — đã được duyệt |
+| Ứng viên | candidate@joblink.vn | Candidate@123 | Nguyen Van A |
 
 ## Cấu trúc thư mục
 
-```text
-.
-├── Trangchu.html
-├── Tuyendung.html
-├── login.html
-├── admin/
-├── user/
-├── css/
-├── jss/
-│   ├── ai-chatbot-widget.js
-│   ├── data.js
-│   └── notif-ui.js
-├── scripts/
-│   ├── db-adapter.mjs
-│   ├── migrate-sqlite-to-supabase.mjs
-│   ├── serve.mjs
-│   └── prepare-mobile.mjs
-├── docs/
-│   ├── ISSUE_9_CHATBOT_QA.md
-│   └── ISSUE_11_CHATBOT_QA.md
-├── supabase/
-│   └── schema.sql
-├── capacitor.config.ts
-├── .env.example
-└── package.json
+```
+recruitment-platform/
+├── server.js                 # Entry point Express app
+├── config/db.js              # Kết nối MySQL pool
+├── database/
+│   ├── schema.sql            # Schema + seed danh mục ngành nghề
+│   └── seed.js                # Script tạo tài khoản/tin demo
+├── middleware/                # JWT auth, phân quyền, upload file (multer)
+├── models/                    # Truy vấn DB (1 file / 1 bảng chính)
+├── controllers/                # Logic xử lý nghiệp vụ
+├── routes/                    # Định nghĩa API endpoint
+├── public/                    # Frontend tĩnh (HTML/CSS/JS thuần)
+│   ├── css/style.css
+│   ├── js/                    # Logic JS cho từng trang
+│   └── *.html                 # Các trang giao diện
+└── uploads/                    # Nơi lưu CV, logo, avatar đã upload
 ```
 
-## Ghi chú
+## API Endpoints (tóm tắt)
 
-- Mật khẩu tài khoản mới được băm bằng PBKDF2 trước khi lưu database.
-- Backend tự chọn Supabase khi có `SUPABASE_URL` và `SUPABASE_SERVICE_ROLE_KEY`.
-- Widget chatbot AI đã được gắn vào các trang web chính, admin và user.
-- Tài liệu phạm vi 3 ngày và QA cho chatbot nằm tại `docs/ISSUE_9_CHATBOT_QA.md`.
-- Tài liệu hoàn thiện chatbot AI theo issue #11 nằm tại `docs/ISSUE_11_CHATBOT_QA.md`.
-- Evidence ảnh giao diện và kết quả test issue #11 nằm tại `docs/evidence/ISSUE_11_EVIDENCE.md`.
-- `www/` là thư mục build cho mobile và không commit lên Git.
-- Một số icon/chart dùng CDN, thiết bị cần internet để hiển thị đầy đủ.
+Tất cả endpoint có tiền tố `/api`. Các route cần đăng nhập sẽ yêu cầu header `Authorization: Bearer <token>`.
 
-## Tên đề tài
+- `POST /auth/register/candidate`, `POST /auth/register/company`, `POST /auth/login`, `GET /auth/me`
+- `GET /jobs`, `GET /jobs/featured`, `GET /jobs/:id` (public) — `POST/PUT/DELETE /jobs` (doanh nghiệp)
+- `POST /applications/:jobId` (ứng viên ứng tuyển) — `GET /applications/job/:jobId`, `PUT /applications/:id/status` (doanh nghiệp)
+- `GET/PUT /candidates/me`, `POST /candidates/me/cv`, `POST /candidates/me/avatar`, `GET /candidates/me/applications`, `GET/POST/DELETE /candidates/me/saved-jobs`
+- `GET/PUT /companies/me/profile`, `POST /companies/me/logo`, `GET /companies/:id` (public)
+- `GET /admin/stats`, `GET/PUT /admin/companies`, `GET/PUT /admin/users`, `GET/DELETE /admin/jobs`, `GET/POST/DELETE /admin/categories`
+- `GET /categories` (public)
 
-**Xây dựng ứng dụng quản lý tuyển dụng, hồ sơ CV và quy trình xét duyệt ứng viên cho doanh nghiệp.**
+## Ghi chú quan trọng
+
+- File CV/logo/avatar được lưu trực tiếp trên ổ đĩa server tại thư mục `uploads/` (không dùng cloud storage) — phù hợp cho mục đích học tập/demo.
+- Mật khẩu được mã hoá bằng bcrypt trước khi lưu vào database.
+- Doanh nghiệp đăng ký mới sẽ ở trạng thái `pending` và **không thể đăng tin** cho đến khi Admin duyệt.
+- Dự án này được xây dựng cho mục đích học tập (đồ án môn học), thương hiệu "JobLink" không liên quan đến TopCV hay bất kỳ sản phẩm thương mại nào.

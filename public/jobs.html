@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tìm việc làm — JobLink</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+<style>
+  .jobs-layout { display: grid; grid-template-columns: 270px 1fr; gap: 28px; align-items: flex-start; }
+  @media (max-width: 860px) { .jobs-layout { grid-template-columns: 1fr; } }
+  .filter-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 22px; position: sticky; top: 90px; }
+  .filter-panel h4 { font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.03em; color: var(--ink-faint); margin-bottom: 10px; margin-top: 22px; }
+  .filter-panel h4:first-child { margin-top: 0; }
+  .job-list { display: flex; flex-direction: column; gap: 14px; }
+  .job-row { flex-direction: row; align-items: center; gap: 18px; }
+  .job-row .job-card-top { flex: 1; }
+  .job-row .job-meta { margin-top: 4px; }
+  @media (max-width: 640px) { .job-row { flex-direction: column; align-items: stretch; } }
+</style>
+</head>
+<body>
+
+<header class="navbar">
+  <div class="navbar-inner">
+    <a href="/index.html" class="brand"><span class="brand-mark">JL</span>JobLink</a>
+    <nav class="nav-links">
+      <a href="/index.html">Trang chủ</a>
+      <a href="/jobs.html">Việc làm</a>
+      <a href="/register.html">Dành cho Doanh nghiệp</a>
+      <a href="/packages.html">Bảng giá</a>
+    </nav>
+    <div class="nav-actions">
+      <div id="nav-auth-slot" class="flex gap-12 items-center"></div>
+      <button class="nav-toggle" aria-label="Mở menu">☰</button>
+    </div>
+  </div>
+</header>
+
+<section style="padding: 32px 0 0;">
+  <div class="container">
+    <form class="search-card" id="search-form" style="margin-bottom:28px;">
+      <input type="text" id="search-keyword" class="input" placeholder="Vị trí, công ty, kỹ năng...">
+      <div class="search-divider"></div>
+      <input type="text" id="search-location" class="input" placeholder="Tỉnh / thành phố">
+      <button type="submit" class="btn btn-accent">Tìm kiếm</button>
+    </form>
+  </div>
+</section>
+
+<section class="section" style="padding-top:0;">
+  <div class="container jobs-layout">
+    <aside class="filter-panel">
+      <h4>Ngành nghề</h4>
+      <select id="filter-category" class="input">
+        <option value="">Tất cả ngành nghề</option>
+      </select>
+
+      <h4>Loại công việc</h4>
+      <select id="filter-job-type" class="input">
+        <option value="">Tất cả</option>
+        <option value="full-time">Toàn thời gian</option>
+        <option value="part-time">Bán thời gian</option>
+        <option value="internship">Thực tập</option>
+        <option value="remote">Làm từ xa</option>
+      </select>
+
+      <h4>Mức lương tối thiểu</h4>
+      <select id="filter-salary" class="input">
+        <option value="">Tất cả mức lương</option>
+        <option value="5000000">Từ 5 triệu</option>
+        <option value="10000000">Từ 10 triệu</option>
+        <option value="15000000">Từ 15 triệu</option>
+        <option value="20000000">Từ 20 triệu</option>
+      </select>
+
+      <button class="btn btn-primary btn-block" style="margin-top:22px;" id="apply-filters-btn">Áp dụng lọc</button>
+      <button class="btn btn-ghost btn-block" style="margin-top:8px;" id="clear-filters-btn">Xoá lọc</button>
+    </aside>
+
+    <div>
+      <div class="section-head" style="margin-bottom:18px;">
+        <p id="results-count" class="mb-0">Đang tải...</p>
+      </div>
+      <div class="job-list" id="job-list">
+        <div class="job-card skeleton" style="height:110px;"></div>
+        <div class="job-card skeleton" style="height:110px;"></div>
+        <div class="job-card skeleton" style="height:110px;"></div>
+      </div>
+      <div class="pagination" id="pagination"></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <div class="footer-bottom" style="border-top:none; padding-top:0;">
+      <span>© 2026 JobLink. Đồ án minh hoạ — không phải sản phẩm thương mại.</span>
+    </div>
+  </div>
+</footer>
+
+<script src="/js/api.js"></script>
+<script src="/js/header.js"></script>
+<script src="/js/jobs.js"></script>
+<script src="/js/chatbot-widget.js"></script>
+</body>
+</html>

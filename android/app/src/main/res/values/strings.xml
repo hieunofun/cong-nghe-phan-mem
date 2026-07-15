@@ -1,7 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<resources>
-    <string name="app_name">CVMS Recruitment</string>
-    <string name="title_activity_main">CVMS Recruitment</string>
-    <string name="package_name">com.cvms.recruitment</string>
-    <string name="custom_url_scheme">com.cvms.recruitment</string>
-</resources>

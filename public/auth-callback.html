@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Đang đăng nhập... — JobLink</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #F5F8F6;
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; padding: 24px;
+  }
+  .card {
+    background: #fff; border: 1px solid #DEE6E1;
+    border-radius: 22px; padding: 48px 40px;
+    text-align: center; max-width: 360px; width: 100%;
+    box-shadow: 0 8px 24px rgba(21,33,28,.10);
+  }
+  .brand {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: 'Sora', sans-serif; font-weight: 700;
+    font-size: 1.2rem; color: #073D32; margin-bottom: 28px;
+  }
+  .brand-mark {
+    width: 30px; height: 30px; border-radius: 8px;
+    background: linear-gradient(135deg, #0B5D4D, #FF6B4A);
+    color: #fff; display: flex; align-items: center;
+    justify-content: center; font-weight: 800; font-size: 0.9rem;
+  }
+  .spinner {
+    width: 44px; height: 44px; border: 4px solid #EEF3F0;
+    border-top-color: #0B5D4D; border-radius: 50%;
+    animation: spin .7s linear infinite; margin: 0 auto 20px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  h2 { font-family: 'Sora', sans-serif; font-size: 1.2rem; color: #15211C; margin-bottom: 8px; }
+  p { font-size: 0.88rem; color: #5B6B63; }
+  .error-icon { font-size: 2.5rem; margin-bottom: 16px; }
+  .btn {
+    display: inline-block; margin-top: 20px;
+    padding: 11px 24px; border-radius: 100px;
+    background: #0B5D4D; color: #fff;
+    font-weight: 600; font-size: 0.9rem;
+    text-decoration: none;
+  }
+  .btn:hover { background: #073D32; }
+</style>
+</head>
+<body>
+<div class="card" id="card">
+  <div class="brand"><span class="brand-mark">JL</span>JobLink</div>
+  <div class="spinner"></div>
+  <h2>Đang xử lý đăng nhập...</h2>
+  <p>Vui lòng chờ trong giây lát.</p>
+</div>
+
+<script>
+(function () {
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get('token');
+  const userRaw = params.get('user');
+  const error = params.get('error');
+  const card = document.getElementById('card');
+
+  function showError(msg) {
+    card.innerHTML = `
+      <div class="brand"><span class="brand-mark">JL</span>JobLink</div>
+      <div class="error-icon">⚠️</div>
+      <h2>Đăng nhập không thành công</h2>
+      <p>${msg}</p>
+      <a href="/login.html" class="btn">Thử lại</a>
+    `;
+  }
+
+  if (error || !token) {
+    showError(error === 'oauth_failed'
+      ? 'Không thể xác thực với nhà cung cấp. Vui lòng thử lại.'
+      : 'Không nhận được token xác thực.');
+    return;
+  }
+
+  try {
+    const user = JSON.parse(decodeURIComponent(userRaw));
+    localStorage.setItem('joblink_token', token);
+    localStorage.setItem('joblink_user', JSON.stringify(user));
+
+    // Chuyen den dashboard tuong ung
+    const dashMap = {
+      admin: '/admin-dashboard.html',
+      company: '/company-dashboard.html',
+      candidate: '/candidate-dashboard.html'
+    };
+    const dest = dashMap[user.role] || '/index.html';
+
+    card.innerHTML = `
+      <div class="brand"><span class="brand-mark">JL</span>JobLink</div>
+      <div style="font-size:2.5rem; margin-bottom:16px;">✅</div>
+      <h2>Đăng nhập thành công!</h2>
+      <p>Đang chuyển hướng...</p>
+    `;
+    setTimeout(() => { window.location.href = dest; }, 800);
+  } catch (e) {
+    showError('Dữ liệu xác thực không hợp lệ. Vui lòng thử lại.');
+  }
+})();
+</script>
+</body>
+</html>

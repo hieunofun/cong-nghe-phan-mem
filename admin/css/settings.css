@@ -1,7 +1,0 @@
-/* ═══════════════════════════════════════
-   settings.css
-═══════════════════════════════════════ */
-
-.settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-.user-role-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--border); }
-.user-role-row:last-child { border-bottom: none; }

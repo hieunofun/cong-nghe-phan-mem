@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quản lý Doanh nghiệp — JobLink</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+<style>
+  .upload-row { display:flex; align-items:center; gap:14px; margin-bottom: 20px; flex-wrap: wrap; }
+  .upload-row .upload-preview { width:56px; height:56px; border-radius:10px; background:var(--surface-alt); display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0; color:var(--ink-faint); font-size:0.78rem; }
+  .upload-preview img { width:100%; height:100%; object-fit:cover; }
+  .stat-row { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px; }
+  @media (max-width:760px){ .stat-row{ grid-template-columns:repeat(2,1fr); } }
+  .applicant-card .ac-meta { color: var(--ink-faint); font-size:0.78rem; margin-bottom:6px; }
+</style>
+</head>
+<body>
+
+<header class="navbar">
+  <div class="navbar-inner">
+    <a href="/index.html" class="brand"><span class="brand-mark">JL</span>JobLink</a>
+    <nav class="nav-links">
+      <a href="/index.html">Trang chủ</a>
+      <a href="/jobs.html">Việc làm</a>
+    </nav>
+    <div class="nav-actions">
+      <div id="nav-auth-slot" class="flex gap-12 items-center"></div>
+      <button class="nav-toggle" aria-label="Mở menu">☰</button>
+    </div>
+  </div>
+</header>
+
+<div class="dashboard-shell">
+  <aside class="dash-sidebar">
+    <div class="dash-user">
+      <div class="dash-avatar" id="sidebar-avatar">?</div>
+      <div>
+        <div class="dash-user-name" id="sidebar-name">Doanh nghiệp</div>
+        <div class="dash-user-role" id="sidebar-status">Tài khoản Doanh nghiệp</div>
+      </div>
+    </div>
+    <nav class="dash-nav">
+      <a href="#" data-view="overview" class="active">📊 Tổng quan</a>
+      <a href="#" data-view="jobs">📋 Tin đã đăng</a>
+      <a href="#" data-view="applicants">🧑‍💼 Quản lý ứng viên</a>
+      <a href="#" data-view="subscription">💎 Gói dịch vụ</a>
+      <a href="/cv-search.html">🗂️ Kho CV ứng viên</a>
+      <a href="#" data-view="profile">🏢 Hồ sơ công ty</a>
+    </nav>
+  </aside>
+
+  <main class="dash-main">
+    <div id="approval-banner"></div>
+    <div class="dash-header">
+      <div>
+        <h1 id="view-title">Tổng quan</h1>
+        <p id="view-subtitle" class="mb-0">Tình hình tuyển dụng của doanh nghiệp bạn.</p>
+      </div>
+      <div id="header-action"></div>
+    </div>
+
+    <section id="view-overview" class="dash-view">
+      <div class="stat-row" id="stat-row"></div>
+      <div class="card">
+        <h3 style="font-size:0.95rem;">Tin đăng gần đây</h3>
+        <div class="table-wrap" style="margin-top:12px;">
+          <table id="recent-jobs-table"><thead><tr><th>Tiêu đề</th><th>Trạng thái</th><th>Ứng viên</th></tr></thead><tbody></tbody></table>
+        </div>
+      </div>
+    </section>
+
+    <section id="view-jobs" class="dash-view" style="display:none;">
+      <div class="table-wrap">
+        <table id="jobs-table">
+          <thead><tr><th>Tiêu đề</th><th>Loại</th><th>Trạng thái</th><th>Lượt xem</th><th>Ứng viên</th><th>Hành động</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div id="jobs-empty" style="display:none;" class="empty-state"><div class="empty-icon">📋</div><p>Bạn chưa đăng tin tuyển dụng nào.</p></div>
+    </section>
+
+    <section id="view-applicants" class="dash-view" style="display:none;">
+      <div class="card" style="margin-bottom:0;">
+        <label for="job-select" style="font-weight:600; font-size:0.88rem; display:block; margin-bottom:8px;">Chọn tin tuyển dụng:</label>
+        <select id="job-select" class="input"></select>
+      </div>
+      <div class="pipeline" id="pipeline"></div>
+      <div id="applicants-empty" style="display:none;" class="empty-state"><div class="empty-icon">🧑‍💼</div><p>Chưa có ứng viên nào ứng tuyển vào tin này.</p></div>
+    </section>
+
+    <section id="view-subscription" class="dash-view" style="display:none;">
+      <div id="sub-content"><div class="card skeleton" style="height:200px;"></div></div>
+    </section>
+
+    <section id="view-profile" class="dash-view" style="display:none;">
+      <div class="card" style="margin-bottom:20px;">
+        <h3 style="font-size:0.95rem; margin-bottom:14px;">Logo công ty</h3>
+        <div class="upload-row mb-0">
+          <div class="upload-preview" id="logo-preview">Logo</div>
+          <div>
+            <input type="file" id="logo-input" accept=".png,.jpg,.jpeg,.svg,.webp" style="display:none;">
+            <button class="btn btn-outline btn-sm" id="logo-upload-btn">Đổi logo</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div id="profile-alert-slot"></div>
+        <form id="profile-form">
+          <div class="form-group">
+            <label for="company_name">Tên doanh nghiệp</label>
+            <input type="text" id="company_name" class="input" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="tax_code">Mã số thuế</label>
+              <input type="text" id="tax_code" class="input">
+            </div>
+            <div class="form-group">
+              <label for="scale">Quy mô</label>
+              <input type="text" id="scale" class="input" placeholder="Ví dụ: 50-100 nhân viên">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="website">Website</label>
+            <input type="text" id="website" class="input" placeholder="https://...">
+          </div>
+          <div class="form-group">
+            <label for="address">Địa chỉ</label>
+            <input type="text" id="address" class="input">
+          </div>
+          <div class="form-group">
+            <label for="description">Giới thiệu công ty</label>
+            <textarea id="description" class="input"></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary" id="profile-submit-btn">Lưu thay đổi</button>
+        </form>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/header.js"></script>
+<script src="/js/company-dashboard.js"></script>
+<script src="/js/chatbot-widget.js"></script>
+</body>
+</html>

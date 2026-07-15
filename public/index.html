@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JobLink — Kết nối Doanh nghiệp và Ứng viên</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<header class="navbar">
+  <div class="navbar-inner">
+    <a href="/index.html" class="brand"><span class="brand-mark">JL</span>JobLink</a>
+    <nav class="nav-links">
+      <a href="/index.html">Trang chủ</a>
+      <a href="/jobs.html">Việc làm</a>
+      <a href="/register.html">Dành cho Doanh nghiệp</a>
+      <a href="/packages.html">Bảng giá</a>
+    </nav>
+    <div class="nav-actions">
+      <div id="nav-auth-slot" class="flex gap-12 items-center"></div>
+      <button class="nav-toggle" aria-label="Mở menu">☰</button>
+    </div>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="container hero-grid">
+    <div>
+      <span class="eyebrow">● 1.240+ việc đang tuyển hôm nay</span>
+      <h1>Tìm việc mơ ước,<br><span class="highlight">kết nối đúng người</span></h1>
+      <p class="hero-sub">JobLink giúp ứng viên IT, kinh doanh, marketing tìm được công việc phù hợp — và giúp doanh nghiệp tiếp cận đúng nhân sự mình cần, nhanh và minh bạch.</p>
+
+      <form class="search-card" id="hero-search-form">
+        <input type="text" id="hero-keyword" class="input" placeholder="Vị trí, công ty, kỹ năng...">
+        <div class="search-divider"></div>
+        <input type="text" id="hero-location" class="input" placeholder="Tỉnh / thành phố">
+        <button type="submit" class="btn btn-accent">Tìm việc</button>
+      </form>
+
+      <div class="chip-row" id="hero-chip-row">
+        <span class="chip skeleton" style="width:90px;height:32px;"></span>
+        <span class="chip skeleton" style="width:120px;height:32px;"></span>
+        <span class="chip skeleton" style="width:100px;height:32px;"></span>
+      </div>
+    </div>
+
+    <div class="card-stack" aria-hidden="true">
+      <div class="float-card c1">
+        <div class="fc-top">
+          <div class="fc-logo">VS</div>
+          <div>
+            <div class="fc-title">Lập trình viên Backend</div>
+            <div class="fc-company">VietSoft Solutions</div>
+          </div>
+        </div>
+        <div class="fc-tags"><span class="fc-tag">Cầu Giấy, Hà Nội</span><span class="fc-tag">Toàn thời gian</span></div>
+        <div class="fc-salary">12 — 20 triệu</div>
+      </div>
+      <div class="float-card c2">
+        <div class="fc-top">
+          <div class="fc-logo">GM</div>
+          <div>
+            <div class="fc-title">Nhân viên Kinh doanh</div>
+            <div class="fc-company">GreenMart Retail</div>
+          </div>
+        </div>
+        <div class="fc-tags"><span class="fc-tag">Quận 7, TP.HCM</span><span class="fc-tag">+ Hoa hồng</span></div>
+        <div class="fc-salary">8 — 15 triệu</div>
+      </div>
+      <div class="float-card c3">
+        <div class="fc-top">
+          <div class="fc-logo">★</div>
+          <div>
+            <div class="fc-title">Thực tập sinh Frontend</div>
+            <div class="fc-company">VietSoft Solutions</div>
+          </div>
+        </div>
+        <div class="fc-tags"><span class="fc-tag">Thực tập</span><span class="fc-tag">Sinh viên năm 3-4</span></div>
+        <div class="fc-salary">3 — 5 triệu</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="ticker-strip">
+  <div class="container">
+    <div class="ticker-track" id="ticker-track"></div>
+  </div>
+</div>
+
+<section class="section">
+  <div class="container">
+    <div class="section-head">
+      <div>
+        <h2>Việc làm nổi bật</h2>
+        <p>Những vị trí mới được cập nhật gần đây từ các doanh nghiệp đã xác thực.</p>
+      </div>
+      <a href="/jobs.html" class="btn btn-outline btn-sm">Xem tất cả →</a>
+    </div>
+    <div class="grid-3" id="featured-jobs-grid">
+      <div class="job-card skeleton" style="height:180px;"></div>
+      <div class="job-card skeleton" style="height:180px;"></div>
+      <div class="job-card skeleton" style="height:180px;"></div>
+    </div>
+  </div>
+</section>
+
+<section class="section section-alt">
+  <div class="container">
+    <div class="section-head">
+      <div>
+        <h2>Tìm theo ngành nghề</h2>
+        <p>Chọn lĩnh vực để xem ngay các vị trí đang tuyển phù hợp.</p>
+      </div>
+    </div>
+    <div class="grid-4" id="category-grid">
+      <div class="card skeleton" style="height:90px;"></div>
+      <div class="card skeleton" style="height:90px;"></div>
+      <div class="card skeleton" style="height:90px;"></div>
+      <div class="card skeleton" style="height:90px;"></div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="section-head">
+      <div><h2>Bắt đầu chỉ với 3 bước</h2></div>
+    </div>
+    <div class="grid-3">
+      <div class="card">
+        <div class="eyebrow">Bước 1</div>
+        <h3>Tạo hồ sơ ứng viên</h3>
+        <p>Điền thông tin kỹ năng, kinh nghiệm và tải CV — chỉ mất vài phút.</p>
+      </div>
+      <div class="card">
+        <div class="eyebrow">Bước 2</div>
+        <h3>Tìm việc phù hợp</h3>
+        <p>Lọc theo ngành nghề, mức lương, địa điểm để tìm đúng vị trí mong muốn.</p>
+      </div>
+      <div class="card">
+        <div class="eyebrow">Bước 3</div>
+        <h3>Ứng tuyển và theo dõi</h3>
+        <p>Gửi hồ sơ với một cú click, theo dõi trạng thái xử lý ngay trên dashboard.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section section-alt">
+  <div class="container">
+    <div class="card" style="display:flex; align-items:center; justify-content:space-between; gap:24px; flex-wrap:wrap; padding:40px;">
+      <div style="max-width:520px;">
+        <h2 style="margin-bottom:10px;">Là doanh nghiệp? Đăng tin tuyển dụng ngay</h2>
+        <p class="mb-0">Tiếp cận hàng nghìn ứng viên đang tìm việc, quản lý pipeline tuyển dụng và CV ứng viên ở một nơi duy nhất.</p>
+      </div>
+      <a href="/register.html" class="btn btn-primary">Đăng ký cho Doanh nghiệp</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand"><span class="brand-mark">JL</span>JobLink</div>
+        <p>Nền tảng kết nối Doanh nghiệp và Ứng viên, giúp việc tuyển dụng và tìm việc trở nên đơn giản, minh bạch hơn.</p>
+      </div>
+      <div>
+        <h4>Dành cho Ứng viên</h4>
+        <a href="/jobs.html">Tìm việc làm</a>
+        <a href="/register.html">Tạo hồ sơ</a>
+        <a href="/login.html">Đăng nhập</a>
+      </div>
+      <div>
+        <h4>Dành cho Doanh nghiệp</h4>
+        <a href="/register.html">Đăng ký tài khoản</a>
+        <a href="/login.html">Đăng nhập quản lý</a>
+      </div>
+      <div>
+        <h4>Liên hệ</h4>
+        <a href="mailto:support@joblink.vn">support@joblink.vn</a>
+        <a href="tel:1900000000">1900 000 000</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 JobLink. Đồ án minh hoạ — không phải sản phẩm thương mại.</span>
+      <span>Được xây dựng với Node.js, Express &amp; MySQL</span>
+    </div>
+  </div>
+</footer>
+
+<script src="/js/api.js"></script>
+<script src="/js/header.js"></script>
+<script src="/js/home.js"></script>
+<script src="/js/chatbot-widget.js"></script>
+</body>
+</html>

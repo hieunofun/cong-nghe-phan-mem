@@ -1,8 +1,0 @@
-/* ═══════════════════════════════════════
-   reports.css
-═══════════════════════════════════════ */
-
-.report-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-.source-bar-row { display: flex; align-items: center; gap: 10px; }
-.source-bar-wrap { width: 100px; }
-.source-pct { font-size: 11px; color: var(--text-secondary); min-width: 30px; text-align: right; }

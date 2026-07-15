@@ -1,37 +1,9 @@
-# dependencies
 node_modules/
-
-# mobile generated web bundle
-www/
-
-# logs
-npm-debug.log*
-yarn-debug.log*
-pnpm-debug.log*
-dev-server.*.log
-server-*.err.log
-server-*.out.log
-demo-server*.log
-
-# OS/editor
-.DS_Store
-Thumbs.db
-.vscode/
-.sixth/
-
-# env/secrets
 .env
-.env.*
-!.env.example
-
-# database
-data/
-
-# Capacitor/Android/iOS build outputs
-android/app/build/
-android/build/
-ios/App/build/
-ios/App/Pods/
-ios/App/output/
-DerivedData/
-xcuserdata/
+uploads/cv/*
+uploads/logos/*
+uploads/avatars/*
+!uploads/cv/.gitkeep
+!uploads/logos/.gitkeep
+!uploads/avatars/.gitkeep
+*.log
