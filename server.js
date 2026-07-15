@@ -70,7 +70,12 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`JobLink server dang chay tai http://localhost:${PORT}`);
-  console.log('OAuth providers:');
-});
+
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`JobLink server dang chay tai http://localhost:${PORT}`);
+    console.log('OAuth providers:');
+  });
+}
+
+module.exports = app;

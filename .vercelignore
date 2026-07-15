@@ -1,0 +1,11 @@
+node_modules
+.env
+*.log
+server.log
+server-error.log
+uploads/cv/*
+uploads/logos/*
+uploads/avatars/*
+ai_service/__pycache__
+ai_service/app.log
+ai_service/app-error.log
