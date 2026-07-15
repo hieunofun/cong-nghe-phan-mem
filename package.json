@@ -1,6 +1,6 @@
 {
   "name": "joblink-recruitment-platform",
-  "version": "1.0.0",
+  "version": "0.2.0",
   "description": "Nen tang tuyen dung ket noi Doanh nghiep va Ung vien (kieu TopCV)",
   "main": "server.js",
   "scripts": {

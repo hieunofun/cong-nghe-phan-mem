@@ -10,6 +10,18 @@ Release v0.2 is the Beta milestone after Week 7. It packages the first integrate
 
 This release is prepared for course assessment using the Sommerville software engineering rubric. The release evidence maps product value, architecture, reliability, testing, security, DevOps, and documentation to concrete files in the repository.
 
+Reviewer entry points:
+
+- Changelog: `CHANGELOG.md`
+- Release traceability: `docs/RELEASE_TRACEABILITY.md`
+- User stories and acceptance criteria: `docs/USER_STORIES.md`
+- Architecture: `docs/ARCHITECTURE.md`
+- API documentation: `docs/API.md`
+- Deployment notes: `docs/DEPLOYMENT.md`
+- Testing plan: `docs/TEST_PLAN.md`
+- CI workflow: `.github/workflows/ci.yml`
+- Automated tests: `tests/release-evidence.test.js`
+
 ## Features
 
 - AI Chatbot hoàn chỉnh for beta:
@@ -53,6 +65,8 @@ This release is prepared for course assessment using the Sommerville software en
 - Added `docs/API.md` for endpoint documentation.
 - Added `docs/DEPLOYMENT.md` for local and production deployment notes.
 - Added `docs/TEST_PLAN.md` for unit, integration, and manual beta verification.
+- Added `docs/RELEASE_TRACEABILITY.md` to map each release requirement to concrete repository evidence.
+- Added `CHANGELOG.md` with the v0.2 change summary.
 - Added basic automated release evidence tests through `npm test`.
 - Added GitHub Actions workflow to run the basic tests on push and pull request.
 - Added `SELF_ASSESSMENT.md` using the 80/20 Sommerville rubric.
@@ -152,3 +166,14 @@ This release is prepared for course assessment using the Sommerville software en
   - `docs/TEST_PLAN.md` defines API integration scenarios for auth, job search, candidate profile, employer dashboard, chatbot, recommendation, and resume ranking.
   - Full automated DB integration tests are planned for the next iteration.
 
+## Contributor Acknowledgements
+
+- `hieunofun` - repository owner and release publisher.
+- Additional team member names should be added here if the course submission requires individual attribution.
+
+## Changelog / Traceability
+
+- Changelog: `CHANGELOG.md`
+- Requirement-to-evidence matrix: `docs/RELEASE_TRACEABILITY.md`
+- Release tag: `v0.2`
+- Target commit: `71e3bed382710122ae2c098e2f81ec946f1550bd`

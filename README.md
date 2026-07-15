@@ -146,6 +146,8 @@ Tất cả endpoint có tiền tố `/api`. Các route cần đăng nhập sẽ 
 ## Release v0.2 Beta và tài liệu chấm điểm
 
 - Release Notes: [`docs/RELEASE_v0.2.md`](docs/RELEASE_v0.2.md)
+- Changelog: [`CHANGELOG.md`](CHANGELOG.md)
+- Release Traceability: [`docs/RELEASE_TRACEABILITY.md`](docs/RELEASE_TRACEABILITY.md)
 - User Stories / Acceptance Criteria: [`docs/USER_STORIES.md`](docs/USER_STORIES.md)
 - Architecture: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
 - API Documentation: [`docs/API.md`](docs/API.md)
