@@ -143,6 +143,22 @@ Tất cả endpoint có tiền tố `/api`. Các route cần đăng nhập sẽ 
 - `GET /admin/stats`, `GET/PUT /admin/companies`, `GET/PUT /admin/users`, `GET/DELETE /admin/jobs`, `GET/POST/DELETE /admin/categories`
 - `GET /categories` (public)
 
+## Release v0.2 Beta và tài liệu chấm điểm
+
+- Release Notes: [`docs/RELEASE_v0.2.md`](docs/RELEASE_v0.2.md)
+- User Stories / Acceptance Criteria: [`docs/USER_STORIES.md`](docs/USER_STORIES.md)
+- Architecture: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+- API Documentation: [`docs/API.md`](docs/API.md)
+- Deployment Notes: [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)
+- Testing Plan: [`docs/TEST_PLAN.md`](docs/TEST_PLAN.md)
+- Self Assessment theo rubric Sommerville 80/20: [`SELF_ASSESSMENT.md`](SELF_ASSESSMENT.md)
+
+## Kiểm thử
+
+```bash
+npm test
+```
+
 ## Ghi chú quan trọng
 
 - File CV/logo/avatar được lưu trực tiếp trên ổ đĩa server tại thư mục `uploads/` (không dùng cloud storage) — phù hợp cho mục đích học tập/demo.
