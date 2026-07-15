@@ -8,6 +8,8 @@ const FacebookStrategy = require('passport-facebook').Strategy;
 const pool = require('./db');
 const candidateModel = require('../models/candidateModel');
 
+const BASE_URL = process.env.BASE_URL || process.env.RENDER_EXTERNAL_URL || 'http://localhost:3000';
+
 // Serialize / deserialize chi dung trong pham vi OAuth redirect (khong dung session lau dai)
 passport.serializeUser((user, done) => done(null, user));
 passport.deserializeUser((user, done) => done(null, user));
@@ -64,7 +66,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: `${process.env.BASE_URL || 'http://localhost:3000'}/api/auth/google/callback`
+    callbackURL: `${BASE_URL}/api/auth/google/callback`
   }, async (accessToken, refreshToken, profile, done) => {
     try {
       const user = await findOrCreateOAuthUser({
@@ -90,7 +92,7 @@ if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
   passport.use(new GitHubStrategy({
     clientID: process.env.GITHUB_CLIENT_ID,
     clientSecret: process.env.GITHUB_CLIENT_SECRET,
-    callbackURL: `${process.env.BASE_URL || 'http://localhost:3000'}/api/auth/github/callback`,
+    callbackURL: `${BASE_URL}/api/auth/github/callback`,
     scope: ['user:email']
   }, async (accessToken, refreshToken, profile, done) => {
     try {
@@ -120,7 +122,7 @@ if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
   passport.use(new FacebookStrategy({
     clientID: process.env.FACEBOOK_APP_ID,
     clientSecret: process.env.FACEBOOK_APP_SECRET,
-    callbackURL: `${process.env.BASE_URL || 'http://localhost:3000'}/api/auth/facebook/callback`,
+    callbackURL: `${BASE_URL}/api/auth/facebook/callback`,
     profileFields: ['id', 'emails', 'name', 'displayName', 'photos']
   }, async (accessToken, refreshToken, profile, done) => {
     try {
