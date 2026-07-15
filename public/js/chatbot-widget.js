@@ -216,7 +216,7 @@
     showTyping();
 
     try {
-      const res = await fetch('/api/ai/chat', {
+      const res = await fetch(apiEndpoint('/ai/chat'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

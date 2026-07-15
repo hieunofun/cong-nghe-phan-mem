@@ -1,7 +1,13 @@
 // public/js/api.js
 // Wrapper goi API chung: tu dong gan token, parse JSON, nem loi co message ro rang
 
-const API_BASE = '/api';
+const API_ORIGIN = (window.JOBLINK_API_BASE_URL || '').trim().replace(/\/$/, '');
+const API_BASE = `${API_ORIGIN}/api`;
+window.JOBLINK_API_BASE = API_BASE;
+
+function apiEndpoint(path) {
+  return `${API_BASE}${path}`;
+}
 
 function getToken() {
   return localStorage.getItem('joblink_token') || sessionStorage.getItem('joblink_token');
@@ -35,7 +41,7 @@ async function apiFetch(path, { method = 'GET', body, auth = true } = {}) {
   const headers = { 'Content-Type': 'application/json' };
   if (auth && getToken()) headers['Authorization'] = `Bearer ${getToken()}`;
 
-  const res = await fetch(`${API_BASE}${path}`, {
+  const res = await fetch(apiEndpoint(path), {
     method,
     headers,
     body: body !== undefined ? JSON.stringify(body) : undefined
@@ -58,7 +64,7 @@ async function apiUpload(path, formData, method = 'POST') {
   const headers = {};
   if (getToken()) headers['Authorization'] = `Bearer ${getToken()}`;
 
-  const res = await fetch(`${API_BASE}${path}`, { method, headers, body: formData });
+  const res = await fetch(apiEndpoint(path), { method, headers, body: formData });
 
   let data = null;
   try { data = await res.json(); } catch (e) { /* khong co body JSON */ }
