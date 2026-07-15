@@ -71,12 +71,19 @@ test('candidate and employer profile routes exist', () => {
 test('documentation evidence exists for grading', () => {
   [
     'SELF_ASSESSMENT.md',
+    'CHANGELOG.md',
     'docs/API.md',
     'docs/ARCHITECTURE.md',
     'docs/DEPLOYMENT.md',
+    'docs/RELEASE_TRACEABILITY.md',
     'docs/TEST_PLAN.md',
     'docs/USER_STORIES.md'
   ].forEach((file) => assert.equal(exists(file), true, `${file} should exist`));
+});
+
+test('package version matches the v0.2 release line', () => {
+  const pkg = JSON.parse(read('package.json'));
+  assert.equal(pkg.version, '0.2.0');
 });
 
 test('configuration hygiene keeps secrets out and tracks large model via LFS', () => {
@@ -86,4 +93,3 @@ test('configuration hygiene keeps secrets out and tracks large model via LFS', (
   assert.equal(exists('.env.example'), true);
   assert.match(attrs, /ai_service\/models\/cv_job_matching\/model\.safetensors filter=lfs/);
 });
-

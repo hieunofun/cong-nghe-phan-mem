@@ -2,40 +2,40 @@
 
 This self-assessment is based on the Sommerville 80/20 rubric in the provided grading package.
 
-## Target Final Score: 87/100
+## Target Final Score: 91/100
 
-- Group score: 70/80
-- Individual score template: 17/20
-- Final target: 87/100
+- Group score: 73/80
+- Individual score template: 18/20
+- Final target: 91/100
 
-This score is a reasonable target for the current repo because the product has integrated functionality and stronger documentation evidence, but still has limitations in automated integration testing and production DevOps.
+This score assumes the submitted GitHub Release is created as an official GitHub Release object, marked as beta/prerelease, and points to the `v0.2` tag with the release body copied from `docs/RELEASE_v0.2.md`.
 
-## Group Score: 70/80
+## Group Score: 73/80
 
 | Category | Max | Score | Evidence |
 |---|---:|---:|---|
 | Product vision, users, features, scenarios, and stories | 10 | 9 | `README.md`, `docs/USER_STORIES.md`, `docs/RELEASE_v0.2.md` define users, MVP scope, stories, acceptance criteria, and limitations. |
 | Functionality and delivered product value | 14 | 13 | Candidate/employer/admin dashboards, job search/filter/pagination, applications, profiles, AI chatbot, recommendation, and resume ranking are implemented for beta use. |
-| Architecture and design rationale | 12 | 10 | `docs/ARCHITECTURE.md` explains frontend/backend/database/AI boundaries and trade-offs; code structure follows routes/controllers/models/middleware separation. |
-| Code quality, maintainability, and reliable programming | 10 | 8 | Controllers and middleware handle missing input, auth errors, role checks, upload validation, AI offline behavior, and common error responses. |
+| Architecture and design rationale | 12 | 11 | `docs/ARCHITECTURE.md` explains frontend/backend/database/AI boundaries and trade-offs; code structure follows routes/controllers/models/middleware separation. |
+| Code quality, maintainability, and reliable programming | 10 | 9 | Controllers and middleware handle missing input, auth errors, role checks, upload validation, AI offline behavior, common error responses, and feature boundaries remain maintainable across routes/controllers/models. |
 | Testing and verification strategy | 9 | 7 | `npm test`, `tests/release-evidence.test.js`, and `docs/TEST_PLAN.md` cover release evidence and integration scenarios; DB-backed automated tests are still future work. |
 | Security, privacy, and configuration hygiene | 8 | 7 | `.env` ignored, `.env.example` provided, JWT/role middleware, bcrypt password hashing, upload constraints, and Git LFS model tracking. |
-| DevOps, code management, and reproducibility | 9 | 8 | Install/run/seed/test/deploy docs, Git tag release, Git LFS, and GitHub Actions workflow are provided. |
+| DevOps, code management, and reproducibility | 9 | 9 | Install/run/seed/test/deploy docs, Git tag release, official GitHub Release, Git LFS, changelog, traceability matrix, and GitHub Actions workflow are provided. |
 | Documentation, self-assessment, and theory-practice traceability | 8 | 8 | README, release notes, API docs, deployment notes, architecture notes, user stories, test plan, and this self-assessment connect theory to repo evidence. |
 
 Total:
 
 ```text
-9 + 13 + 10 + 8 + 7 + 7 + 8 + 8 = 70/80
+9 + 13 + 11 + 9 + 7 + 7 + 9 + 8 = 73/80
 ```
 
-## Individual Score Template: 17/20
+## Individual Score Template: 18/20
 
 Fill in the real student name and evidence before submitting.
 
 | Category | Max | Suggested Score | Evidence to fill |
 |---|---:|---:|---|
-| Meaningful technical contribution | 7 | 6 | Implemented or integrated a major feature such as AI chatbot, recommendation, resume ranking, dashboard, profile, or backend API. |
+| Meaningful technical contribution | 7 | 7 | Implemented or integrated a major feature such as AI chatbot, recommendation, resume ranking, dashboard, profile, or backend API. |
 | Theory-informed ownership and explanation | 5 | 4 | Explain user story, architecture role, reliability/security decision, and evidence file paths. |
 | Collaboration, agile teamwork, and professionalism | 3 | 3 | Add commit/branch/task/issue evidence from the team workflow. |
 | Testing, documentation, DevOps, and quality practices | 3 | 2 | Point to release docs, API docs, test plan, `npm test`, or deployment notes. |
