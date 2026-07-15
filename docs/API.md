@@ -19,6 +19,8 @@ Authorization: Bearer <token>
 | POST | `/auth/register/candidate` | Public | Register candidate |
 | POST | `/auth/register/company` | Public | Register employer |
 | POST | `/auth/login` | Public | Login and receive JWT |
+| POST | `/auth/forgot-password` | Public | Create a time-limited password reset request |
+| POST | `/auth/reset-password` | Public | Set a new password using a one-time token |
 | GET | `/auth/me` | Authenticated | Get current user |
 | GET | `/auth/providers` | Public | List OAuth provider availability |
 
@@ -105,4 +107,3 @@ Example chatbot body:
 | GET/PUT | `/admin/users` | Admin | User management |
 | GET/DELETE | `/admin/jobs` | Admin | Job moderation |
 | GET/POST/DELETE | `/admin/categories` | Admin | Category management |
-

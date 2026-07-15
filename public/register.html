@@ -3,86 +3,111 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Đăng ký — JobLink</title>
+<title>Tạo tài khoản — JobLink</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/style.css">
 </head>
-<body>
-
-<header class="navbar">
-  <div class="navbar-inner">
-    <a href="/index.html" class="brand"><span class="brand-mark">JL</span>JobLink</a>
-    <nav class="nav-links">
-      <a href="/index.html">Trang chủ</a>
-      <a href="/jobs.html">Việc làm</a>
-      <a href="/register.html">Dành cho Doanh nghiệp</a>
-    </nav>
-    <div class="nav-actions">
-      <div id="nav-auth-slot" class="flex gap-12 items-center"></div>
-      <button class="nav-toggle" aria-label="Mở menu">☰</button>
-    </div>
-  </div>
+<body class="auth-page">
+<header class="auth-header">
+  <a href="/index.html" class="brand"><span class="brand-mark">JL</span>JobLink</a>
+  <a href="/login.html" class="auth-header-link">Đã có tài khoản? Đăng nhập</a>
 </header>
 
-<div class="auth-shell">
-  <div class="auth-card" style="max-width:480px;">
-    <h2 style="margin-bottom:6px;">Tạo tài khoản</h2>
-    <p style="margin-bottom:20px;">Đã có tài khoản? <a href="/login.html">Đăng nhập</a></p>
+<main class="auth-shell auth-shell-wide auth-shell-register">
+  <section class="auth-layout auth-layout-register" aria-labelledby="register-title">
+    <aside class="auth-aside">
+      <a href="/index.html" class="auth-aside-brand"><span class="brand-mark">JL</span>JobLink</a>
+      <div class="auth-aside-copy">
+        <p class="auth-eyebrow">BẮT ĐẦU CÙNG JOBLINK</p>
+        <h1>Tạo hồ sơ tốt. Mở ra cơ hội phù hợp.</h1>
+        <p>Chọn đúng loại tài khoản để bắt đầu với trải nghiệm dành riêng cho bạn.</p>
+      </div>
+      <p class="auth-trust">Thông tin của bạn được sử dụng theo Chính sách bảo mật JobLink.</p>
+    </aside>
 
-    <div class="role-switch">
-      <button type="button" class="active" data-role="candidate">Tôi là Ứng viên</button>
-      <button type="button" data-role="company">Tôi là Doanh nghiệp</button>
+    <div class="auth-form-panel auth-form-panel-wide">
+      <div class="auth-form-head">
+        <p class="auth-kicker">Tham gia JobLink</p>
+        <h2 id="register-title">Tạo tài khoản mới</h2>
+        <p>Đã có tài khoản? <a href="/login.html">Đăng nhập</a></p>
+      </div>
+
+      <div class="role-switch" role="tablist" aria-label="Loại tài khoản">
+        <button type="button" class="active" data-role="candidate" role="tab" aria-selected="true">Ứng viên</button>
+        <button type="button" data-role="company" role="tab" aria-selected="false">Doanh nghiệp</button>
+      </div>
+
+      <div id="alert-slot" aria-live="polite"></div>
+
+      <form id="register-form" novalidate>
+        <div id="candidate-fields">
+          <div class="form-group">
+            <label for="full_name">Họ và tên</label>
+            <input type="text" id="full_name" class="input" autocomplete="name" placeholder="Nguyễn Văn A">
+          </div>
+        </div>
+
+        <div id="company-fields" hidden>
+          <div class="form-group">
+            <label for="company_name">Tên doanh nghiệp</label>
+            <input type="text" id="company_name" class="input" autocomplete="organization" placeholder="Công ty TNHH ABC">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="tax_code">Mã số thuế <span class="optional-label">Không bắt buộc</span></label>
+              <input type="text" id="tax_code" class="input" inputmode="numeric" placeholder="0123456789">
+            </div>
+            <div class="form-group">
+              <label for="address">Địa chỉ</label>
+              <input type="text" id="address" class="input" autocomplete="street-address" placeholder="Tỉnh/thành phố">
+            </div>
+          </div>
+          <div class="alert alert-info company-review-note">Hồ sơ doanh nghiệp sẽ được quản trị viên xác minh trước khi đăng tin.</div>
+        </div>
+
+        <div class="form-group">
+          <label for="email">Địa chỉ email</label>
+          <input type="email" id="email" class="input" required autocomplete="email" inputmode="email" placeholder="tenban@email.com">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="password">Mật khẩu</label>
+            <div class="password-field">
+              <input type="password" id="password" class="input" required minlength="8" autocomplete="new-password" placeholder="Tối thiểu 8 ký tự">
+              <button type="button" class="password-toggle" data-password-toggle="password" aria-label="Hiện mật khẩu">Hiện</button>
+            </div>
+            <div class="password-strength" id="password-strength" aria-live="polite">
+              <span class="strength-track"><span class="strength-fill"></span></span>
+              <span class="strength-label">Dùng chữ hoa, chữ thường và số</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="confirm_password">Xác nhận mật khẩu</label>
+            <div class="password-field">
+              <input type="password" id="confirm_password" class="input" required autocomplete="new-password" placeholder="Nhập lại mật khẩu">
+              <button type="button" class="password-toggle" data-password-toggle="confirm_password" aria-label="Hiện mật khẩu xác nhận">Hiện</button>
+            </div>
+          </div>
+        </div>
+
+        <label class="check-field terms-check">
+          <input type="checkbox" id="terms" required>
+          <span>Tôi đã đọc và đồng ý với <a href="/terms.html" target="_blank">Điều khoản sử dụng</a> và <a href="/privacy.html" target="_blank">Chính sách bảo mật</a> của JobLink.</span>
+        </label>
+
+        <button type="submit" class="btn btn-primary btn-block auth-submit" id="submit-btn">Tạo tài khoản</button>
+      </form>
+
+      <div id="social-login-container"></div>
     </div>
-
-    <div id="alert-slot"></div>
-
-    <form id="register-form">
-      <div class="form-group">
-        <label for="email">Email</label>
-        <input type="email" id="email" class="input" required placeholder="ban@email.com">
-      </div>
-      <div class="form-group">
-        <label for="password">Mật khẩu</label>
-        <input type="password" id="password" class="input" required minlength="6" placeholder="Tối thiểu 6 ký tự">
-      </div>
-
-      <div id="candidate-fields">
-        <div class="form-group">
-          <label for="full_name">Họ và tên</label>
-          <input type="text" id="full_name" class="input" placeholder="Nguyễn Văn A">
-        </div>
-      </div>
-
-      <div id="company-fields" style="display:none;">
-        <div class="form-group">
-          <label for="company_name">Tên doanh nghiệp</label>
-          <input type="text" id="company_name" class="input" placeholder="Công ty TNHH...">
-        </div>
-        <div class="form-group">
-          <label for="tax_code">Mã số thuế (không bắt buộc)</label>
-          <input type="text" id="tax_code" class="input" placeholder="0123456789">
-        </div>
-        <div class="form-group">
-          <label for="address">Địa chỉ</label>
-          <input type="text" id="address" class="input" placeholder="Số nhà, đường, quận/huyện, tỉnh/thành">
-        </div>
-        <div class="alert alert-info">Hồ sơ doanh nghiệp cần được Admin duyệt trước khi đăng tin tuyển dụng.</div>
-      </div>
-
-      <button type="submit" class="btn btn-primary btn-block" id="submit-btn">Đăng ký</button>
-    </form>
-    <div id="social-login-container"></div>
-  </div>
-</div>
+  </section>
+</main>
 
 <script src="/js/api.js"></script>
-<script src="/js/header.js"></script>
 <script src="/js/social-login.js"></script>
 <script src="/js/auth.js"></script>
-<script src="/js/chatbot-widget.js"></script>
-<script>
-renderSocialButtons('social-login-container');
-</script>
+<script>renderSocialButtons('social-login-container');</script>
 </body>
 </html>

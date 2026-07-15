@@ -24,6 +24,14 @@ Important variables:
 - `GROQ_API_KEY`
 - OAuth provider IDs/secrets when social login is enabled
 
+For an existing v0.2 database, apply the authentication migration once:
+
+```bash
+mysql -u root -p < database/auth_enhancements.sql
+```
+
+In development, the forgot-password API returns a reset link so the flow can be tested without an email server. Production deployments must configure an email delivery service and must not expose reset links in API responses.
+
 ## Local Run
 
 ```bash
@@ -67,4 +75,3 @@ git checkout <previous-tag-or-commit>
 ```
 
 Then redeploy the selected revision and database backup if schema changed.
-

@@ -8,63 +8,74 @@
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/style.css">
 </head>
-<body>
-
-<header class="navbar">
-  <div class="navbar-inner">
-    <a href="/index.html" class="brand"><span class="brand-mark">JL</span>JobLink</a>
-    <nav class="nav-links">
-      <a href="/index.html">Trang chủ</a>
-      <a href="/jobs.html">Việc làm</a>
-      <a href="/register.html">Dành cho Doanh nghiệp</a>
-    </nav>
-    <div class="nav-actions">
-      <div id="nav-auth-slot" class="flex gap-12 items-center"></div>
-      <button class="nav-toggle" aria-label="Mở menu">☰</button>
-    </div>
-  </div>
+<body class="auth-page">
+<header class="auth-header">
+  <a href="/index.html" class="brand"><span class="brand-mark">JL</span>JobLink</a>
+  <a href="/jobs.html" class="auth-header-link">Khám phá việc làm</a>
 </header>
 
-<div class="auth-shell">
-  <div class="auth-card">
-    <h2 style="margin-bottom:6px;">Đăng nhập</h2>
-    <p style="margin-bottom:24px;">Chưa có tài khoản? <a href="/register.html">Đăng ký ngay</a></p>
-
-    <div id="alert-slot"></div>
-
-    <form id="login-form">
-      <div class="form-group">
-        <label for="email">Email</label>
-        <input type="email" id="email" class="input" required placeholder="ban@email.com">
+<main class="auth-shell auth-shell-wide">
+  <section class="auth-layout" aria-labelledby="login-title">
+    <aside class="auth-aside">
+      <a href="/index.html" class="auth-aside-brand"><span class="brand-mark">JL</span>JobLink</a>
+      <div class="auth-aside-copy">
+        <p class="auth-eyebrow">JOBLINK CAREER</p>
+        <h1>Tiếp tục hành trình nghề nghiệp của bạn.</h1>
+        <p>Một tài khoản để quản lý hồ sơ, ứng tuyển và theo dõi cơ hội phù hợp.</p>
       </div>
-      <div class="form-group">
-        <label for="password">Mật khẩu</label>
-        <input type="password" id="password" class="input" required placeholder="••••••••">
-      </div>
-      <button type="submit" class="btn btn-primary btn-block" id="submit-btn">Đăng nhập</button>
-    </form>
-    <div id="social-login-container"></div>
+      <p class="auth-trust">Kết nối an toàn · Thông tin minh bạch · Chủ động lựa chọn</p>
+    </aside>
 
-    <p class="form-hint" style="text-align:center; margin-top:18px;">
-      Tài khoản demo — Admin: admin@joblink.vn / Admin@123
-    </p>
-  </div>
-</div>
+    <div class="auth-form-panel">
+      <div class="auth-form-head">
+        <p class="auth-kicker">Chào mừng trở lại</p>
+        <h2 id="login-title">Đăng nhập JobLink</h2>
+        <p>Chưa có tài khoản? <a href="/register.html">Tạo tài khoản miễn phí</a></p>
+      </div>
+
+      <div id="alert-slot" aria-live="polite"></div>
+
+      <form id="login-form" novalidate>
+        <div class="form-group">
+          <label for="email">Địa chỉ email</label>
+          <input type="email" id="email" class="input" required autocomplete="email" inputmode="email" placeholder="tenban@email.com">
+        </div>
+        <div class="form-group">
+          <div class="label-row">
+            <label for="password">Mật khẩu</label>
+            <a href="/forgot-password.html" class="subtle-link">Quên mật khẩu?</a>
+          </div>
+          <div class="password-field">
+            <input type="password" id="password" class="input" required autocomplete="current-password" placeholder="Nhập mật khẩu">
+            <button type="button" class="password-toggle" data-password-toggle="password" aria-label="Hiện mật khẩu">Hiện</button>
+          </div>
+        </div>
+
+        <label class="check-field auth-option">
+          <input type="checkbox" id="remember" checked>
+          <span>Ghi nhớ đăng nhập trên thiết bị này</span>
+        </label>
+
+        <button type="submit" class="btn btn-primary btn-block auth-submit" id="submit-btn">Đăng nhập</button>
+      </form>
+
+      <div id="social-login-container"></div>
+      <p class="auth-security-note">Không chia sẻ mật khẩu hoặc mã đăng nhập với bất kỳ ai.</p>
+    </div>
+  </section>
+</main>
 
 <script src="/js/api.js"></script>
-<script src="/js/header.js"></script>
 <script src="/js/social-login.js"></script>
 <script src="/js/auth.js"></script>
-<script src="/js/chatbot-widget.js"></script>
 <script>
-// Hien thi nut social login
 renderSocialButtons('social-login-container');
 
-// Hien thi loi neu OAuth that bai
 const urlErr = new URLSearchParams(window.location.search).get('error');
 if (urlErr === 'oauth_failed') {
-  const slot = document.getElementById('alert-slot');
-  if (slot) slot.innerHTML = '<div class="alert alert-error">Đăng nhập bằng mạng xã hội không thành công. Vui lòng thử lại.</div>';
+  showAlert('Đăng nhập bằng mạng xã hội không thành công. Vui lòng thử lại.');
+} else if (urlErr === 'provider_not_configured') {
+  showAlert('Phương thức đăng nhập này chưa được cấu hình. Vui lòng đăng nhập bằng email.');
 }
 </script>
 </body>

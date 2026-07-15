@@ -1,10 +1,19 @@
 // models/userModel.js
 const pool = require('../config/db');
 
-async function createUser({ email, hashedPassword, role, status = 'active' }) {
+async function createUser({
+  email,
+  hashedPassword,
+  role,
+  status = 'active',
+  termsAcceptedAt = null,
+  termsVersion = null
+}) {
   const [result] = await pool.query(
-    'INSERT INTO users (email, password, role, status) VALUES (?, ?, ?, ?)',
-    [email, hashedPassword, role, status]
+    `INSERT INTO users
+      (email, password, role, status, terms_accepted_at, terms_version)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+    [email, hashedPassword, role, status, termsAcceptedAt, termsVersion]
   );
   return result.insertId;
 }

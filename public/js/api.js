@@ -4,22 +4,26 @@
 const API_BASE = '/api';
 
 function getToken() {
-  return localStorage.getItem('joblink_token');
+  return localStorage.getItem('joblink_token') || sessionStorage.getItem('joblink_token');
 }
 
 function getUser() {
-  const raw = localStorage.getItem('joblink_user');
+  const raw = localStorage.getItem('joblink_user') || sessionStorage.getItem('joblink_user');
   return raw ? JSON.parse(raw) : null;
 }
 
-function setAuth(token, user) {
-  localStorage.setItem('joblink_token', token);
-  localStorage.setItem('joblink_user', JSON.stringify(user));
+function setAuth(token, user, remember = true) {
+  clearAuth();
+  const storage = remember ? localStorage : sessionStorage;
+  storage.setItem('joblink_token', token);
+  storage.setItem('joblink_user', JSON.stringify(user));
 }
 
 function clearAuth() {
   localStorage.removeItem('joblink_token');
   localStorage.removeItem('joblink_user');
+  sessionStorage.removeItem('joblink_token');
+  sessionStorage.removeItem('joblink_user');
 }
 
 function isLoggedIn() {
