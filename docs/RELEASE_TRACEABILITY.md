@@ -19,7 +19,7 @@ This document links release requirements to repository evidence so reviewers can
 | Requirement | Evidence | Verification |
 |---|---|---|
 | AI Chatbot hoàn chỉnh | `routes/aiRoutes.js`, `controllers/aiController.js`, `public/js/chatbot-widget.js`, `ai_service/app.py` | `npm test` checks chatbot route; manual test sends a message to `/api/ai/chat`. |
-| Resume Ranking | `GET /api/ai/match/:jobId`, `GET /api/ai/analyze-cv`, `ai_service/models/cv_job_matching/` | `npm test` checks AI ranking routes; manual test requires candidate profile data. |
+| Resume Ranking | `GET /api/ai/match/:jobId`, `GET /api/ai/analyze-cv`, `ai_service/app.py` | `npm test` checks AI ranking routes; production uses the lightweight TF-IDF and skill backend. |
 | Recommendation | `GET /api/ai/recommend`, `public/js/candidate-dashboard.js` | `npm test` checks recommendation route; manual test from candidate dashboard. |
 | Dashboard đầy đủ | `public/candidate-dashboard.html`, `public/company-dashboard.html`, `public/admin-dashboard.html` | Manual smoke test in `docs/TEST_PLAN.md`. |
 | Candidate Profile | `routes/candidateRoutes.js`, `controllers/candidateController.js` | `npm test` checks profile routes; manual update/upload test. |

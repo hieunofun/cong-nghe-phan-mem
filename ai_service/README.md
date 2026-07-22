@@ -33,7 +33,7 @@ Sau khi tải về, copy toàn bộ nội dung vào thư mục `ai_service/model
 ```
 ai_service/
 └── models/
-    ├── cv_job_matching/          ← thư mục model sentence-transformer
+    ├── cv_job_matching/          ← model sentence-transformer tùy chọn, chỉ lưu local
     │   ├── config.json
     │   ├── pytorch_model.bin
     │   └── ...
@@ -45,7 +45,7 @@ ai_service/
         └── faq_data.json        ← dữ liệu tri thức FAQ, service tự build RAG index khi chạy
 ```
 
-> **Lưu ý:** Nếu Sentence Transformers hoặc model fine-tune chưa sẵn sàng, Flask service vẫn chấm điểm bằng TF-IDF + độ phủ kỹ năng. CV analyzer dùng rule-based khi classifier không tải được.
+> **Lưu ý:** Model Sentence Transformer không được đưa lên Git và Render Free không tải model này. Flask service vẫn chấm điểm thật bằng TF-IDF + độ phủ kỹ năng. CV analyzer dùng rule-based khi classifier không tải được.
 > Chatbot không cần `tfidf_vectorizer.pkl` nữa. File này đã được thay bằng RAG index tạo động từ `faq_data.json`.
 
 ### Bước 3 — Cài đặt dependencies Python
@@ -56,7 +56,7 @@ Cần Python 3.10+ và pip. Mở terminal trong thư mục `ai_service/`:
 python -m pip install -r requirements.txt
 ```
 
-Lần đầu cài có thể mất 5–10 phút vì PyTorch và sentence-transformers khá nặng (~2GB).
+File `requirements.txt` dành cho máy local muốn dùng đầy đủ PyTorch và sentence-transformers nên có thể tải khoảng 2 GB. Render Free dùng `requirements.render.txt` nhẹ hơn.
 
 Trên Windows, nếu PyTorch báo lỗi DLL, cài lại bản CPU chính thức:
 
