@@ -1,0 +1,65 @@
+envVarGroups:
+  - name: joblink-ai-shared
+    envVars:
+      - key: AI_SERVICE_TOKEN
+        generateValue: true
+
+services:
+  - type: web
+    name: joblink-ai
+    runtime: python
+    plan: free
+    rootDir: ai_service
+    buildCommand: pip install -r requirements.render.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --timeout 180
+    healthCheckPath: /health
+    envVars:
+      - fromGroup: joblink-ai-shared
+      - key: PYTHON_VERSION
+        value: 3.11.11
+      - key: DB_CLIENT
+        value: postgres
+      - key: AI_LIGHTWEIGHT_MODE
+        value: 'true'
+      - key: DATABASE_URL
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GROQ_MODEL
+        value: llama-3.3-70b-versatile
+
+  - type: web
+    name: joblink-web
+    runtime: node
+    plan: free
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - fromGroup: joblink-ai-shared
+      - key: NODE_ENV
+        value: production
+      - key: DB_CLIENT
+        value: postgres
+      - key: DATABASE_URL
+        fromService:
+          type: web
+          name: joblink-ai
+          envVarKey: DATABASE_URL
+      - key: AI_SERVICE_HOST
+        fromService:
+          type: web
+          name: joblink-ai
+          envVarKey: RENDER_EXTERNAL_HOSTNAME
+      - key: AI_TIMEOUT_MS
+        value: '120000'
+      - key: JWT_SECRET
+        generateValue: true
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SECRET_KEY
+        sync: false

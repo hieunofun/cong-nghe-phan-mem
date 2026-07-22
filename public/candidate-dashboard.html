@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hồ sơ ứng viên — JobLink</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+<style>
+  .upload-row { display:flex; align-items:center; gap:14px; margin-bottom: 20px; flex-wrap: wrap; }
+  .upload-row .upload-preview { width:56px; height:56px; border-radius:10px; background:var(--surface-alt); display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0; color:var(--ink-faint); font-size:0.78rem; text-align:center; }
+  .upload-preview img { width:100%; height:100%; object-fit:cover; }
+  .dash-main { width:100%; max-width:1200px; }
+  .saved-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:16px; }
+  .section-heading { display:flex; align-items:flex-end; justify-content:space-between; gap:16px; margin-bottom:14px; }
+  .section-heading h2 { font-size:1.05rem; margin:0 0 3px; }
+  .section-heading p { font-size:0.84rem; color:var(--ink-faint); margin:0; }
+  .section-count { color:var(--primary-dark); background:var(--primary-light); border-radius:100px; padding:5px 10px; font-size:0.78rem; font-weight:700; white-space:nowrap; }
+  .saved-empty-compact { background:var(--surface); border:1px dashed var(--border); border-radius:var(--radius-md); padding:28px 20px; text-align:center; color:var(--ink-faint); }
+  .discovery-section { margin-top:30px; padding-top:24px; border-top:1px solid var(--border); }
+  .dashboard-job-search { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-md); padding:14px; margin-bottom:18px; }
+  .dashboard-job-search form { display:grid; grid-template-columns:minmax(0,1.4fr) minmax(180px,0.8fr) auto; gap:10px; align-items:center; }
+  .dashboard-job-search .input { min-width:0; }
+  .discovery-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; }
+  .discovery-grid .job-card { min-width:0; padding:16px; }
+  .discovery-grid .job-card h3 { font-size:0.92rem; }
+  .discovery-grid .job-logo { width:42px; height:42px; }
+  .application-summary { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin-bottom:20px; }
+  .application-stat { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); padding:14px 16px; }
+  .application-stat strong { display:block; color:var(--primary-dark); font-family:var(--font-display); font-size:1.45rem; line-height:1.2; }
+  .application-stat span { color:var(--ink-faint); font-size:0.78rem; }
+  .application-list { display:grid; gap:12px; }
+  .application-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-md); padding:18px; }
+  .application-card-main { display:grid; grid-template-columns:minmax(0,1fr) 220px; gap:20px; align-items:start; }
+  .application-job { display:flex; gap:13px; min-width:0; }
+  .application-job h3 { font-size:1rem; margin:0 0 4px; }
+  .application-job .company-name { color:var(--ink-soft); font-size:0.86rem; margin:0 0 8px; }
+  .application-status { border-left:1px solid var(--border); padding-left:20px; }
+  .application-status p { color:var(--ink-soft); font-size:0.8rem; line-height:1.5; margin:8px 0 0; }
+  .application-card-footer { display:flex; justify-content:space-between; align-items:center; gap:14px; border-top:1px solid var(--border); margin-top:15px; padding-top:12px; }
+  .application-date { color:var(--ink-faint); font-size:0.8rem; }
+  @media (max-width:900px){
+    .discovery-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .application-summary { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  }
+  @media (max-width:700px){
+    .saved-grid, .discovery-grid { grid-template-columns:1fr; }
+    .dashboard-job-search form { grid-template-columns:1fr; }
+    .application-card-main { grid-template-columns:1fr; }
+    .application-status { border-left:0; border-top:1px solid var(--border); padding:14px 0 0; }
+    .application-card-footer { align-items:flex-start; flex-direction:column; }
+  }
+</style>
+</head>
+<body>
+
+<header class="navbar">
+  <div class="navbar-inner">
+    <a href="/index.html" class="brand"><span class="brand-mark">JL</span>JobLink</a>
+    <nav class="nav-links">
+      <a href="/index.html">Trang chủ</a>
+      <a href="/jobs.html">Việc làm</a>
+    </nav>
+    <div class="nav-actions">
+      <div id="nav-auth-slot" class="flex gap-12 items-center"></div>
+      <button class="nav-toggle" aria-label="Mở menu">☰</button>
+    </div>
+  </div>
+</header>
+
+<div class="dashboard-shell">
+  <aside class="dash-sidebar">
+    <div class="dash-user">
+      <div class="dash-avatar" id="sidebar-avatar">?</div>
+      <div>
+        <div class="dash-user-name" id="sidebar-name">Ứng viên</div>
+        <div class="dash-user-role">Tài khoản Ứng viên</div>
+      </div>
+    </div>
+    <nav class="dash-nav">
+      <a href="#" data-view="profile" class="active">👤 Hồ sơ của tôi</a>
+      <a href="#" data-view="applications">📄 Đơn đã ứng tuyển</a>
+      <a href="#" data-view="saved">🔎 Tìm việc & tin đã lưu</a>
+      <a href="#" data-view="ai">🤖 AI Phân tích</a>
+    </nav>
+  </aside>
+
+  <main class="dash-main">
+    <div class="dash-header">
+      <div>
+        <h1 id="view-title">Hồ sơ của tôi</h1>
+        <p id="view-subtitle" class="mb-0">Cập nhật thông tin để nhà tuyển dụng hiểu rõ hơn về bạn.</p>
+      </div>
+    </div>
+
+    <section id="view-profile" class="dash-view">
+      <div class="card" style="margin-bottom:20px;">
+        <h3 style="font-size:0.95rem; margin-bottom:14px;">Ảnh đại diện & CV</h3>
+        <div class="upload-row">
+          <div class="upload-preview" id="avatar-preview">Ảnh</div>
+          <div>
+            <input type="file" id="avatar-input" accept=".png,.jpg,.jpeg,.webp" style="display:none;">
+            <button class="btn btn-outline btn-sm" id="avatar-upload-btn">Đổi ảnh đại diện</button>
+          </div>
+        </div>
+        <div class="upload-row mb-0">
+          <div class="upload-preview" id="cv-preview">CV</div>
+          <div>
+            <input type="file" id="cv-input" accept=".pdf,.docx" style="display:none;">
+            <button class="btn btn-outline btn-sm" id="cv-upload-btn">Tải lên / Thay CV</button>
+            <a href="#" id="cv-view-link" target="_blank" style="display:none; margin-left:10px;" class="btn btn-ghost btn-sm">Xem CV hiện tại</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div id="profile-alert-slot"></div>
+        <form id="profile-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="full_name">Họ và tên</label>
+              <input type="text" id="full_name" class="input" required>
+            </div>
+            <div class="form-group">
+              <label for="phone">Số điện thoại</label>
+              <input type="text" id="phone" class="input">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="birth_date">Ngày sinh</label>
+              <input type="date" id="birth_date" class="input">
+            </div>
+            <div class="form-group">
+              <label for="gender">Giới tính</label>
+              <select id="gender" class="input">
+                <option value="">Không chọn</option>
+                <option value="male">Nam</option>
+                <option value="female">Nữ</option>
+                <option value="other">Khác</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="address">Địa chỉ</label>
+            <input type="text" id="address" class="input">
+          </div>
+          <div class="form-group">
+            <label for="skills">Kỹ năng</label>
+            <textarea id="skills" class="input" placeholder="Ví dụ: JavaScript, Quản lý thời gian, Làm việc nhóm..."></textarea>
+          </div>
+          <div class="form-group">
+            <label for="experience">Kinh nghiệm làm việc</label>
+            <textarea id="experience" class="input"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="education">Học vấn</label>
+            <textarea id="education" class="input"></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary" id="profile-submit-btn">Lưu thay đổi</button>
+        </form>
+      </div>
+    </section>
+
+    <section id="view-applications" class="dash-view" style="display:none;">
+      <div class="application-summary" id="application-summary"></div>
+      <div class="application-list" id="applications-list"></div>
+      <div id="applications-empty" style="display:none;" class="empty-state"><div class="empty-icon">📄</div><p>Bạn chưa ứng tuyển vào tin nào.</p><a href="/jobs.html" class="btn btn-primary btn-sm">Tìm việc ngay</a></div>
+    </section>
+
+    <section id="view-saved" class="dash-view" style="display:none;">
+      <div class="section-heading">
+        <div><h2>Việc làm đã lưu</h2><p>Các tin bạn muốn xem lại hoặc ứng tuyển sau.</p></div>
+        <span class="section-count" id="saved-count">0 tin</span>
+      </div>
+      <div class="saved-grid" id="saved-grid"></div>
+      <div id="saved-empty" style="display:none;" class="saved-empty-compact">Bạn chưa lưu tin nào. Tin đã ứng tuyển sẽ tự động chuyển sang mục Đơn đã ứng tuyển.</div>
+
+      <div class="discovery-section">
+        <div class="section-heading">
+          <div><h2 id="discovery-title">Khám phá việc làm</h2><p id="discovery-subtitle">Những cơ hội mới bạn chưa lưu hoặc ứng tuyển.</p></div>
+          <a href="/jobs.html" class="btn btn-ghost btn-sm">Xem tất cả việc làm</a>
+        </div>
+        <div class="dashboard-job-search">
+          <form id="dashboard-job-search-form">
+            <input type="search" class="input" id="dashboard-job-keyword" placeholder="Vị trí, kỹ năng hoặc công ty">
+            <input type="search" class="input" id="dashboard-job-location" placeholder="Tỉnh / thành phố">
+            <button type="submit" class="btn btn-primary" id="dashboard-job-search-btn">Tìm kiếm</button>
+          </form>
+        </div>
+        <div class="discovery-grid" id="discovery-grid"></div>
+      </div>
+    </section>
+      <section id="view-ai" class="dash-view" style="display:none;">
+      <div id="ai-content">
+        <div class="card" style="margin-bottom:20px;">
+          <h3 style="font-size:0.95rem; margin-bottom:6px;">🤖 Phân tích CV bằng AI</h3>
+          <p style="font-size:0.85rem; color:var(--ink-soft); margin-bottom:14px;">AI sẽ đọc thông tin hồ sơ của bạn, trích xuất kỹ năng, đánh giá cấp độ và gợi ý vị trí phù hợp.</p>
+          <button class="btn btn-primary" id="analyze-cv-btn">🔍 Phân tích CV ngay</button>
+        </div>
+        <div id="ai-analysis-result" style="display:none;"></div>
+        <div class="card" style="margin-top:20px;">
+          <h3 style="font-size:0.95rem; margin-bottom:6px;">✨ Việc làm gợi ý cho bạn</h3>
+          <p style="font-size:0.85rem; color:var(--ink-soft); margin-bottom:14px;">Dựa trên kỹ năng và kinh nghiệm trong hồ sơ, AI gợi ý những tin tuyển dụng phù hợp nhất.</p>
+          <button class="btn btn-outline" id="get-recommend-btn">🎯 Tìm việc phù hợp</button>
+          <div id="ai-recommendations" style="margin-top:16px;"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script src="/js/api.js?v=20260720-2"></script>
+<script src="/js/header.js?v=20260721-6"></script>
+<script src="/js/candidate-dashboard.js?v=20260721-6"></script>
+<script src="/js/chatbot-widget.js"></script>
+</body>
+</html>

@@ -1,0 +1,575 @@
+{
+  "all_tech_skills": {
+    "python": {
+      "skill": "Python",
+      "domain": "it_data"
+    },
+    "django": {
+      "skill": "Django",
+      "domain": "it_backend"
+    },
+    "flask": {
+      "skill": "Flask",
+      "domain": "it_backend"
+    },
+    "fastapi": {
+      "skill": "FastAPI",
+      "domain": "it_backend"
+    },
+    "node.js": {
+      "skill": "Node.js",
+      "domain": "it_backend"
+    },
+    "express": {
+      "skill": "Express",
+      "domain": "it_backend"
+    },
+    "java": {
+      "skill": "Java",
+      "domain": "it_backend"
+    },
+    "spring boot": {
+      "skill": "Spring Boot",
+      "domain": "it_backend"
+    },
+    "php": {
+      "skill": "PHP",
+      "domain": "it_backend"
+    },
+    "laravel": {
+      "skill": "Laravel",
+      "domain": "it_backend"
+    },
+    "mysql": {
+      "skill": "MySQL",
+      "domain": "it_backend"
+    },
+    "postgresql": {
+      "skill": "PostgreSQL",
+      "domain": "it_backend"
+    },
+    "mongodb": {
+      "skill": "MongoDB",
+      "domain": "it_backend"
+    },
+    "redis": {
+      "skill": "Redis",
+      "domain": "it_backend"
+    },
+    "docker": {
+      "skill": "Docker",
+      "domain": "it_devops"
+    },
+    "kubernetes": {
+      "skill": "Kubernetes",
+      "domain": "it_devops"
+    },
+    "rest api": {
+      "skill": "REST API",
+      "domain": "it_backend"
+    },
+    "graphql": {
+      "skill": "GraphQL",
+      "domain": "it_backend"
+    },
+    "microservices": {
+      "skill": "Microservices",
+      "domain": "it_backend"
+    },
+    "aws": {
+      "skill": "AWS",
+      "domain": "it_devops"
+    },
+    "git": {
+      "skill": "Git",
+      "domain": "it_backend"
+    },
+    "linux": {
+      "skill": "Linux",
+      "domain": "it_devops"
+    },
+    "ci/cd": {
+      "skill": "CI/CD",
+      "domain": "it_backend"
+    },
+    "html": {
+      "skill": "HTML",
+      "domain": "it_frontend"
+    },
+    "css": {
+      "skill": "CSS",
+      "domain": "it_frontend"
+    },
+    "javascript": {
+      "skill": "JavaScript",
+      "domain": "it_frontend"
+    },
+    "typescript": {
+      "skill": "TypeScript",
+      "domain": "it_frontend"
+    },
+    "react": {
+      "skill": "React",
+      "domain": "it_frontend"
+    },
+    "vue.js": {
+      "skill": "Vue.js",
+      "domain": "it_frontend"
+    },
+    "angular": {
+      "skill": "Angular",
+      "domain": "it_frontend"
+    },
+    "next.js": {
+      "skill": "Next.js",
+      "domain": "it_frontend"
+    },
+    "tailwind css": {
+      "skill": "Tailwind CSS",
+      "domain": "it_frontend"
+    },
+    "webpack": {
+      "skill": "Webpack",
+      "domain": "it_frontend"
+    },
+    "vite": {
+      "skill": "Vite",
+      "domain": "it_frontend"
+    },
+    "jquery": {
+      "skill": "jQuery",
+      "domain": "it_frontend"
+    },
+    "bootstrap": {
+      "skill": "Bootstrap",
+      "domain": "it_frontend"
+    },
+    "figma": {
+      "skill": "Figma",
+      "domain": "it_frontend"
+    },
+    "ui/ux": {
+      "skill": "UI/UX",
+      "domain": "it_frontend"
+    },
+    "responsive design": {
+      "skill": "Responsive Design",
+      "domain": "it_frontend"
+    },
+    "r": {
+      "skill": "R",
+      "domain": "it_data"
+    },
+    "tensorflow": {
+      "skill": "TensorFlow",
+      "domain": "it_data"
+    },
+    "pytorch": {
+      "skill": "PyTorch",
+      "domain": "it_data"
+    },
+    "scikit-learn": {
+      "skill": "scikit-learn",
+      "domain": "it_data"
+    },
+    "pandas": {
+      "skill": "Pandas",
+      "domain": "it_data"
+    },
+    "numpy": {
+      "skill": "NumPy",
+      "domain": "it_data"
+    },
+    "matplotlib": {
+      "skill": "Matplotlib",
+      "domain": "it_data"
+    },
+    "sql": {
+      "skill": "SQL",
+      "domain": "it_data"
+    },
+    "tableau": {
+      "skill": "Tableau",
+      "domain": "it_data"
+    },
+    "power bi": {
+      "skill": "Power BI",
+      "domain": "it_data"
+    },
+    "hadoop": {
+      "skill": "Hadoop",
+      "domain": "it_data"
+    },
+    "hdfs": {
+      "skill": "HDFS",
+      "domain": "it_data"
+    },
+    "mapreduce": {
+      "skill": "MapReduce",
+      "domain": "it_data"
+    },
+    "machine learning": {
+      "skill": "Machine Learning",
+      "domain": "it_data"
+    },
+    "deep learning": {
+      "skill": "Deep Learning",
+      "domain": "it_data"
+    },
+    "nlp": {
+      "skill": "NLP",
+      "domain": "it_data"
+    },
+    "computer vision": {
+      "skill": "Computer Vision",
+      "domain": "it_data"
+    },
+    "spark": {
+      "skill": "Spark",
+      "domain": "it_data"
+    },
+    "jenkins": {
+      "skill": "Jenkins",
+      "domain": "it_devops"
+    },
+    "gitlab ci": {
+      "skill": "GitLab CI",
+      "domain": "it_devops"
+    },
+    "terraform": {
+      "skill": "Terraform",
+      "domain": "it_devops"
+    },
+    "ansible": {
+      "skill": "Ansible",
+      "domain": "it_devops"
+    },
+    "gcp": {
+      "skill": "GCP",
+      "domain": "it_devops"
+    },
+    "azure": {
+      "skill": "Azure",
+      "domain": "it_devops"
+    },
+    "bash": {
+      "skill": "Bash",
+      "domain": "it_devops"
+    },
+    "monitoring": {
+      "skill": "Monitoring",
+      "domain": "it_devops"
+    },
+    "prometheus": {
+      "skill": "Prometheus",
+      "domain": "it_devops"
+    },
+    "grafana": {
+      "skill": "Grafana",
+      "domain": "it_devops"
+    },
+    "nginx": {
+      "skill": "Nginx",
+      "domain": "it_devops"
+    },
+    "load balancing": {
+      "skill": "Load Balancing",
+      "domain": "it_devops"
+    },
+    "google ads": {
+      "skill": "Google Ads",
+      "domain": "marketing"
+    },
+    "facebook ads": {
+      "skill": "Facebook Ads",
+      "domain": "marketing"
+    },
+    "seo": {
+      "skill": "SEO",
+      "domain": "marketing"
+    },
+    "content marketing": {
+      "skill": "Content Marketing",
+      "domain": "marketing"
+    },
+    "email marketing": {
+      "skill": "Email Marketing",
+      "domain": "marketing"
+    },
+    "copywriting": {
+      "skill": "Copywriting",
+      "domain": "marketing"
+    },
+    "photoshop": {
+      "skill": "Photoshop",
+      "domain": "marketing"
+    },
+    "canva": {
+      "skill": "Canva",
+      "domain": "marketing"
+    },
+    "google analytics": {
+      "skill": "Google Analytics",
+      "domain": "marketing"
+    },
+    "social media": {
+      "skill": "Social Media",
+      "domain": "marketing"
+    },
+    "tiktok ads": {
+      "skill": "TikTok Ads",
+      "domain": "marketing"
+    },
+    "brand strategy": {
+      "skill": "Brand Strategy",
+      "domain": "marketing"
+    },
+    "market research": {
+      "skill": "Market Research",
+      "domain": "marketing"
+    },
+    "crm": {
+      "skill": "CRM",
+      "domain": "sales"
+    },
+    "hubspot": {
+      "skill": "HubSpot",
+      "domain": "marketing"
+    },
+    "excel nâng cao": {
+      "skill": "Excel nâng cao",
+      "domain": "accounting"
+    },
+    "sap": {
+      "skill": "SAP",
+      "domain": "accounting"
+    },
+    "misa": {
+      "skill": "MISA",
+      "domain": "accounting"
+    },
+    "kế toán thuế": {
+      "skill": "Kế toán thuế",
+      "domain": "accounting"
+    },
+    "báo cáo tài chính": {
+      "skill": "Báo cáo tài chính",
+      "domain": "accounting"
+    },
+    "kiểm toán": {
+      "skill": "Kiểm toán",
+      "domain": "accounting"
+    },
+    "kế toán tổng hợp": {
+      "skill": "Kế toán tổng hợp",
+      "domain": "accounting"
+    },
+    "phân tích tài chính": {
+      "skill": "Phân tích tài chính",
+      "domain": "accounting"
+    },
+    "quyết toán": {
+      "skill": "Quyết toán",
+      "domain": "accounting"
+    },
+    "thuế gtgt": {
+      "skill": "Thuế GTGT",
+      "domain": "accounting"
+    },
+    "thuế tndn": {
+      "skill": "Thuế TNDN",
+      "domain": "accounting"
+    },
+    "kỹ năng bán hàng": {
+      "skill": "Kỹ năng bán hàng",
+      "domain": "sales"
+    },
+    "chăm sóc khách hàng": {
+      "skill": "Chăm sóc khách hàng",
+      "domain": "sales"
+    },
+    "đàm phán": {
+      "skill": "Đàm phán",
+      "domain": "sales"
+    },
+    "telesales": {
+      "skill": "Telesales",
+      "domain": "sales"
+    },
+    "b2b": {
+      "skill": "B2B",
+      "domain": "sales"
+    },
+    "b2c": {
+      "skill": "B2C",
+      "domain": "sales"
+    },
+    "tìm kiếm khách hàng": {
+      "skill": "Tìm kiếm khách hàng",
+      "domain": "sales"
+    },
+    "upselling": {
+      "skill": "Upselling",
+      "domain": "sales"
+    },
+    "kpi doanh số": {
+      "skill": "KPI doanh số",
+      "domain": "sales"
+    },
+    "thuyết trình": {
+      "skill": "Thuyết trình",
+      "domain": "sales"
+    },
+    "tuyển dụng": {
+      "skill": "Tuyển dụng",
+      "domain": "hr"
+    },
+    "onboarding": {
+      "skill": "Onboarding",
+      "domain": "hr"
+    },
+    "c&b": {
+      "skill": "C&B",
+      "domain": "hr"
+    },
+    "hris": {
+      "skill": "HRIS",
+      "domain": "hr"
+    },
+    "đào tạo": {
+      "skill": "Đào tạo",
+      "domain": "hr"
+    },
+    "bhxh": {
+      "skill": "BHXH",
+      "domain": "hr"
+    },
+    "hợp đồng lao động": {
+      "skill": "Hợp đồng lao động",
+      "domain": "hr"
+    },
+    "đánh giá hiệu suất kpi": {
+      "skill": "Đánh giá hiệu suất KPI",
+      "domain": "hr"
+    },
+    "văn hóa doanh nghiệp": {
+      "skill": "Văn hóa doanh nghiệp",
+      "domain": "hr"
+    },
+    "labor law": {
+      "skill": "Labor Law",
+      "domain": "hr"
+    },
+    "payroll": {
+      "skill": "Payroll",
+      "domain": "hr"
+    }
+  },
+  "soft_skills": [
+    "giao tiếp tốt",
+    "làm việc nhóm",
+    "tư duy logic",
+    "chịu áp lực cao",
+    "quản lý thời gian",
+    "sáng tạo",
+    "cẩn thận",
+    "chi tiết",
+    "chủ động",
+    "học hỏi nhanh",
+    "tiếng Anh tốt",
+    "lãnh đạo",
+    "phân tích vấn đề"
+  ],
+  "title_mapping": {
+    "it_backend": [
+      "Backend Developer",
+      "Software Engineer",
+      "Full-stack Developer",
+      "API Developer",
+      "Java Developer",
+      "Python Developer",
+      "Node.js Developer"
+    ],
+    "it_frontend": [
+      "Frontend Developer",
+      "UI Developer",
+      "React Developer",
+      "Web Designer",
+      "Frontend Engineer"
+    ],
+    "it_data": [
+      "Data Scientist",
+      "Data Analyst",
+      "ML Engineer",
+      "AI Engineer",
+      "Data Engineer"
+    ],
+    "it_devops": [
+      "DevOps Engineer",
+      "SRE",
+      "Cloud Engineer",
+      "Infrastructure Engineer",
+      "System Administrator"
+    ],
+    "marketing": [
+      "Marketing Executive",
+      "Digital Marketing",
+      "Content Creator",
+      "SEO Specialist",
+      "Brand Manager"
+    ],
+    "accounting": [
+      "Kế toán viên",
+      "Kế toán tổng hợp",
+      "Kiểm toán viên",
+      "Kế toán trưởng",
+      "Chuyên viên tài chính"
+    ],
+    "sales": [
+      "Nhân viên kinh doanh",
+      "Sales Executive",
+      "Account Manager",
+      "Business Development",
+      "Key Account"
+    ],
+    "hr": [
+      "HR Executive",
+      "Chuyên viên tuyển dụng",
+      "HR Manager",
+      "C&B Specialist",
+      "Training & Development"
+    ]
+  },
+  "exp_levels": {
+    "fresher": [
+      "sinh viên năm cuối",
+      "mới ra trường",
+      "0 năm kinh nghiệm",
+      "thực tập",
+      "fresher",
+      "tốt nghiệp đại học"
+    ],
+    "junior": [
+      "1 năm kinh nghiệm",
+      "2 năm kinh nghiệm",
+      "junior",
+      "dưới 2 năm",
+      "có kinh nghiệm cơ bản"
+    ],
+    "middle": [
+      "3 năm kinh nghiệm",
+      "4 năm kinh nghiệm",
+      "middle",
+      "từ 3-5 năm",
+      "có kinh nghiệm thực tế"
+    ],
+    "senior": [
+      "5 năm kinh nghiệm",
+      "senior",
+      "trên 5 năm",
+      "nhiều năm kinh nghiệm",
+      "chuyên gia",
+      "lead"
+    ]
+  }
+}

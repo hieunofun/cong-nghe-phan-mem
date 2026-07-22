@@ -1,0 +1,14 @@
+node_modules/
+.env
+.env.*
+!.env.example
+uploads/cv/*
+uploads/logos/*
+uploads/avatars/*
+!uploads/cv/.gitkeep
+!uploads/logos/.gitkeep
+!uploads/avatars/.gitkeep
+*.log
+ai_service/.cache/
+ai_service/**/__pycache__/
+ai_service/models/cv_job_matching/

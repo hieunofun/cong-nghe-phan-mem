@@ -1,0 +1,94 @@
+[
+  {
+    "question": "Học lập trình bắt đầu từ đâu",
+    "answer": "Bạn nên bắt đầu với Python vì cú pháp đơn giản và có nhiều tài liệu tiếng Việt. Học qua freeCodeCamp, Coursera, hoặc Youtube. Làm 2-3 project nhỏ (web scraper, todo app, chatbot đơn giản) trước khi tìm việc. Thời gian từ 0 đến tìm được việc đầu tiên thường 6-12 tháng nếu học đều đặn."
+  },
+  {
+    "question": "Python hay JavaScript nên học trước",
+    "answer": "Nếu muốn làm backend/AI/data: học Python trước. Nếu muốn làm web/fullstack: học JavaScript. Cả hai đều có việc làm tốt. Python dễ học hơn cho người mới, JavaScript đa dụng hơn (chạy cả frontend lẫn backend với Node.js)."
+  },
+  {
+    "question": "Làm frontend hay backend lương cao hơn",
+    "answer": "Lương tương đương nhau ở cùng cấp độ kinh nghiệm (2025). Frontend Senior: 25-40 triệu. Backend Senior: 25-45 triệu. Fullstack thường được trả cao hơn 10-20% vì làm được cả hai. DevOps/Cloud thường có lương cao nhất trong ngành IT."
+  },
+  {
+    "question": "Học React hay Vue.js",
+    "answer": "React có nhiều cơ hội việc làm hơn tại Việt Nam và quốc tế. Vue.js dễ học hơn cho người mới. Nếu chưa biết gì, học React trước vì việc làm nhiều hơn và cộng đồng lớn hơn. Vue.js tốt cho dự án startup nhỏ."
+  },
+  {
+    "question": "IT fresher lương bao nhiêu",
+    "answer": "Fresher IT tại Việt Nam (2025): 7-15 triệu/tháng tuỳ thành phố và công ty. Hà Nội/HCM công ty lớn: 10-18 triệu. Công ty outsource: 8-12 triệu. Startup: 8-15 triệu + stock. Sau 1 năm thường tăng 30-50% nếu performance tốt."
+  },
+  {
+    "question": "Học AI Machine Learning cần biết gì trước",
+    "answer": "Cần có nền tảng: Python (thành thạo), toán (đại số tuyến tính, xác suất thống kê), SQL cơ bản. Học theo thứ tự: scikit-learn → Pandas/NumPy → TensorFlow hoặc PyTorch → các mô hình chuyên sâu. Kaggle là nơi tốt để thực hành."
+  },
+  {
+    "question": "Data Analyst khác Data Scientist như thế nào",
+    "answer": "Data Analyst: phân tích dữ liệu có sẵn, tạo báo cáo/dashboard, dùng SQL + Excel + Tableau/Power BI. Ít code hơn. Data Scientist: xây dựng mô hình ML, dự đoán, thống kê nâng cao, code nhiều hơn với Python/R. Lương Data Scientist thường cao hơn 20-40% nhưng yêu cầu kỹ năng khó hơn."
+  },
+  {
+    "question": "DevOps là làm gì",
+    "answer": "DevOps kết hợp Development và Operations: tự động hoá deploy code (CI/CD), quản lý hạ tầng cloud (AWS/GCP/Azure), containerization (Docker/Kubernetes), monitoring hệ thống. Đây là ngành hot, lương Senior DevOps tại VN: 35-60 triệu. Cần biết: Linux, Docker, 1 cloud platform, scripting (Bash/Python)."
+  },
+  {
+    "question": "Digital Marketing cần học gì",
+    "answer": "Cần học: Google Ads và Facebook Ads (cơ bản nhất), SEO on-page và off-page, Content Marketing, Email Marketing, Google Analytics. Chứng chỉ Google (miễn phí): Digital Garage, Google Ads. Meta Blueprint cho Facebook. Thực hành bằng cách chạy ads cho shop online nhỏ hoặc làm dự án cá nhân."
+  },
+  {
+    "question": "Marketing lương bao nhiêu",
+    "answer": "Marketing Executive fresher: 7-12 triệu. Digital Marketing có kinh nghiệm 2 năm: 12-20 triệu. Marketing Manager: 20-35 triệu. Brand Manager: 25-45 triệu. Người chạy ads giỏi (performance marketer) lương rất linh hoạt vì thường được hưởng hoa hồng theo kết quả."
+  },
+  {
+    "question": "Kế toán mới ra trường làm gì",
+    "answer": "Vị trí phù hợp: Kế toán tổng hợp/thuế junior, nhân viên kế toán công nợ, nhân viên kế toán kho. Cần biết: Excel nâng cao (VLOOKUP, Pivot Table), phần mềm MISA hoặc SAP, nghiệp vụ thuế GTGT và TNDN cơ bản. Thi lấy chứng chỉ ACCA hoặc CPA để tăng giá trị."
+  },
+  {
+    "question": "HR là làm gì",
+    "answer": "HR (Human Resources) có nhiều chuyên ngành: Tuyển dụng (Recruitment) - tìm và chọn ứng viên; C&B - lương thưởng và phúc lợi; L&D - đào tạo và phát triển; HRBP - đối tác kinh doanh chiến lược. HR generalist làm tất cả các mảng. Lương HR fresher: 7-12 triệu. HR Manager 5 năm: 20-40 triệu."
+  },
+  {
+    "question": "Tiếng Anh quan trọng không trong IT",
+    "answer": "Rất quan trọng! 90% tài liệu IT bằng tiếng Anh, code và documentation cũng vậy. IELTS 6.0+ hoặc TOEIC 700+ giúp tăng lương 20-30% và mở ra cơ hội làm việc cho công ty nước ngoài. Nghe/đọc kỹ thuật quan trọng hơn giao tiếp thông thường trong IT."
+  },
+  {
+    "question": "Cần bằng đại học không để làm IT",
+    "answer": "Không bắt buộc nhưng có lợi thế. Nhiều công ty lớn vẫn yêu cầu bằng ĐH. Tuy nhiên portfolio và kỹ năng thực tế quan trọng hơn. Bootcamp 6-12 tháng + 3-4 project GitHub tốt có thể thay thế. Công ty startup và outsource thường linh hoạt hơn về bằng cấp."
+  },
+  {
+    "question": "Làm sao tăng lương nhanh",
+    "answer": "Cách hiệu quả nhất: nhảy việc sau 2 năm (tăng 30-50%), liên tục học thêm kỹ năng mới, lấy chứng chỉ liên quan (AWS, Google Cloud, ACCA,...), network tốt với người trong ngành. Ở lại một công ty lâu thường tăng lương chậm hơn (5-15%/năm)."
+  },
+  {
+    "question": "Viết CV như thế nào cho đúng",
+    "answer": "CV tốt cần: 1-2 trang, format gọn rõ ràng, ảnh chuyên nghiệp, contact đầy đủ. Phần kinh nghiệm: viết theo format STAR (Tình huống - Nhiệm vụ - Hành động - Kết quả). Số liệu cụ thể: 'tăng traffic 40%' tốt hơn 'phụ trách SEO'. Kỹ năng: chỉ ghi những gì thực sự biết. Customize CV theo từng vị trí apply."
+  },
+  {
+    "question": "Phỏng vấn làm sao để pass",
+    "answer": "Chuẩn bị: research công ty kỹ (sản phẩm, văn hóa, tin tức gần đây), ôn lại kỹ năng chuyên môn, chuẩn bị câu hỏi hỏi ngược lại. Kỹ năng phỏng vấn: trả lời theo STAR, thành thật về điểm yếu, đặt câu hỏi thông minh về team và công việc cụ thể. Sau phỏng vấn gửi email cảm ơn trong 24h."
+  },
+  {
+    "question": "Internship có lương không",
+    "answer": "Đa số có lương. IT: 3-8 triệu/tháng, một số công ty lớn (Samsung, FPT, VNG) có thể 10-15 triệu. Marketing: 3-6 triệu. Tài chính: 3-6 triệu. Một số nơi không trả lương nhưng bù lại bằng training chất lượng cao. Internship 3-6 tháng trong resume rất có giá trị cho fresher."
+  },
+  {
+    "question": "Startup hay công ty lớn tốt hơn",
+    "answer": "Công ty lớn: ổn định hơn, quy trình rõ ràng, thương hiệu tốt cho resume, lương cơ bản ổn. Startup: học được nhiều hơn (làm nhiều vai), cơ hội thăng tiến nhanh hơn, văn hóa linh hoạt, có thể có equity. Fresher nên thử cả hai: công ty lớn 1-2 năm đầu để học quy trình, sau đó có thể chuyển startup."
+  },
+  {
+    "question": "Làm remote có tốt không",
+    "answer": "Remote có nhiều lợi ích: tiết kiệm thời gian đi lại, linh hoạt giờ làm, có thể apply công ty nước ngoài lương USD. Nhưng cần tự kỷ luật cao, dễ cô đơn và khó tách biệt công việc-cuộc sống. Fresher nên làm onsite 1-2 năm đầu để học hỏi từ đồng nghiệp, sau đó mới chuyển remote."
+  },
+  {
+    "question": "Portfolio quan trọng không",
+    "answer": "Rất quan trọng, đặc biệt với IT và Creative (Design, Marketing). Portfolio = bằng chứng thực tế. IT: 3-5 project trên GitHub với README rõ ràng, deploy được. Design: Behance hoặc website cá nhân. Marketing: case study các chiến dịch đã làm. Không có portfolio thì CV chỉ là giấy tờ."
+  },
+  {
+    "question": "Học bootcamp có tìm được việc không",
+    "answer": "Có thể, nhưng không đảm bảo 100%. Bootcamp tốt: cung cấp kỹ năng thực tế trong 3-6 tháng, có mentor, làm project thực, hỗ trợ tìm việc. Điều kiện để tìm được việc sau bootcamp: học nghiêm túc, có ít nhất 3 project chất lượng, network tốt, kiên nhẫn (có thể mất 3-6 tháng để tìm việc đầu tiên)."
+  },
+  {
+    "question": "Có nên học thêm chứng chỉ không",
+    "answer": "Tùy ngành. IT: AWS/GCP/Azure Certified có giá trị thực sự và tăng lương rõ rệt (10-30%). Kế toán: CPA, ACCA rất quan trọng. PMP cho Project Manager. Google/Meta certifications cho Marketing. Tránh chứng chỉ không rõ uy tín hoặc quá chung chung. Kinh nghiệm thực tế vẫn quan trọng hơn chứng chỉ."
+  }
+]

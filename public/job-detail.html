@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chi tiết việc làm — JobLink</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+<style>
+  .detail-layout { display: grid; grid-template-columns: 1fr 320px; gap: 28px; align-items: flex-start; }
+  @media (max-width: 900px) { .detail-layout { grid-template-columns: 1fr; } }
+  .detail-section { margin-bottom: 26px; }
+  .detail-section h3 { font-size: 1.05rem; margin-bottom: 10px; }
+  .detail-section .body-text { color: var(--ink); white-space: pre-line; }
+  .sticky-side { position: sticky; top: 90px; }
+</style>
+</head>
+<body>
+
+<header class="navbar">
+  <div class="navbar-inner">
+    <a href="/index.html" class="brand"><span class="brand-mark">JL</span>JobLink</a>
+    <nav class="nav-links">
+      <a href="/index.html">Trang chủ</a>
+      <a href="/jobs.html">Việc làm</a>
+      <a href="/employers.html">Dành cho Doanh nghiệp</a>
+      <a href="/packages.html">Bảng giá</a>
+    </nav>
+    <div class="nav-actions">
+      <div id="nav-auth-slot" class="flex gap-12 items-center"></div>
+      <button class="nav-toggle" aria-label="Mở menu">☰</button>
+    </div>
+  </div>
+</header>
+
+<section class="section" style="padding-top:32px;">
+  <div class="container">
+    <div class="page-back-row">
+      <a href="/jobs.html" class="page-back-link" data-history-back data-fallback="/jobs.html"><span aria-hidden="true">&larr;</span> Quay lại</a>
+    </div>
+    <div id="job-content">
+      <div class="card skeleton" style="height:260px;"></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <div class="footer-bottom" style="border-top:none; padding-top:0;">
+      <span>© 2026 JobLink. Đồ án minh hoạ — không phải sản phẩm thương mại.</span>
+    </div>
+  </div>
+</footer>
+
+<script src="/js/api.js?v=20260720-2"></script>
+<script src="/js/navigation.js?v=20260720-3"></script>
+<script src="/js/header.js?v=20260721-6"></script>
+<script src="/js/job-detail.js?v=20260721-1"></script>
+<script src="/js/chatbot-widget.js"></script>
+</body>
+</html>
