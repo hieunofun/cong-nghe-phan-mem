@@ -1,5 +1,7 @@
 require('dotenv').config();
 
+const { removeConnectionStringSslOptions } = require('../utils/postgresConnection');
+
 const dbClient = (process.env.DB_CLIENT || (process.env.DATABASE_URL ? 'postgres' : 'mysql')).toLowerCase();
 
 function toPostgresSql(sql) {
@@ -31,6 +33,7 @@ function toPostgresSql(sql) {
 
 function createPostgresPool() {
   const { Pool } = require('pg');
+  const connectionString = removeConnectionStringSslOptions(process.env.DATABASE_URL);
   const ssl =
     process.env.PGSSLMODE === 'disable'
       ? false
@@ -39,8 +42,8 @@ function createPostgresPool() {
         : undefined;
 
   const pgPool = new Pool(
-    process.env.DATABASE_URL
-      ? { connectionString: process.env.DATABASE_URL, ssl }
+    connectionString
+      ? { connectionString, ssl }
       : {
           host: process.env.DB_HOST || 'localhost',
           user: process.env.DB_USER || 'postgres',
