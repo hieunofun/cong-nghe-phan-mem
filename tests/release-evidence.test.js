@@ -94,4 +94,12 @@ test('configuration hygiene keeps secrets and the optional large model out of Gi
   assert.equal(exists('.env.example'), true);
   assert.equal(exists('.gitattributes'), false);
   assert.match(renderConfig, /key: AI_LIGHTWEIGHT_MODE\s+value: ['"]true['"]/);
+  [
+    'GOOGLE_CLIENT_ID',
+    'GOOGLE_CLIENT_SECRET',
+    'GITHUB_CLIENT_ID',
+    'GITHUB_CLIENT_SECRET'
+  ].forEach((key) => {
+    assert.match(renderConfig, new RegExp(`key: ${key}\\s+sync: false`));
+  });
 });
