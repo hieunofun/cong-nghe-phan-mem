@@ -1,6 +1,6 @@
 {
   "name": "joblink-recruitment-platform",
-  "version": "1.0.0",
+  "version": "0.2.0",
   "description": "Nền tảng tuyển dụng kết nối Doanh nghiệp và Ứng viên (kiểu TopCV)",
   "main": "server.js",
   "scripts": {
