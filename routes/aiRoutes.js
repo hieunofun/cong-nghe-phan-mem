@@ -19,10 +19,16 @@ router.get('/recommend', verifyToken, requireRole('candidate'), aiController.rec
 // Phan tich CV cua chinh ung vien
 router.get('/analyze-cv', verifyToken, requireRole('candidate'), aiController.analyzeMyCV);
 
-// Company/Admin phan tich CV cua 1 ung vien cu the
+// Admin phan tich ho so cua 1 ung vien cu the
 router.get('/analyze-cv/:candidateId',
-  verifyToken, requireRole('company', 'admin'),
+  verifyToken, requireRole('admin'),
   aiController.analyzeCandidateCV
+);
+
+// Company/Admin phan tich dung CV trong don ung tuyen
+router.get('/analyze-application/:applicationId',
+  verifyToken, requireRole('company', 'admin'),
+  aiController.analyzeApplicationCV
 );
 
 module.exports = router;

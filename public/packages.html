@@ -8,24 +8,103 @@
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/style.css">
 <style>
-  .pricing-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:20px; margin-top:40px; }
-  @media(max-width:1000px){ .pricing-grid{ grid-template-columns:repeat(2,1fr); } }
-  @media(max-width:600px){ .pricing-grid{ grid-template-columns:1fr; } }
-  .pricing-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); padding:28px; display:flex; flex-direction:column; gap:12px; position:relative; }
+  .packages-section { padding:64px 0 84px; }
+  .pricing-heading { margin:18px auto 0; max-width:680px; }
+  .pricing-heading p { max-width:600px; margin:14px auto 0; color:var(--ink-soft); line-height:1.7; }
+  .pricing-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:20px; margin-top:48px; align-items:stretch; }
+  .pricing-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); padding:30px 28px 28px; display:flex; flex-direction:column; gap:16px; position:relative; min-width:0; }
   .pricing-card.popular { border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-light); }
-  .popular-badge { position:absolute; top:-12px; left:50%; transform:translateX(-50%); background:var(--primary); color:#fff; font-size:0.72rem; font-weight:700; padding:4px 14px; border-radius:100px; white-space:nowrap; }
-  .price-tag { font-family:var(--font-display); font-size:2rem; font-weight:800; color:var(--ink); }
-  .price-tag span { font-size:0.9rem; font-weight:500; color:var(--ink-soft); }
-  .feature-list { list-style:none; display:flex; flex-direction:column; gap:9px; flex:1; }
-  .feature-list li { font-size:0.88rem; display:flex; gap:8px; }
-  .feature-list li::before { content:'✓'; color:var(--success); font-weight:700; flex-shrink:0; }
-  .feature-list li.no::before { content:'✗'; color:var(--ink-faint); }
-  .feature-list li.no { color:var(--ink-faint); }
-  .method-box { background:var(--surface-alt); border-radius:var(--radius-md); padding:20px; margin-top:12px; }
-  .method-btn { border:2px solid var(--border); background:var(--surface); border-radius:var(--radius-sm); padding:12px 18px; cursor:pointer; font-weight:600; font-size:0.9rem; text-align:left; width:100%; display:flex; gap:12px; align-items:center; margin-bottom:10px; }
-  .method-btn.selected { border-color:var(--primary); background:var(--primary-light); }
-  .bank-info { background:var(--info-bg); border:1px solid #93c5fd; border-radius:var(--radius-sm); padding:16px; margin-top:12px; font-size:0.88rem; }
-  .bank-info code { font-family:var(--font-mono); font-weight:700; font-size:1rem; color:var(--primary-dark); }
+  .popular-badge { position:absolute; top:-15px; left:50%; transform:translateX(-50%); background:var(--primary); color:#fff; font-size:0.75rem; font-weight:700; padding:6px 16px; border-radius:100px; white-space:nowrap; }
+  .plan-name { font-family:var(--font-display); font-weight:700; font-size:1.08rem; margin-bottom:8px; }
+  .price-tag { display:flex; align-items:baseline; gap:3px; min-height:48px; font-family:var(--font-display); font-size:2.05rem; line-height:1.15; font-weight:800; color:var(--ink); white-space:nowrap; }
+  .price-tag span { font-family:var(--font-body); font-size:0.88rem; font-weight:500; color:var(--ink-soft); }
+  .plan-description { min-height:72px; margin:0; font-size:0.86rem; line-height:1.65; color:var(--ink-soft); }
+  .feature-list { list-style:none; display:grid; grid-template-rows:repeat(6,58px); gap:4px; flex:1; margin:0; padding:2px 0 0; }
+  .feature-list li { font-size:0.9rem; line-height:1.45; display:flex; gap:9px; align-items:flex-start; padding:6px 0; }
+  .feature-list li::before { content:'✓'; color:var(--success); font-weight:800; flex:0 0 14px; }
+  .feature-list li.no::before { content:'—'; color:#71817e; }
+  .feature-list li.no { color:#71817e; }
+  .pricing-action { min-height:44px; margin-top:4px; border-radius:100px; font-weight:700; }
+  .pricing-current { display:flex; align-items:center; justify-content:center; text-align:center; padding:11px 16px; border:1px solid var(--border); color:var(--ink-soft); background:var(--surface-alt); cursor:default; }
+  body.modal-open { overflow:hidden; }
+  .checkout-modal { max-width:860px; max-height:calc(100vh - 32px); padding:0; overflow:hidden; border:1px solid var(--border); }
+  .checkout-modal .modal-head { margin:0; padding:22px 28px; border-bottom:1px solid var(--border); }
+  .checkout-modal .modal-head h3 { font-size:1.2rem; }
+  .checkout-modal .modal-close { width:36px; height:36px; display:grid; place-items:center; border-radius:50%; font-size:1.5rem; }
+  .checkout-modal .modal-close:hover { background:var(--surface-alt); color:var(--ink); }
+  .checkout-scroll { max-height:calc(100vh - 112px); padding:26px 28px 28px; overflow-y:auto; }
+  .checkout-review-grid { display:grid; grid-template-columns:minmax(0,1.05fr) minmax(280px,.95fr); gap:22px; align-items:start; }
+  .checkout-summary-card, .checkout-method-card { border:1px solid var(--border); border-radius:14px; padding:22px; background:var(--surface); }
+  .checkout-summary-card { background:linear-gradient(145deg,var(--primary-light),#fff 68%); }
+  .checkout-label { color:var(--ink-faint); font-size:.75rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; }
+  .checkout-package { margin:8px 0 2px; font:800 1.35rem var(--font-display); color:var(--primary-dark); }
+  .checkout-total { margin:12px 0 18px; font:800 2rem var(--font-display); color:var(--ink); }
+  .checkout-total small { font:500 .82rem var(--font-body); color:var(--ink-soft); }
+  .checkout-facts { display:grid; gap:10px; padding-top:16px; border-top:1px solid rgba(15,107,87,.14); }
+  .checkout-fact { display:flex; justify-content:space-between; gap:16px; font-size:.84rem; }
+  .checkout-fact span { color:var(--ink-soft); }
+  .checkout-method-title { margin:0 0 14px; font-size:.9rem; }
+  .bank-choice { display:flex; align-items:center; gap:13px; padding:14px; border:2px solid var(--primary); border-radius:12px; background:var(--primary-light); }
+  .bank-wordmark { width:48px; height:48px; display:grid; place-items:center; flex:0 0 auto; border-radius:12px; background:#007b5f; color:#fff; font:800 .75rem var(--font-display); }
+  .bank-choice strong { display:block; font-size:.9rem; }
+  .bank-choice span { display:block; margin-top:3px; color:var(--ink-soft); font-size:.78rem; line-height:1.4; }
+  .checkout-terms { display:flex; align-items:flex-start; gap:11px; margin-top:18px; padding:14px; border:1px solid var(--border); border-radius:12px; background:var(--surface-alt); cursor:pointer; }
+  .checkout-terms:focus-within { border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-light); }
+  .checkout-terms input { width:18px; height:18px; margin:2px 0 0; flex:0 0 auto; accent-color:var(--primary); }
+  .checkout-terms span { color:var(--ink-soft); font-size:.78rem; line-height:1.55; }
+  .checkout-terms a { font-weight:600; }
+  .checkout-submit { margin-top:16px; min-height:48px; font-weight:700; }
+  .checkout-assurance { display:flex; justify-content:center; gap:7px; margin:12px 0 0; color:var(--ink-faint); font-size:.74rem; text-align:center; }
+  .checkout-stage[hidden] { display:none; }
+  .payment-stage-grid { display:grid; grid-template-columns:minmax(260px,.85fr) minmax(0,1.15fr); gap:24px; align-items:start; }
+  .qr-panel { border:1px solid var(--border); border-radius:16px; padding:18px; background:linear-gradient(150deg,#f2fbf7,#eef2ff); text-align:center; }
+  .qr-image-shell { position:relative; min-height:260px; display:grid; place-items:center; border-radius:12px; background:#fff; overflow:hidden; }
+  .qr-image { display:block; width:100%; max-width:320px; height:auto; }
+  .qr-caption { margin:12px 0 0; color:var(--ink-soft); font-size:.78rem; line-height:1.5; }
+  .payment-status-row { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:14px; }
+  .payment-status-chip { display:inline-flex; align-items:center; gap:7px; padding:7px 11px; border-radius:100px; background:#fff7d6; color:#815900; font-size:.76rem; font-weight:700; }
+  .payment-status-chip.completed { background:var(--success-bg); color:var(--success); }
+  .payment-status-chip.failed, .payment-status-chip.expired { background:var(--danger-bg); color:var(--danger); }
+  .payment-order-code { color:var(--ink-faint); font:.72rem var(--font-mono); }
+  .transfer-card { border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+  .transfer-row { display:grid; grid-template-columns:122px minmax(0,1fr) auto; gap:12px; align-items:center; min-height:54px; padding:10px 14px; border-bottom:1px solid var(--border); }
+  .transfer-row:last-child { border-bottom:0; }
+  .transfer-row > span:first-child { color:var(--ink-faint); font-size:.77rem; }
+  .transfer-value { min-width:0; overflow-wrap:anywhere; font-size:.88rem; font-weight:700; }
+  .transfer-value.emphasis { color:var(--primary-dark); font:700 .94rem var(--font-mono); }
+  .copy-btn { border:1px solid var(--border); background:#fff; border-radius:8px; padding:7px 9px; color:var(--primary-dark); font-size:.72rem; font-weight:700; cursor:pointer; }
+  .copy-btn:hover { border-color:var(--primary); background:var(--primary-light); }
+  .payment-note { margin:14px 0 0; padding:13px 14px; border-radius:10px; background:#fff8df; color:#765800; font-size:.78rem; line-height:1.55; }
+  .payment-expiry { margin:12px 0 0; color:var(--ink-soft); font-size:.78rem; }
+  .checkout-footer-actions { display:flex; gap:10px; margin-top:18px; }
+  .checkout-footer-actions .btn { flex:1; }
+  .payment-policy-note { margin:18px 0 0; color:var(--ink-faint); font-size:.74rem; line-height:1.55; text-align:center; }
+  @media(max-width:1100px){ .pricing-grid{ grid-template-columns:repeat(2,minmax(0,1fr)); } }
+  @media(max-width:760px){
+    .checkout-review-grid, .payment-stage-grid{ grid-template-columns:1fr; }
+    .qr-image-shell{ min-height:220px; }
+    .qr-image{ max-width:280px; }
+  }
+  @media(max-width:680px){
+    .packages-section{ padding:40px 0 64px; }
+    .pricing-heading{ margin-top:12px; }
+    .pricing-grid{ grid-template-columns:1fr; gap:28px; margin-top:42px; }
+    .pricing-card{ padding:28px 24px 24px; }
+    .plan-description{ min-height:0; }
+    .feature-list{ display:flex; flex-direction:column; gap:0; }
+    .feature-list li{ min-height:0; }
+  }
+  @media(max-width:520px){
+    .modal-overlay{ padding:0; align-items:stretch; }
+    .checkout-modal{ max-height:100dvh; min-height:100dvh; border:0; border-radius:0; }
+    .checkout-modal .modal-head{ padding:18px 18px; }
+    .checkout-scroll{ max-height:calc(100dvh - 73px); padding:20px 16px 28px; }
+    .checkout-summary-card, .checkout-method-card{ padding:18px; }
+    .transfer-row{ grid-template-columns:96px minmax(0,1fr) auto; gap:8px; padding:10px; }
+    .transfer-row > span:first-child{ font-size:.7rem; }
+    .copy-btn{ padding:7px; }
+    .checkout-footer-actions{ flex-direction:column-reverse; }
+  }
 </style>
 </head>
 <body>
@@ -36,21 +115,25 @@
     <nav class="nav-links">
       <a href="/index.html">Trang chủ</a>
       <a href="/jobs.html">Việc làm</a>
+      <a href="/employers.html">Dành cho Doanh nghiệp</a>
       <a href="/packages.html" class="active">Bảng giá</a>
     </nav>
     <div class="nav-actions">
       <div id="nav-auth-slot" class="flex gap-12 items-center"></div>
-      <button class="nav-toggle">☰</button>
+      <button class="nav-toggle" type="button" aria-label="Mở menu">☰</button>
     </div>
   </div>
 </header>
 
-<section class="section" style="padding-top:48px;">
+<section class="section packages-section">
   <div class="container">
-    <div class="text-center" style="margin-bottom:8px;">
+    <div class="page-back-row">
+      <a href="/index.html" class="page-back-link" data-history-back data-fallback="/index.html"><span aria-hidden="true">&larr;</span> Quay lại</a>
+    </div>
+    <div class="text-center pricing-heading">
       <span class="eyebrow">● Minh bạch — Linh hoạt — Không ràng buộc</span>
       <h1 style="font-size:clamp(1.8rem,3.5vw,2.8rem); margin-top:12px;">Chọn gói phù hợp với<br>quy mô tuyển dụng</h1>
-      <p style="max-width:520px; margin:12px auto 0;">Tất cả gói đều tính theo tháng, không cần ký hợp đồng dài hạn. Nâng hoặc hạ cấp bất cứ lúc nào.</p>
+      <p>Tất cả gói đều tính theo tháng, không cần ký hợp đồng dài hạn. Bạn có thể nâng hoặc hạ cấp khi nhu cầu tuyển dụng thay đổi.</p>
     </div>
 
     <div class="pricing-grid" id="pricing-grid">
@@ -62,86 +145,127 @@
   </div>
 </section>
 
-<!-- Modal mua gói -->
+<!-- Checkout chuyển khoản -->
 <div class="modal-overlay" id="purchase-modal" style="display:none;">
-  <div class="modal-box" style="max-width:500px;">
+  <div class="modal-box checkout-modal" role="dialog" aria-modal="true" aria-labelledby="modal-pkg-name">
     <div class="modal-head">
-      <h3 class="mb-0" id="modal-pkg-name">Mua gói</h3>
-      <button class="modal-close" onclick="closePurchaseModal()">&times;</button>
-    </div>
-    <div id="modal-alert"></div>
-
-    <div style="background:var(--surface-alt); border-radius:var(--radius-sm); padding:16px; margin-bottom:18px;">
-      <div style="font-size:0.85rem; color:var(--ink-soft);">Tổng thanh toán</div>
-      <div class="price-tag" id="modal-price">0 đ</div>
-      <div style="font-size:0.82rem; color:var(--ink-faint);" id="modal-duration">Hiệu lực 30 ngày</div>
-    </div>
-
-    <div class="method-box">
-      <p style="font-weight:600; margin-bottom:12px; font-size:0.9rem;">Chọn phương thức thanh toán:</p>
-      <button class="method-btn selected" data-method="demo" onclick="selectMethod(this)">
-        <span style="font-size:1.2rem;">⚡</span>
-        <div>
-          <div>Thanh toán Demo (Tức thì)</div>
-          <div style="font-size:0.75rem; color:var(--ink-faint);">Kích hoạt gói ngay lập tức — dùng cho demo/thử nghiệm</div>
-        </div>
-      </button>
-      <button class="method-btn" data-method="bank_transfer" onclick="selectMethod(this)">
-        <span style="font-size:1.2rem;">🏦</span>
-        <div>
-          <div>Chuyển khoản ngân hàng</div>
-          <div style="font-size:0.75rem; color:var(--ink-faint);">Admin xác nhận trong 1–2 giờ làm việc</div>
-        </div>
-      </button>
-      <button class="method-btn" data-method="momo" onclick="selectMethod(this)">
-        <span style="font-size:1.2rem;">📱</span>
-        <div>
-          <div>Ví MoMo</div>
-          <div style="font-size:0.75rem; color:var(--ink-faint);">Chuyển khoản MoMo — Admin xác nhận trong 1–2 giờ</div>
-        </div>
-      </button>
-
-      <div id="bank-info-box" class="bank-info" style="display:none;">
-        <div style="font-weight:600; margin-bottom:10px;">Thông tin chuyển khoản:</div>
-        <div style="margin-bottom:6px;">Ngân hàng: <strong>MB Bank</strong></div>
-        <div style="margin-bottom:6px;">Số tài khoản: <code>0123456789</code></div>
-        <div style="margin-bottom:6px;">Chủ tài khoản: <strong>CONG TY TNHH JOBLINK</strong></div>
-        <div style="margin-bottom:6px;">Số tiền: <code id="bank-amount">0</code></div>
-        <div>Nội dung: <code id="bank-content">JOBLINK ...</code></div>
-        <p class="form-hint" style="margin-top:10px;">Sau khi chuyển khoản, Admin sẽ xác nhận và kích hoạt gói trong 1–2 giờ làm việc.</p>
+      <div>
+        <div class="checkout-label">Thanh toán an toàn</div>
+        <h3 class="mb-0" id="modal-pkg-name">Thanh toán gói</h3>
       </div>
+      <button class="modal-close" type="button" onclick="closePurchaseModal()" aria-label="Đóng thanh toán">&times;</button>
     </div>
+    <div class="checkout-scroll">
+      <div id="modal-alert"></div>
 
-    <button class="btn btn-primary btn-block" style="margin-top:16px;" id="confirm-btn" onclick="confirmPurchase()">Xác nhận mua gói</button>
-  </div>
-</div>
+      <section class="checkout-stage" id="checkout-review">
+        <div class="checkout-review-grid">
+          <div class="checkout-summary-card">
+            <div class="checkout-label">Đơn hàng của bạn</div>
+            <div class="checkout-package" id="checkout-package-name">Gói Pro</div>
+            <div class="checkout-total"><span id="modal-price">0 đ</span> <small>/ 30 ngày</small></div>
+            <div class="checkout-facts">
+              <div class="checkout-fact"><span>Thời hạn sử dụng</span><strong id="modal-duration">30 ngày</strong></div>
+              <div class="checkout-fact"><span>Gia hạn</span><strong>Không tự động</strong></div>
+              <div class="checkout-fact"><span>Kích hoạt</span><strong>Sau khi đối soát</strong></div>
+            </div>
+          </div>
 
-<!-- Kết quả sau khi mua -->
-<div class="modal-overlay" id="result-modal" style="display:none;">
-  <div class="modal-box" style="max-width:420px; text-align:center;">
-    <div style="font-size:3rem; margin-bottom:12px;" id="result-icon">✅</div>
-    <h3 id="result-title">Thanh toán thành công!</h3>
-    <p id="result-msg"></p>
-    <div style="background:var(--surface-alt); border-radius:var(--radius-sm); padding:12px; margin-bottom:18px; font-size:0.85rem;">
-      Mã giao dịch: <code id="result-tx" style="font-family:var(--font-mono);"></code>
+          <div class="checkout-method-card">
+            <h4 class="checkout-method-title">Phương thức thanh toán</h4>
+            <div class="bank-choice">
+              <span class="bank-wordmark">VCB</span>
+              <div>
+                <strong>Chuyển khoản Vietcombank</strong>
+                <span>Quét VietQR, tự điền số tiền và nội dung đơn hàng</span>
+              </div>
+            </div>
+
+            <label class="checkout-terms" for="checkout-terms">
+              <input type="checkbox" id="checkout-terms">
+              <span>Tôi đã đọc và đồng ý với <a href="/terms.html#thanh-toan" target="_blank" rel="noopener">Điều khoản dịch vụ</a>, <a href="/payment-policy.html" target="_blank" rel="noopener">Chính sách thanh toán &amp; hoàn tiền</a> và <a href="/privacy.html" target="_blank" rel="noopener">Chính sách bảo mật</a>.</span>
+            </label>
+            <button class="btn btn-primary btn-block checkout-submit" type="button" id="confirm-btn" onclick="confirmPurchase()" disabled>Tạo đơn chuyển khoản</button>
+            <p class="checkout-assurance"><span aria-hidden="true">🔒</span> JobLink chỉ kích hoạt gói sau khi xác nhận tiền đã về tài khoản.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="checkout-stage" id="checkout-payment" hidden>
+        <div class="payment-status-row">
+          <span class="payment-status-chip" id="payment-status-chip">● Đang chờ thanh toán</span>
+          <span class="payment-order-code" id="payment-order-code">Mã đơn</span>
+        </div>
+
+        <div class="payment-stage-grid">
+          <div class="qr-panel">
+            <div class="qr-image-shell">
+              <img class="qr-image" id="payment-qr" src="" alt="Mã VietQR thanh toán JobLink">
+              <div id="payment-state-icon" hidden style="font:800 3rem var(--font-display); color:var(--primary-dark);"></div>
+            </div>
+            <p class="qr-caption">Mở ứng dụng ngân hàng và quét mã. Số tiền cùng nội dung chuyển khoản đã được điền sẵn.</p>
+          </div>
+
+          <div>
+            <div class="transfer-card" id="payment-transfer-card">
+              <div class="transfer-row"><span>Ngân hàng</span><strong class="transfer-value" id="payment-bank">Vietcombank</strong></div>
+              <div class="transfer-row"><span>Số tài khoản</span><strong class="transfer-value emphasis" id="payment-account"></strong><button class="copy-btn" type="button" data-copy="payment-account">Sao chép</button></div>
+              <div class="transfer-row"><span>Chủ tài khoản</span><strong class="transfer-value" id="payment-owner"></strong></div>
+              <div class="transfer-row"><span>Số tiền</span><strong class="transfer-value emphasis" id="payment-amount"></strong><button class="copy-btn" type="button" data-copy="payment-amount">Sao chép</button></div>
+              <div class="transfer-row"><span>Nội dung</span><strong class="transfer-value emphasis" id="payment-content"></strong><button class="copy-btn" type="button" data-copy="payment-content">Sao chép</button></div>
+            </div>
+            <p class="payment-note" id="payment-transfer-note"><strong>Quan trọng:</strong> Chuyển đúng số tiền và nội dung để đơn được đối soát chính xác. Không chuyển tiền sau khi đơn hết hạn.</p>
+            <p class="payment-expiry" id="payment-expiry"></p>
+            <div class="checkout-footer-actions">
+              <button class="btn btn-outline" type="button" onclick="closePurchaseModal()">Đóng và thanh toán sau</button>
+              <a class="btn btn-primary" href="/company-dashboard.html?view=subscription">Xem lịch sử giao dịch</a>
+            </div>
+          </div>
+        </div>
+        <p class="payment-policy-note">Thông thường JobLink xác nhận trong 1–2 giờ làm việc. Bạn có thể mở lại hướng dẫn này từ mục Gói của tôi.</p>
+      </section>
     </div>
-    <a href="/company-dashboard.html" class="btn btn-primary btn-block" style="margin-bottom:10px;">Về Dashboard</a>
-    <button class="btn btn-ghost btn-block" onclick="document.getElementById('result-modal').style.display='none'">Đóng</button>
   </div>
 </div>
 
 <footer>
   <div class="container">
-    <div class="footer-bottom" style="border-top:none;padding-top:0;">
-      <span>© 2026 JobLink. Đồ án minh hoạ — không phải sản phẩm thương mại.</span>
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand"><span class="brand-mark">JL</span>JobLink</div>
+        <p>Nền tảng kết nối Doanh nghiệp và Ứng viên, giúp việc tuyển dụng và tìm việc trở nên đơn giản, minh bạch hơn.</p>
+      </div>
+      <div>
+        <h4>Dành cho Ứng viên</h4>
+        <a href="/jobs.html">Tìm việc làm</a>
+        <a href="/register.html">Tạo hồ sơ</a>
+        <a href="/login.html">Đăng nhập</a>
+      </div>
+      <div>
+        <h4>Dành cho Doanh nghiệp</h4>
+        <a href="/employers.html">Giải pháp tuyển dụng</a>
+        <a href="/register.html?role=company">Đăng ký tài khoản</a>
+        <a href="/login.html">Đăng nhập quản lý</a>
+      </div>
+      <div>
+        <h4>Liên hệ</h4>
+        <a href="mailto:support@joblink.vn">support@joblink.vn</a>
+        <a href="/terms.html">Điều khoản sử dụng</a>
+        <a href="/payment-policy.html">Thanh toán &amp; hoàn tiền</a>
+        <a href="/privacy.html">Chính sách bảo mật</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 JobLink. Bảo lưu mọi quyền.</span>
+      <span>Kết nối doanh nghiệp với ứng viên phù hợp.</span>
     </div>
   </div>
 </footer>
 
-<script src="/js/env.js"></script>
-<script src="/js/api.js"></script>
-<script src="/js/header.js"></script>
-<script src="/js/packages.js"></script>
+<script src="/js/api.js?v=20260720-2"></script>
+<script src="/js/navigation.js?v=20260720-3"></script>
+<script src="/js/header.js?v=20260721-6"></script>
+<script src="/js/packages.js?v=20260721-3"></script>
 <script src="/js/chatbot-widget.js"></script>
 </body>
 </html>

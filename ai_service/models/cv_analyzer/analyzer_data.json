@@ -196,6 +196,18 @@
       "skill": "Power BI",
       "domain": "it_data"
     },
+    "hadoop": {
+      "skill": "Hadoop",
+      "domain": "it_data"
+    },
+    "hdfs": {
+      "skill": "HDFS",
+      "domain": "it_data"
+    },
+    "mapreduce": {
+      "skill": "MapReduce",
+      "domain": "it_data"
+    },
     "machine learning": {
       "skill": "Machine Learning",
       "domain": "it_data"

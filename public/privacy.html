@@ -5,43 +5,107 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Chính sách bảo mật — JobLink</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
 <header class="navbar">
   <div class="navbar-inner">
     <a href="/index.html" class="brand"><span class="brand-mark">JL</span>JobLink</a>
-    <a href="/register.html" class="btn btn-outline btn-sm">Quay lại đăng ký</a>
+    <nav class="nav-links">
+      <a href="/index.html">Trang chủ</a>
+      <a href="/jobs.html">Việc làm</a>
+      <a href="/terms.html">Điều khoản</a>
+      <a href="/privacy.html" class="active">Bảo mật</a>
+    </nav>
+    <div class="nav-actions">
+      <div id="nav-auth-slot" class="flex gap-12 items-center"></div>
+      <button class="nav-toggle" aria-label="Mở menu">☰</button>
+    </div>
   </div>
 </header>
-<main class="legal-shell">
-  <article class="legal-document">
-    <p class="auth-kicker">Cập nhật ngày 15/07/2026</p>
-    <h1>Chính sách bảo mật</h1>
-    <p>Chính sách này mô tả cách JobLink thu thập, sử dụng và bảo vệ thông tin khi bạn sử dụng nền tảng.</p>
 
-    <h2>1. Dữ liệu được thu thập</h2>
-    <p>JobLink có thể xử lý thông tin tài khoản, hồ sơ ứng viên, CV, thông tin doanh nghiệp, lịch sử ứng tuyển và dữ liệu kỹ thuật cần thiết để vận hành hệ thống.</p>
+<main class="legal-page">
+  <header class="legal-heading">
+    <div class="container">
+      <a href="/index.html" class="page-back-link legal-back-link" data-history-back data-fallback="/index.html"><span aria-hidden="true">&larr;</span> Quay lại</a>
+      <p class="auth-kicker">Quyền riêng tư</p>
+      <h1>Chính sách bảo mật JobLink</h1>
+      <p>Phiên bản 2026-07-21 · Có hiệu lực từ 21/07/2026</p>
+    </div>
+  </header>
 
-    <h2>2. Mục đích sử dụng</h2>
-    <p>Dữ liệu được dùng để cung cấp tài khoản, kết nối ứng viên với doanh nghiệp, cá nhân hóa đề xuất, bảo vệ hệ thống, hỗ trợ người dùng và cải thiện chất lượng dịch vụ.</p>
+  <div class="container legal-layout">
+    <nav class="legal-toc" aria-label="Mục lục chính sách bảo mật">
+      <strong>Nội dung</strong>
+      <a href="#thu-thap">1. Dữ liệu thu thập</a>
+      <a href="#muc-dich">2. Mục đích sử dụng</a>
+      <a href="#cv">3. CV và hồ sơ</a>
+      <a href="#chia-se">4. Chia sẻ dữ liệu</a>
+      <a href="#luu-tru">5. Lưu trữ và bảo mật</a>
+      <a href="#quyen">6. Quyền của bạn</a>
+      <a href="#cookie">7. Cookie và đăng nhập</a>
+      <a href="#lien-he">8. Liên hệ</a>
+    </nav>
 
-    <h2>3. Chia sẻ thông tin</h2>
-    <p>Thông tin hồ sơ chỉ được hiển thị theo chức năng tuyển dụng và quyền truy cập phù hợp. JobLink không bán dữ liệu cá nhân. Dữ liệu có thể được chia sẻ khi có sự đồng ý hoặc yêu cầu hợp pháp.</p>
+    <article class="legal-content">
+      <section id="thu-thap">
+        <h2>1. Dữ liệu chúng tôi thu thập</h2>
+        <p>JobLink có thể thu thập thông tin tài khoản, hồ sơ cá nhân, CV, lịch sử ứng tuyển, tin đã lưu, thông tin doanh nghiệp, tin tuyển dụng và giao dịch gói dịch vụ. Khi người dùng tạo đơn thanh toán, hệ thống còn lưu mã giao dịch, phiên bản điều khoản đã chấp thuận, thời điểm chấp thuận, địa chỉ IP và thông tin trình duyệt cần thiết để xác minh giao dịch, phòng chống gian lận và xử lý khiếu nại.</p>
+      </section>
 
-    <h2>4. Lưu trữ và bảo mật</h2>
-    <p>Mật khẩu được lưu dưới dạng băm. Token đặt lại mật khẩu có thời hạn và chỉ sử dụng một lần. JobLink áp dụng các biện pháp kỹ thuật hợp lý để hạn chế truy cập trái phép.</p>
+      <section id="muc-dich">
+        <h2>2. Mục đích sử dụng</h2>
+        <ul>
+          <li>Cung cấp và bảo vệ tài khoản JobLink.</li>
+          <li>Kết nối ứng viên với doanh nghiệp và xử lý hoạt động ứng tuyển.</li>
+          <li>Phân tích CV, chấm điểm phù hợp và gợi ý việc làm khi người dùng yêu cầu.</li>
+          <li>Cải thiện chất lượng, xử lý hỗ trợ và ngăn chặn hành vi gian lận.</li>
+        </ul>
+      </section>
 
-    <h2>5. Quyền của người dùng</h2>
-    <p>Bạn có thể xem, cập nhật hoặc yêu cầu xử lý thông tin cá nhân theo phạm vi pháp luật cho phép. Bạn cũng có trách nhiệm duy trì tính chính xác của hồ sơ.</p>
+      <section id="cv">
+        <h2>3. CV và khả năng hiển thị hồ sơ</h2>
+        <p>CV được lưu để phục vụ hồ sơ, ứng tuyển và các tính năng AI. Khi hồ sơ được bật cho Kho CV, doanh nghiệp đủ điều kiện có thể tìm kiếm và xem thông tin theo quyền của gói dịch vụ. CV gửi kèm một đơn ứng tuyển có thể tiếp tục được doanh nghiệp nhận đơn truy cập.</p>
+      </section>
 
-    <h2>6. Cookie và phiên đăng nhập</h2>
-    <p>Hệ thống sử dụng dữ liệu lưu trữ trong trình duyệt và cookie phiên cần thiết cho đăng nhập, bảo mật và tích hợp nhà cung cấp xác thực.</p>
+      <section id="chia-se">
+        <h2>4. Chia sẻ dữ liệu và dịch vụ bên thứ ba</h2>
+        <p>JobLink chỉ chia sẻ dữ liệu trong phạm vi cần thiết với bên tuyển dụng mà bạn tương tác, nhà cung cấp hạ tầng, dịch vụ đăng nhập mạng xã hội, nhà cung cấp AI và nhà cung cấp công cụ tạo mã thanh toán. JobLink không gửi mật khẩu hoặc CV của ứng viên cho dịch vụ tạo VietQR. Các bên liên quan được yêu cầu xử lý dữ liệu theo mục đích cung cấp dịch vụ và quy định áp dụng.</p>
+      </section>
 
-    <h2>7. Liên hệ</h2>
-    <p>Yêu cầu về quyền riêng tư có thể được gửi tới <a href="mailto:privacy@joblink.vn">privacy@joblink.vn</a>.</p>
-  </article>
+      <section id="luu-tru">
+        <h2>5. Lưu trữ và bảo mật</h2>
+        <p>JobLink áp dụng kiểm soát truy cập, băm mật khẩu, token có thời hạn và các biện pháp kỹ thuật phù hợp. Không có hệ thống trực tuyến nào an toàn tuyệt đối; người dùng cũng cần bảo vệ thiết bị và thông tin đăng nhập của mình.</p>
+      </section>
+
+      <section id="quyen">
+        <h2>6. Quyền của bạn</h2>
+        <p>Bạn có thể xem, chỉnh sửa hoặc yêu cầu xử lý thông tin cá nhân của mình; thay đổi CV và tùy chọn hiển thị; hoặc liên hệ JobLink để yêu cầu hỗ trợ liên quan dữ liệu. Một số dữ liệu có thể được lưu trong thời gian cần thiết để đáp ứng nghĩa vụ bảo mật và pháp lý.</p>
+      </section>
+
+      <section id="cookie">
+        <h2>7. Cookie và lưu trữ đăng nhập</h2>
+        <p>Website sử dụng cookie phiên cho luồng đăng nhập mạng xã hội và bộ nhớ trình duyệt để duy trì trạng thái đăng nhập theo lựa chọn của người dùng. Bạn có thể xóa dữ liệu này bằng cách đăng xuất hoặc sử dụng cài đặt trình duyệt.</p>
+      </section>
+
+      <section id="lien-he">
+        <h2>8. Liên hệ và cập nhật</h2>
+        <p>Chính sách có thể được điều chỉnh khi hệ thống hoặc quy định thay đổi. Mọi câu hỏi về quyền riêng tư có thể gửi tới <a href="mailto:support@joblink.vn">support@joblink.vn</a>.</p>
+      </section>
+    </article>
+  </div>
 </main>
+
+<footer>
+  <div class="container footer-bottom legal-footer">
+    <span>© 2026 JobLink.</span>
+    <span><a href="/terms.html">Điều khoản sử dụng</a> · <a href="/payment-policy.html">Thanh toán &amp; hoàn tiền</a> · <a href="/privacy.html">Chính sách bảo mật</a></span>
+  </div>
+</footer>
+
+<script src="/js/api.js?v=20260720-2"></script>
+<script src="/js/navigation.js?v=20260720-3"></script>
+<script src="/js/header.js?v=20260721-6"></script>
 </body>
 </html>

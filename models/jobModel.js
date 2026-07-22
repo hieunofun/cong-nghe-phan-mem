@@ -20,7 +20,7 @@ async function createJob(companyId, data) {
       companyId, category_id || null, title, description, requirements || null, benefits || null,
       salary_min || null, salary_max || null, !!salary_negotiable, location || null, job_type || 'full-time',
       experience_level || null, vacancies || 1, deadline || null,
-      is_vip ? 1 : 0, is_featured ? 1 : 0
+      !!is_vip, !!is_featured
     ]
   );
   return result.insertId;

@@ -24,7 +24,8 @@ Current automated tests are basic release-evidence tests. They verify the presen
 - Configuration:
   - `.env` is ignored.
   - `.env.example` exists.
-  - Git LFS tracks the large AI model.
+  - The optional large Transformer model is ignored by Git.
+  - Render Free explicitly enables lightweight AI mode.
 
 ## Integration Testing Checklist
 

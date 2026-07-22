@@ -2,24 +2,25 @@
 const pool = require('../config/db');
 const companyModel = require('../models/companyModel');
 const subscriptionModel = require('../models/subscriptionModel');
+const { withAccessibleCVUrl } = require('../services/storageService');
 
 // GET /api/cv-search?keyword=&location=&gender=&page=
 async function searchCandidates(req, res) {
   try {
     const company = await companyModel.findByUserId(req.user.id);
-    if (!company) return res.status(404).json({ message: 'Khong tim thay ho so doanh nghiep.' });
+    if (!company) return res.status(404).json({ message: 'Không tìm thấy hồ sơ doanh nghiệp.' });
 
     const sub = await subscriptionModel.getActiveByCompany(company.id);
     if (!sub || !sub.can_search_cv) {
       return res.status(403).json({
-        message: 'Tinh nang Kho CV chi danh cho goi Pro va Enterprise. Vui long nang cap goi de su dung.',
+        message: 'Tính năng Kho CV chỉ dành cho gói Pro và Enterprise. Vui lòng nâng cấp gói để sử dụng.',
         upgrade_required: true
       });
     }
 
     if (sub.max_cv_views < 999 && sub.cv_views_used >= sub.max_cv_views) {
       return res.status(403).json({
-        message: `Ban da xem het ${sub.max_cv_views} CV trong goi hien tai. Vui long nang cap goi.`,
+        message: `Bạn đã xem hết ${sub.max_cv_views} CV trong gói hiện tại. Vui lòng nâng cấp gói.`,
         quota_exceeded: true
       });
     }
@@ -71,7 +72,7 @@ async function searchCandidates(req, res) {
     });
   } catch (err) {
     console.error('searchCandidates error:', err);
-    res.status(500).json({ message: 'Loi server, vui long thu lai sau.' });
+    res.status(500).json({ message: 'Lỗi máy chủ, vui lòng thử lại sau.' });
   }
 }
 
@@ -79,19 +80,19 @@ async function searchCandidates(req, res) {
 async function viewCandidateDetail(req, res) {
   try {
     const company = await companyModel.findByUserId(req.user.id);
-    if (!company) return res.status(404).json({ message: 'Khong tim thay ho so doanh nghiep.' });
+    if (!company) return res.status(404).json({ message: 'Không tìm thấy hồ sơ doanh nghiệp.' });
 
     const sub = await subscriptionModel.getActiveByCompany(company.id);
     if (!sub || !sub.can_search_cv) {
       return res.status(403).json({
-        message: 'Tinh nang Kho CV chi danh cho goi Pro va Enterprise.',
+        message: 'Tính năng Kho CV chỉ dành cho gói Pro và Enterprise.',
         upgrade_required: true
       });
     }
 
     if (sub.max_cv_views < 999 && sub.cv_views_used >= sub.max_cv_views) {
       return res.status(403).json({
-        message: `Ban da xem het ${sub.max_cv_views} CV trong thang nay.`,
+        message: `Bạn đã xem hết ${sub.max_cv_views} CV trong tháng này.`,
         quota_exceeded: true
       });
     }
@@ -104,19 +105,19 @@ async function viewCandidateDetail(req, res) {
       [req.params.id]
     );
 
-    if (!rows[0]) return res.status(404).json({ message: 'Khong tim thay ung vien.' });
+    if (!rows[0]) return res.status(404).json({ message: 'Không tìm thấy ứng viên.' });
 
     // Tinh 1 luot xem CV
     await subscriptionModel.incrementUsage(sub.id, 'cv_views_used');
 
     res.json({
-      candidate: rows[0],
+      candidate: await withAccessibleCVUrl(rows[0]),
       cv_views_used: sub.cv_views_used + 1,
       cv_views_limit: sub.max_cv_views
     });
   } catch (err) {
     console.error('viewCandidateDetail error:', err);
-    res.status(500).json({ message: 'Loi server, vui long thu lai sau.' });
+    res.status(500).json({ message: 'Lỗi máy chủ, vui lòng thử lại sau.' });
   }
 }
 

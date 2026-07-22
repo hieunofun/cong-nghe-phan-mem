@@ -9,11 +9,11 @@ Browser UI
   -> Express routes
   -> Controllers
   -> Models
-  -> MySQL
+  -> PostgreSQL (Supabase production) / MySQL (local)
 
 Express backend
   -> Flask AI service
-  -> Local AI models / Groq API
+  -> Lightweight TF-IDF + skill matching / Groq API
 ```
 
 ## Components
@@ -24,11 +24,11 @@ Express backend
 | Express entrypoint | `server.js` | Middleware, static assets, API route mounting |
 | Routes | `routes/` | HTTP endpoint definitions and role guards |
 | Controllers | `controllers/` | Business workflow and response handling |
-| Models | `models/` | MySQL queries and persistence logic |
+| Models | `models/` | Database queries through the MySQL/PostgreSQL adapter |
 | Middleware | `middleware/` | JWT authorization and file upload validation |
 | Database | `database/` | Schema and seed data |
 | AI service | `ai_service/` | Chatbot, resume ranking, recommendation, CV analysis |
-| Uploads | `uploads/` | Local storage for CV, logo, and avatar files |
+| Uploads | `services/storageService.js` | Supabase Storage in production, local storage in development |
 
 ## Design Decisions
 
@@ -48,21 +48,21 @@ Reason: the product has three distinct user roles, and each role has different d
 
 Evidence: `middleware/auth.js`, `routes/candidateRoutes.js`, `routes/companyRoutes.js`, `routes/adminRoutes.js`.
 
-### Local Upload Storage for Beta
+### Persistent Upload Storage
 
-Decision: store uploaded CVs/logos/avatars under `uploads/`.
+Decision: store CVs, logos, and avatars in Supabase Storage in production. Local development can use `uploads/`.
 
-Reason: simple and reproducible for local demo and course grading.
+Reason: Render Free uses an ephemeral filesystem, so production uploads must be stored outside the web service.
 
-Limitation: production should move uploads to object storage or persistent volume.
+Evidence: `services/storageService.js` and `scripts/setup-supabase-storage.js`.
 
-### Git LFS for AI Model
+### Lightweight AI Matching on Free Hosting
 
-Decision: track the large `model.safetensors` file with Git LFS.
+Decision: do not ship the optional Sentence Transformer model in Git or load it on Render Free. Use TF-IDF plus skill coverage for matching.
 
-Reason: GitHub blocks normal files over 100MB and LFS is the correct mechanism for large model artifacts.
+Reason: the full Transformer runtime exceeds the practical memory budget of the free AI service. Chatbot RAG and CV analysis continue to work.
 
-Evidence: `.gitattributes`.
+Evidence: `ai_service/requirements.render.txt`, `AI_LIGHTWEIGHT_MODE`, and `ai_service/app.py`.
 
 ## Reliability Notes
 

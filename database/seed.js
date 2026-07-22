@@ -18,7 +18,7 @@ async function upsertUser(email, password, role, status = 'active') {
 
 async function seed() {
   try {
-    console.log('Dang tao du lieu mau...');
+    console.log('Đang tạo dữ liệu mẫu...');
 
     // 1. Tai khoan Admin
     const adminId = await upsertUser('admin@joblink.vn', 'Admin@123', 'admin');
@@ -29,16 +29,16 @@ async function seed() {
       {
         email: 'hr@vietsoft.vn', password: 'Company@123',
         company_name: 'VietSoft Solutions', tax_code: '0312345678',
-        address: 'Toa nha Innovation, Quan Cau Giay, Ha Noi',
-        description: 'Cong ty phat trien phan mem chuyen cung cap giai phap web va mobile cho doanh nghiep vua va nho.',
-        scale: '50-100 nhan vien'
+        address: 'Tòa nhà Innovation, Quận Cầu Giấy, Hà Nội',
+        description: 'Công ty phát triển phần mềm chuyên cung cấp giải pháp web và mobile cho doanh nghiệp vừa và nhỏ.',
+        scale: '50-100 nhân viên'
       },
       {
         email: 'tuyendung@greenmart.vn', password: 'Company@123',
         company_name: 'GreenMart Retail', tax_code: '0398765432',
-        address: 'Toa nha Sunrise, Quan 7, TP. Ho Chi Minh',
-        description: 'He thong sieu thi ban le thuc pham sach voi hon 30 chi nhanh tren toan quoc.',
-        scale: '200-500 nhan vien'
+        address: 'Tòa nhà Sunrise, Quận 7, TP. Hồ Chí Minh',
+        description: 'Hệ thống siêu thị bán lẻ thực phẩm sạch với hơn 30 chi nhánh trên toàn quốc.',
+        scale: '200-500 nhân viên'
       }
     ];
 
@@ -66,43 +66,43 @@ async function seed() {
     // 3. Tin tuyen dung mau
     const jobsData = [
       {
-        companyIndex: 0, category: 'Cong nghe thong tin',
-        title: 'Lap trinh vien Backend Node.js',
-        description: 'Phat trien va bao tri he thong API cho cac san pham web cua cong ty. Lam viec truc tiep voi team Product de hien thuc hoa tinh nang moi.',
-        requirements: 'Thanh thao JavaScript/Node.js, hieu biet ve MySQL hoac MongoDB, biet su dung Git.',
-        benefits: 'Luong thang 13, bao hiem suc khoe, lam viec hybrid 2 ngay/tuan tu xa.',
+        companyIndex: 0, category: 'Công nghệ thông tin',
+        title: 'Lập trình viên Backend Node.js',
+        description: 'Phát triển và bảo trì hệ thống API cho các sản phẩm web của công ty. Làm việc trực tiếp với nhóm Product để hiện thực hóa tính năng mới.',
+        requirements: 'Thành thạo JavaScript/Node.js, hiểu biết về MySQL hoặc MongoDB, biết sử dụng Git.',
+        benefits: 'Lương tháng 13, bảo hiểm sức khỏe, làm việc hybrid 2 ngày/tuần từ xa.',
         salary_min: 12000000, salary_max: 20000000,
-        location: 'Cau Giay, Ha Noi', job_type: 'full-time', experience_level: '1-2 nam',
+        location: 'Cầu Giấy, Hà Nội', job_type: 'full-time', experience_level: '1-2 năm',
         vacancies: 3
       },
       {
-        companyIndex: 0, category: 'Cong nghe thong tin',
-        title: 'Thuc tap sinh Frontend (React)',
-        description: 'Ho tro team frontend xay dung giao dien cho cac du an noi bo. Phu hop sinh vien nam 3, nam 4 muon tich luy kinh nghiem thuc te.',
-        requirements: 'Biet HTML/CSS/JavaScript co ban, da tung lam quen voi React la loi the.',
-        benefits: 'Tro cap thuc tap, co hoi len full-time sau 3 thang.',
+        companyIndex: 0, category: 'Công nghệ thông tin',
+        title: 'Thực tập sinh Frontend (React)',
+        description: 'Hỗ trợ nhóm frontend xây dựng giao diện cho các dự án nội bộ. Phù hợp sinh viên năm 3, năm 4 muốn tích lũy kinh nghiệm thực tế.',
+        requirements: 'Biết HTML/CSS/JavaScript cơ bản, đã từng làm quen với React là lợi thế.',
+        benefits: 'Trợ cấp thực tập, cơ hội lên nhân viên chính thức sau 3 tháng.',
         salary_min: 3000000, salary_max: 5000000, salary_negotiable: true,
-        location: 'Cau Giay, Ha Noi', job_type: 'internship', experience_level: 'Sinh vien nam 3-4',
+        location: 'Cầu Giấy, Hà Nội', job_type: 'internship', experience_level: 'Sinh viên năm 3-4',
         vacancies: 2
       },
       {
-        companyIndex: 1, category: 'Kinh doanh / Ban hang',
-        title: 'Nhan vien Kinh doanh khu vuc TP.HCM',
-        description: 'Trien khai ke hoach ban hang, cham soc he thong khach hang dai ly hien co va phat trien khach hang moi tai khu vuc duoc giao.',
-        requirements: 'Co kinh nghiem ban hang tu 6 thang, giao tiep tot, co xe may di lai.',
-        benefits: 'Luong cung 8 trieu + hoa hong, phu cap xang xe va dien thoai.',
+        companyIndex: 1, category: 'Kinh doanh / Bán hàng',
+        title: 'Nhân viên Kinh doanh khu vực TP.HCM',
+        description: 'Triển khai kế hoạch bán hàng, chăm sóc hệ thống khách hàng đại lý hiện có và phát triển khách hàng mới tại khu vực được giao.',
+        requirements: 'Có kinh nghiệm bán hàng từ 6 tháng, giao tiếp tốt, có xe máy đi lại.',
+        benefits: 'Lương cứng 8 triệu + hoa hồng, phụ cấp xăng xe và điện thoại.',
         salary_min: 8000000, salary_max: 15000000,
-        location: 'Quan 7, TP. Ho Chi Minh', job_type: 'full-time', experience_level: '6 thang - 1 nam',
+        location: 'Quận 7, TP. Hồ Chí Minh', job_type: 'full-time', experience_level: '6 tháng - 1 năm',
         vacancies: 5
       },
       {
-        companyIndex: 1, category: 'Cham soc khach hang',
-        title: 'Nhan vien Cham soc khach hang (Part-time)',
-        description: 'Tiep nhan va xu ly phan hoi cua khach hang qua hotline va fanpage trong ca lam viec linh hoat.',
-        requirements: 'Giong noi de nghe, kien nhan, co the lam ca toi hoac cuoi tuan.',
-        benefits: 'Luong theo gio, thuong hieu suat thang.',
+        companyIndex: 1, category: 'Chăm sóc khách hàng',
+        title: 'Nhân viên Chăm sóc khách hàng (Bán thời gian)',
+        description: 'Tiếp nhận và xử lý phản hồi của khách hàng qua hotline và fanpage trong ca làm việc linh hoạt.',
+        requirements: 'Giọng nói dễ nghe, kiên nhẫn, có thể làm ca tối hoặc cuối tuần.',
+        benefits: 'Lương theo giờ, thưởng hiệu suất tháng.',
         salary_min: 25000, salary_max: 35000, salary_negotiable: false,
-        location: 'Quan 7, TP. Ho Chi Minh', job_type: 'part-time', experience_level: 'Khong yeu cau',
+        location: 'Quận 7, TP. Hồ Chí Minh', job_type: 'part-time', experience_level: 'Không yêu cầu',
         vacancies: 4
       }
     ];
@@ -129,7 +129,7 @@ async function seed() {
         category_id: cat ? cat.id : null
       });
     }
-    console.log('Da tao', jobsData.length, 'tin tuyen dung mau.');
+    console.log('Đã tạo', jobsData.length, 'tin tuyển dụng mẫu.');
 
     // 4. Ung vien mau
     const candidateUserId = await upsertUser('candidate@joblink.vn', 'Candidate@123', 'candidate');
@@ -140,18 +140,18 @@ async function seed() {
       });
       await candidateModel.updateProfile(candidateId, {
         phone: '0901234567',
-        address: 'Quan Dong Da, Ha Noi',
-        skills: 'JavaScript, HTML/CSS, Giao tiep, Lam viec nhom',
-        experience: 'Da tham gia 2 do an mon hoc ve phat trien web tai truong.',
-        education: 'Sinh vien nam 3, chuyen nganh Cong nghe thong tin'
+        address: 'Quận Đống Đa, Hà Nội',
+        skills: 'JavaScript, HTML/CSS, Giao tiếp, Làm việc nhóm',
+        experience: 'Đã tham gia 2 đồ án môn học về phát triển web tại trường.',
+        education: 'Sinh viên năm 3, chuyên ngành Công nghệ thông tin'
       });
     }
-    console.log('Ung vien mau:', 'candidate@joblink.vn / Candidate@123');
+    console.log('Ứng viên mẫu:', 'candidate@joblink.vn / Candidate@123');
 
-    console.log('\nHoan tat seed du lieu! Ban co the dang nhap ngay bang cac tai khoan tren.');
+    console.log('\nHoàn tất seed dữ liệu! Bạn có thể đăng nhập ngay bằng các tài khoản trên.');
     process.exit(0);
   } catch (err) {
-    console.error('Loi khi seed du lieu:', err);
+    console.error('Lỗi khi seed dữ liệu:', err);
     process.exit(1);
   }
 }

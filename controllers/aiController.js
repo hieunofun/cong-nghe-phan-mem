@@ -2,77 +2,41 @@
 // Bridge giua Node.js backend va Flask AI Service (port 5000)
 // Neu Flask chua chay, tra ve loi nhe khong anh huong tinh nang khac
 
-const http = require('http');
 const candidateModel = require('../models/candidateModel');
 const jobModel = require('../models/jobModel');
 const companyModel = require('../models/companyModel');
-
-const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://127.0.0.1:5000';
-const AI_TIMEOUT_MS = 30000; // RAG co the can them thoi gian de doc DB va goi Groq
-
-// ── HELPER: Goi Flask AI service ──────────────────────────────
-function callAI(endpoint, body) {
-  return new Promise((resolve, reject) => {
-    const payload = JSON.stringify(body);
-    const url = new URL(AI_SERVICE_URL + endpoint);
-
-    const options = {
-      hostname: url.hostname,
-      port: url.port || 5000,
-      path: url.pathname,
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(payload)
-      },
-      timeout: AI_TIMEOUT_MS
-    };
-
-    const req = http.request(options, (res) => {
-      let data = '';
-      res.on('data', chunk => { data += chunk; });
-      res.on('end', () => {
-        try { resolve(JSON.parse(data)); }
-        catch (e) { reject(new Error('Phan hoi AI khong hop le')); }
-      });
-    });
-
-    req.on('timeout', () => {
-      req.destroy();
-      reject(new Error('AI service timeout - kiem tra Flask dang chay chua'));
-    });
-    req.on('error', (err) => {
-      reject(new Error('Khong ket noi duoc AI service. Vui long chay: python ai_service/app.py'));
-    });
-
-    req.write(payload);
-    req.end();
-  });
-}
+const applicationModel = require('../models/applicationModel');
+const { buildCandidateAIText } = require('../utils/cvTextExtractor');
+const { callAI, getAIHealth: fetchAIHealth } = require('../services/aiServiceClient');
 
 function aiUnavailable(res, err) {
   return res.status(503).json({
-    message: 'AI Service chua san sang. ' + (err?.message || ''),
+    message: 'Dịch vụ AI chưa sẵn sàng. ' + (err?.message || ''),
     ai_offline: true
   });
+}
+
+function handleAIControllerError(res, err, label) {
+  if (/kết nối|ket noi|timeout|hết thời gian/i.test(err.message)) {
+    return aiUnavailable(res, err);
+  }
+  if (err.aiStatus) {
+    return res.status(err.aiStatus).json({
+      ...err.aiPayload,
+      message: err.aiPayload?.message || err.aiPayload?.error || err.message
+    });
+  }
+  console.error(`${label} error:`, err);
+  return res.status(500).json({ message: 'Lỗi máy chủ.' });
 }
 
 // ── 1. KIEM TRA TRANG THAI AI SERVICE ─────────────────────────
 async function getAIHealth(req, res) {
   try {
-    const resp = await new Promise((resolve, reject) => {
-      const url = new URL(AI_SERVICE_URL + '/health');
-      const req2 = http.get({ hostname: url.hostname, port: url.port || 5000, path: '/health', timeout: 3000 }, (r) => {
-        let d = '';
-        r.on('data', c => { d += c; });
-        r.on('end', () => { try { resolve(JSON.parse(d)); } catch (e) { reject(e); } });
-      });
-      req2.on('error', reject);
-      req2.on('timeout', () => { req2.destroy(); reject(new Error('timeout')); });
-    });
+    const resp = await fetchAIHealth();
     res.json({ online: true, ...resp });
   } catch (err) {
-    res.json({ online: false, message: 'AI Service chua chay (python ai_service/app.py)' });
+    res.json({ online: false, message: 'Dịch vụ AI chưa chạy (python ai_service/app.py)' });
   }
 }
 
@@ -81,20 +45,14 @@ async function getAIHealth(req, res) {
 async function matchCVToJob(req, res) {
   try {
     const candidate = await candidateModel.findByUserId(req.user.id);
-    if (!candidate) return res.status(404).json({ message: 'Khong tim thay ho so ung vien.' });
-    if (!candidate.cv_url && !candidate.skills && !candidate.experience) {
-      return res.status(400).json({ message: 'Vui long cap nhat ho so (ky nang, kinh nghiem) de su dung tinh nang nay.' });
+    if (!candidate) return res.status(404).json({ message: 'Không tìm thấy hồ sơ ứng viên.' });
+    const candidateInput = await buildCandidateAIText(candidate);
+    if (candidateInput.text.length < 20) {
+      return res.status(400).json({ message: 'Vui lòng tải CV PDF/DOCX hoặc cập nhật kỹ năng, kinh nghiệm để sử dụng tính năng này.' });
     }
 
     const job = await jobModel.findById(req.params.jobId);
-    if (!job) return res.status(404).json({ message: 'Khong tim thay tin tuyen dung.' });
-
-    const cvText = [
-      candidate.full_name || '',
-      candidate.skills || '',
-      candidate.experience || '',
-      candidate.education || ''
-    ].join(' ').trim();
+    if (!job) return res.status(404).json({ message: 'Không tìm thấy tin tuyển dụng.' });
 
     const jobText = [
       job.title,
@@ -102,12 +60,10 @@ async function matchCVToJob(req, res) {
       job.requirements || ''
     ].join(' ').trim();
 
-    const result = await callAI('/match', { cv_text: cvText, job_text: jobText });
-    res.json(result);
+    const result = await callAI('/match', { cv_text: candidateInput.text, job_text: jobText });
+    res.json({ ...result, input_source: candidateInput.source, cv_read_warning: candidateInput.warning });
   } catch (err) {
-    if (err.message.includes('ket noi') || err.message.includes('timeout')) return aiUnavailable(res, err);
-    console.error('matchCVToJob error:', err);
-    res.status(500).json({ message: 'Loi server.' });
+    return handleAIControllerError(res, err, 'matchCVToJob');
   }
 }
 
@@ -116,16 +72,10 @@ async function matchCVToJob(req, res) {
 async function recommendJobs(req, res) {
   try {
     const candidate = await candidateModel.findByUserId(req.user.id);
-    if (!candidate) return res.status(404).json({ message: 'Khong tim thay ho so ung vien.' });
-
-    const candidateText = [
-      candidate.skills || '',
-      candidate.experience || '',
-      candidate.education || ''
-    ].join(' ').trim();
-
-    if (!candidateText) {
-      return res.status(400).json({ message: 'Ho so cua ban chua co ky nang hoac kinh nghiem. Vui long cap nhat ho so truoc.' });
+    if (!candidate) return res.status(404).json({ message: 'Không tìm thấy hồ sơ ứng viên.' });
+    const candidateInput = await buildCandidateAIText(candidate);
+    if (candidateInput.text.length < 20) {
+      return res.status(400).json({ message: 'Vui lòng tải CV PDF/DOCX hoặc cập nhật kỹ năng, kinh nghiệm trước.' });
     }
 
     // Lay 30 tin active gan nhat de tinh recommendation
@@ -135,11 +85,12 @@ async function recommendJobs(req, res) {
     const jobsForAI = jobs.map(j => ({
       id: j.id,
       title: j.title,
-      description: (j.description || '').slice(0, 300)
+      description: (j.description || '').slice(0, 800),
+      requirements: (j.requirements || '').slice(0, 800)
     }));
 
     const result = await callAI('/recommend', {
-      candidate_text: candidateText,
+      candidate_text: candidateInput.text,
       jobs: jobsForAI
     });
 
@@ -154,11 +105,14 @@ async function recommendJobs(req, res) {
       }))
       .filter(r => r.job !== null);
 
-    res.json({ recommendations: enriched });
+    res.json({
+      recommendations: enriched,
+      backend: result.backend,
+      input_source: candidateInput.source,
+      cv_read_warning: candidateInput.warning
+    });
   } catch (err) {
-    if (err.message.includes('ket noi') || err.message.includes('timeout')) return aiUnavailable(res, err);
-    console.error('recommendJobs error:', err);
-    res.status(500).json({ message: 'Loi server.' });
+    return handleAIControllerError(res, err, 'recommendJobs');
   }
 }
 
@@ -167,25 +121,18 @@ async function recommendJobs(req, res) {
 async function analyzeMyCV(req, res) {
   try {
     const candidate = await candidateModel.findByUserId(req.user.id);
-    if (!candidate) return res.status(404).json({ message: 'Khong tim thay ho so ung vien.' });
-
-    const cvText = [
-      candidate.full_name || '',
-      candidate.skills || '',
-      candidate.experience || '',
-      candidate.education || ''
-    ].join(' ').trim();
-
-    if (!cvText || cvText.length < 30) {
-      return res.status(400).json({ message: 'Ho so qua it thong tin. Vui long dien day du ky nang, kinh nghiem va hoc van truoc khi phan tich.' });
+    if (!candidate) return res.status(404).json({ message: 'Không tìm thấy hồ sơ ứng viên.' });
+    const candidateInput = await buildCandidateAIText(candidate, null, { includeProfileWithCV: false });
+    if (candidateInput.text.length < 30) {
+      return res.status(400).json({
+        message: candidateInput.warning || 'CV/hồ sơ có quá ít thông tin. Vui lòng tải CV PDF/DOCX hoặc điền đầy đủ hồ sơ.'
+      });
     }
 
-    const result = await callAI('/analyze-cv', { cv_text: cvText });
-    res.json(result);
+    const result = await callAI('/analyze-cv', { cv_text: candidateInput.text });
+    res.json({ ...result, input_source: candidateInput.source, cv_read_warning: candidateInput.warning });
   } catch (err) {
-    if (err.message.includes('ket noi') || err.message.includes('timeout')) return aiUnavailable(res, err);
-    console.error('analyzeMyCV error:', err);
-    res.status(500).json({ message: 'Loi server.' });
+    return handleAIControllerError(res, err, 'analyzeMyCV');
   }
 }
 
@@ -193,25 +140,68 @@ async function analyzeMyCV(req, res) {
 async function analyzeCandidateCV(req, res) {
   try {
     const candidate = await candidateModel.findById(req.params.candidateId);
-    if (!candidate) return res.status(404).json({ message: 'Khong tim thay ung vien.' });
-
-    const cvText = [
-      candidate.full_name || '',
-      candidate.skills || '',
-      candidate.experience || '',
-      candidate.education || ''
-    ].join(' ').trim();
-
-    if (!cvText || cvText.length < 20) {
-      return res.status(400).json({ message: 'Ung vien nay chua co du thong tin de phan tich.' });
+    if (!candidate) return res.status(404).json({ message: 'Không tìm thấy ứng viên.' });
+    const candidateInput = await buildCandidateAIText(candidate);
+    if (candidateInput.text.length < 20) {
+      return res.status(400).json({ message: 'Ứng viên này chưa có đủ thông tin để phân tích.' });
     }
 
-    const result = await callAI('/analyze-cv', { cv_text: cvText });
-    res.json({ candidate_name: candidate.full_name, ...result });
+    const result = await callAI('/analyze-cv', { cv_text: candidateInput.text });
+    res.json({
+      candidate_name: candidate.full_name,
+      ...result,
+      input_source: candidateInput.source,
+      cv_read_warning: candidateInput.warning
+    });
   } catch (err) {
-    if (err.message.includes('ket noi') || err.message.includes('timeout')) return aiUnavailable(res, err);
-    console.error('analyzeCandidateCV error:', err);
-    res.status(500).json({ message: 'Loi server.' });
+    return handleAIControllerError(res, err, 'analyzeCandidateCV');
+  }
+}
+
+// GET /api/ai/analyze-application/:applicationId — company/admin phan tich dung CV da ung tuyen
+async function analyzeApplicationCV(req, res) {
+  try {
+    const application = await applicationModel.findById(req.params.applicationId);
+    if (!application) return res.status(404).json({ message: 'Không tìm thấy đơn ứng tuyển.' });
+
+    if (req.user.role === 'company') {
+      const company = await companyModel.findByUserId(req.user.id);
+      if (!company || Number(application.company_id) !== Number(company.id)) {
+        return res.status(403).json({ message: 'Bạn không có quyền phân tích đơn ứng tuyển này.' });
+      }
+    }
+
+    const candidate = await candidateModel.findById(application.candidate_id);
+    if (!candidate) return res.status(404).json({ message: 'Không tìm thấy ứng viên.' });
+
+    const candidateInput = await buildCandidateAIText(candidate, application.cv_url);
+    if (candidateInput.text.length < 20) {
+      return res.status(400).json({ message: 'CV/hồ sơ ứng viên chưa có đủ thông tin để phân tích.' });
+    }
+
+    const jobText = [
+      application.job_title,
+      application.job_description || '',
+      application.job_requirements || ''
+    ].join(' ').trim();
+    const [result, match] = await Promise.all([
+      callAI('/analyze-cv', { cv_text: candidateInput.text }),
+      callAI('/match', { cv_text: candidateInput.text, job_text: jobText })
+    ]);
+    await applicationModel.updateAIScore(application.id, {
+      score: Number(match.score),
+      label: match.label
+    });
+    res.json({
+      candidate_name: candidate.full_name,
+      ...result,
+      match_score: Number(match.score),
+      match_label: match.label,
+      input_source: candidateInput.source,
+      cv_read_warning: candidateInput.warning
+    });
+  } catch (err) {
+    return handleAIControllerError(res, err, 'analyzeApplicationCV');
   }
 }
 
@@ -221,7 +211,7 @@ async function chat(req, res) {
   try {
     const { message, history = [] } = req.body;
     if (!message || !message.trim()) {
-      return res.status(400).json({ message: 'Vui long nhap tin nhan.' });
+      return res.status(400).json({ message: 'Vui lòng nhập tin nhắn.' });
     }
 
     const safeHistory = Array.isArray(history)
@@ -237,9 +227,7 @@ async function chat(req, res) {
     });
     res.json(result);
   } catch (err) {
-    if (err.message.includes('ket noi') || err.message.includes('timeout')) return aiUnavailable(res, err);
-    console.error('chat error:', err);
-    res.status(500).json({ message: 'Loi server.' });
+    return handleAIControllerError(res, err, 'chat');
   }
 }
 
@@ -249,5 +237,6 @@ module.exports = {
   recommendJobs,
   analyzeMyCV,
   analyzeCandidateCV,
+  analyzeApplicationCV,
   chat
 };

@@ -2,12 +2,7 @@
 const pool = require('../config/db');
 
 async function createUser({
-  email,
-  hashedPassword,
-  role,
-  status = 'active',
-  termsAcceptedAt = null,
-  termsVersion = null
+  email, hashedPassword, role, status = 'active', termsAcceptedAt = null, termsVersion = null
 }) {
   const [result] = await pool.query(
     `INSERT INTO users

@@ -1,21 +1,22 @@
 // controllers/companyController.js
 const companyModel = require('../models/companyModel');
+const { deleteStoredFile, storeUploadedFile } = require('../services/storageService');
 
 async function getMyProfile(req, res) {
   try {
     const profile = await companyModel.findByUserId(req.user.id);
-    if (!profile) return res.status(404).json({ message: 'Khong tim thay ho so doanh nghiep.' });
+    if (!profile) return res.status(404).json({ message: 'Không tìm thấy hồ sơ doanh nghiệp.' });
     res.json(profile);
   } catch (err) {
     console.error('getMyProfile error:', err);
-    res.status(500).json({ message: 'Loi server, vui long thu lai sau.' });
+    res.status(500).json({ message: 'Lỗi máy chủ, vui lòng thử lại sau.' });
   }
 }
 
 async function updateMyProfile(req, res) {
   try {
     const profile = await companyModel.findByUserId(req.user.id);
-    if (!profile) return res.status(404).json({ message: 'Khong tim thay ho so doanh nghiep.' });
+    if (!profile) return res.status(404).json({ message: 'Không tìm thấy hồ sơ doanh nghiệp.' });
 
     const { company_name, description, website, address, scale, tax_code } = req.body;
     await companyModel.updateProfile(profile.id, {
@@ -23,27 +24,38 @@ async function updateMyProfile(req, res) {
     });
 
     const updated = await companyModel.findByUserId(req.user.id);
-    res.json({ message: 'Cap nhat ho so cong ty thanh cong!', profile: updated });
+    res.json({ message: 'Cập nhật hồ sơ công ty thành công!', profile: updated });
   } catch (err) {
     console.error('updateMyProfile error:', err);
-    res.status(500).json({ message: 'Loi server, vui long thu lai sau.' });
+    res.status(500).json({ message: 'Lỗi máy chủ, vui lòng thử lại sau.' });
   }
 }
 
 async function uploadLogo(req, res) {
+  let logoUrl = null;
+  let profileUpdateCommitted = false;
   try {
-    if (!req.file) return res.status(400).json({ message: 'Vui long chon file logo.' });
+    if (!req.file) return res.status(400).json({ message: 'Vui lòng chọn tệp logo.' });
 
     const profile = await companyModel.findByUserId(req.user.id);
-    if (!profile) return res.status(404).json({ message: 'Khong tim thay ho so doanh nghiep.' });
+    if (!profile) return res.status(404).json({ message: 'Không tìm thấy hồ sơ doanh nghiệp.' });
 
-    const logoUrl = `/uploads/logos/${req.file.filename}`;
+    logoUrl = await storeUploadedFile(req.file, 'logo', profile.id);
     await companyModel.updateProfile(profile.id, { logo_url: logoUrl });
+    profileUpdateCommitted = true;
+    if (profile.logo_url && profile.logo_url !== logoUrl) {
+      deleteStoredFile(profile.logo_url).catch((err) => {
+        console.error('uploadLogo old-file cleanup warning:', err.message);
+      });
+    }
 
-    res.json({ message: 'Cap nhat logo thanh cong!', logo_url: logoUrl });
+    res.json({ message: 'Cập nhật logo thành công!', logo_url: logoUrl });
   } catch (err) {
+    if (logoUrl && !profileUpdateCommitted) {
+      await deleteStoredFile(logoUrl).catch(() => {});
+    }
     console.error('uploadLogo error:', err);
-    res.status(500).json({ message: 'Loi server, vui long thu lai sau.' });
+    res.status(500).json({ message: 'Lỗi máy chủ, vui lòng thử lại sau.' });
   }
 }
 
@@ -52,12 +64,12 @@ async function getPublicProfile(req, res) {
   try {
     const profile = await companyModel.findById(req.params.id);
     if (!profile || profile.status !== 'approved') {
-      return res.status(404).json({ message: 'Khong tim thay doanh nghiep.' });
+      return res.status(404).json({ message: 'Không tìm thấy doanh nghiệp.' });
     }
     res.json(profile);
   } catch (err) {
     console.error('getPublicProfile error:', err);
-    res.status(500).json({ message: 'Loi server, vui long thu lai sau.' });
+    res.status(500).json({ message: 'Lỗi máy chủ, vui lòng thử lại sau.' });
   }
 }
 

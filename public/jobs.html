@@ -28,7 +28,7 @@
     <nav class="nav-links">
       <a href="/index.html">Trang chủ</a>
       <a href="/jobs.html">Việc làm</a>
-      <a href="/register.html">Dành cho Doanh nghiệp</a>
+      <a href="/employers.html">Dành cho Doanh nghiệp</a>
       <a href="/packages.html">Bảng giá</a>
     </nav>
     <div class="nav-actions">
@@ -40,6 +40,9 @@
 
 <section style="padding: 32px 0 0;">
   <div class="container">
+    <div class="page-back-row">
+      <a href="/index.html" class="page-back-link" data-history-back data-fallback="/index.html"><span aria-hidden="true">&larr;</span> Quay lại</a>
+    </div>
     <form class="search-card" id="search-form" style="margin-bottom:28px;">
       <input type="text" id="search-keyword" class="input" placeholder="Vị trí, công ty, kỹ năng...">
       <div class="search-divider"></div>
@@ -95,15 +98,41 @@
 
 <footer>
   <div class="container">
-    <div class="footer-bottom" style="border-top:none; padding-top:0;">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand"><span class="brand-mark">JL</span>JobLink</div>
+        <p>Nền tảng kết nối Doanh nghiệp và Ứng viên, giúp việc tuyển dụng và tìm việc trở nên đơn giản, minh bạch hơn.</p>
+      </div>
+      <div>
+        <h4>Dành cho Ứng viên</h4>
+        <a href="/jobs.html">Tìm việc làm</a>
+        <a href="/register.html">Tạo hồ sơ</a>
+        <a href="/login.html">Đăng nhập</a>
+      </div>
+      <div>
+        <h4>Dành cho Doanh nghiệp</h4>
+        <a href="/employers.html">Giải pháp tuyển dụng</a>
+        <a href="/register.html?role=company">Đăng ký tài khoản</a>
+        <a href="/login.html">Đăng nhập quản lý</a>
+      </div>
+      <div>
+        <h4>Liên hệ</h4>
+        <a href="mailto:support@joblink.vn">support@joblink.vn</a>
+        <a href="tel:1900000000">1900 000 000</a>
+        <a href="/terms.html">Điều khoản sử dụng</a>
+        <a href="/privacy.html">Chính sách bảo mật</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
       <span>© 2026 JobLink. Đồ án minh hoạ — không phải sản phẩm thương mại.</span>
+      <span>Được xây dựng với Node.js, Express &amp; MySQL</span>
     </div>
   </div>
 </footer>
 
-<script src="/js/env.js"></script>
-<script src="/js/api.js"></script>
-<script src="/js/header.js"></script>
+<script src="/js/api.js?v=20260720-2"></script>
+<script src="/js/navigation.js?v=20260720-3"></script>
+<script src="/js/header.js?v=20260721-6"></script>
 <script src="/js/jobs.js"></script>
 <script src="/js/chatbot-widget.js"></script>
 </body>

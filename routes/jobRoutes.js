@@ -13,6 +13,7 @@ router.get('/company/my-jobs', verifyToken, requireRole('company'), jobControlle
 router.post('/', verifyToken, requireRole('company'), jobController.createJob);
 
 // --- Public: chi tiet 1 tin (dat sau cac route co dinh ben tren) ---
+router.get('/:id/availability', jobController.getJobAvailability);
 router.get('/:id', jobController.getJobById);
 
 // --- Company: sua / xoa tin cua minh ---

@@ -28,6 +28,22 @@ function passwordValidationMessage(password) {
   return '';
 }
 
+function readPageHistoryState(key) {
+  return window.history.state?.[key] || null;
+}
+
+function writePageHistoryState(key, value, push = false) {
+  const nextState = { ...(window.history.state || {}), [key]: value };
+  const method = push ? 'pushState' : 'replaceState';
+  window.history[method](nextState, '', window.location.href);
+}
+
+const accountEntryForm = document.getElementById('login-form') || document.getElementById('register-form');
+if (accountEntryForm) {
+  clearAuth();
+  window.addEventListener('pageshow', clearAuth);
+}
+
 function setupPasswordToggles() {
   document.querySelectorAll('[data-password-toggle]').forEach((button) => {
     button.addEventListener('click', () => {
@@ -182,6 +198,51 @@ if (registerForm) {
 
 const forgotForm = document.getElementById('forgot-form');
 if (forgotForm) {
+  const historyKey = 'joblinkForgotPassword';
+  const demoBox = document.getElementById('dev-reset-link');
+
+  function showForgotForm() {
+    forgotForm.hidden = false;
+    clearAlert();
+    setButtonLoading(document.getElementById('submit-btn'), false, 'Gửi hướng dẫn');
+
+    demoBox.hidden = true;
+    demoBox.querySelector('a').href = '#';
+  }
+
+  function showForgotComplete(state) {
+    showAlert(state.message || 'JobLink đã tạo hướng dẫn đặt lại mật khẩu.', 'success');
+    forgotForm.hidden = true;
+
+    if (state.resetUrl) {
+      demoBox.querySelector('a').href = state.resetUrl;
+      demoBox.hidden = false;
+    } else {
+      demoBox.hidden = true;
+      demoBox.querySelector('a').href = '#';
+    }
+  }
+
+  function renderForgotStep(state) {
+    if (state?.step === 'complete') {
+      showForgotComplete(state);
+    } else {
+      showForgotForm();
+    }
+  }
+
+  let forgotState = readPageHistoryState(historyKey);
+  if (!forgotState || !['form', 'complete'].includes(forgotState.step)) {
+    forgotState = { step: 'form' };
+    writePageHistoryState(historyKey, forgotState);
+  }
+  renderForgotStep(forgotState);
+
+  window.addEventListener('popstate', (event) => {
+    renderForgotStep(event.state?.[historyKey]);
+  });
+  window.addEventListener('pageshow', () => renderForgotStep(readPageHistoryState(historyKey)));
+
   forgotForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     clearAlert();
@@ -194,15 +255,13 @@ if (forgotForm) {
       const data = await apiFetch('/auth/forgot-password', {
         method: 'POST', body: { email }, auth: false
       });
-      showAlert(data.message, 'success');
-      forgotForm.hidden = true;
-
-      if (data.reset_url) {
-        const demoBox = document.getElementById('dev-reset-link');
-        const link = demoBox.querySelector('a');
-        link.href = data.reset_url;
-        demoBox.hidden = false;
-      }
+      const completeState = {
+        step: 'complete',
+        message: data.message,
+        resetUrl: data.reset_url || ''
+      };
+      writePageHistoryState(historyKey, completeState, true);
+      showForgotComplete(completeState);
     } catch (error) {
       showAlert(error.message);
       setButtonLoading(btn, false, 'Gửi hướng dẫn');
@@ -212,15 +271,62 @@ if (forgotForm) {
 
 const resetForm = document.getElementById('reset-form');
 if (resetForm) {
+  const historyKey = 'joblinkResetPassword';
+  const resetComplete = document.getElementById('reset-complete');
   const token = new URLSearchParams(window.location.search).get('token');
+
+  function showResetForm() {
+    resetForm.reset();
+    resetForm.hidden = false;
+    resetComplete.hidden = true;
+    clearAlert();
+    setButtonLoading(document.getElementById('submit-btn'), false, 'Cập nhật mật khẩu');
+
+    document.querySelectorAll('[data-password-toggle]').forEach((button) => {
+      const input = document.getElementById(button.dataset.passwordToggle);
+      if (input) input.type = 'password';
+      button.textContent = 'Hiện';
+      button.setAttribute('aria-label', 'Hiện mật khẩu');
+    });
+    document.getElementById('password')?.dispatchEvent(new Event('input'));
+  }
+
+  function showResetComplete(state) {
+    showAlert(state.message || 'Mật khẩu đã được cập nhật thành công.', 'success');
+    resetForm.hidden = true;
+    resetComplete.hidden = false;
+  }
+
+  function renderResetStep(state) {
+    if (state?.step === 'complete') {
+      showResetComplete(state);
+    } else {
+      showResetForm();
+    }
+  }
+
   if (!token) {
     showAlert('Liên kết đặt lại mật khẩu không hợp lệ hoặc đã thiếu token.');
     resetForm.hidden = true;
+  } else {
+    let resetState = readPageHistoryState(historyKey);
+    if (!resetState || !['form', 'complete'].includes(resetState.step)) {
+      resetState = { step: 'form' };
+      writePageHistoryState(historyKey, resetState);
+    }
+    renderResetStep(resetState);
+
+    window.addEventListener('popstate', (event) => {
+      renderResetStep(event.state?.[historyKey]);
+    });
+    window.addEventListener('pageshow', () => renderResetStep(readPageHistoryState(historyKey)));
   }
 
   resetForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     clearAlert();
+    if (!resetForm.reportValidity()) return;
+
     const password = document.getElementById('password').value;
     const confirmPassword = document.getElementById('confirm_password').value;
     const passwordError = passwordValidationMessage(password);
@@ -233,9 +339,10 @@ if (resetForm) {
       const data = await apiFetch('/auth/reset-password', {
         method: 'POST', body: { token, password }, auth: false
       });
-      showAlert(data.message, 'success');
-      resetForm.hidden = true;
-      document.getElementById('reset-complete').hidden = false;
+      clearAuth();
+      const completeState = { step: 'complete', message: data.message };
+      writePageHistoryState(historyKey, completeState, true);
+      showResetComplete(completeState);
     } catch (error) {
       showAlert(error.message);
       setButtonLoading(btn, false, 'Cập nhật mật khẩu');

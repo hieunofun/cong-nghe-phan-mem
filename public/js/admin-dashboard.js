@@ -20,6 +20,7 @@ function switchView(view) {
   if (view === 'users') loadUsers('');
   if (view === 'jobs') loadJobs();
   if (view === 'categories') loadCategories();
+  if (typeof syncDashboardView === 'function') syncDashboardView(view);
 }
 
 document.querySelectorAll('.dash-nav a').forEach((a) => {
@@ -383,3 +384,8 @@ window.switchView = function(view) {
 document.querySelectorAll('.dash-nav a[data-view]').forEach(a => {
   a.onclick = (e) => { e.preventDefault(); window.switchView(a.dataset.view); };
 });
+
+const requestedAdminView = new URLSearchParams(window.location.search).get('view');
+if (requestedAdminView && VIEW_META[requestedAdminView]) {
+  window.switchView(requestedAdminView);
+}

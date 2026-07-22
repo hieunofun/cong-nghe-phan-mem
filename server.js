@@ -1,5 +1,19 @@
 // server.js
 require('dotenv').config();
+
+if (process.env.NODE_ENV === 'production') {
+  const required = ['DATABASE_URL', 'JWT_SECRET', 'SESSION_SECRET', 'SUPABASE_URL'];
+  const missing = required.filter((key) => !process.env[key]);
+  if (!process.env.SUPABASE_SECRET_KEY && !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    missing.push('SUPABASE_SECRET_KEY');
+  }
+  if (!process.env.AI_SERVICE_URL && !process.env.AI_SERVICE_HOST) {
+    missing.push('AI_SERVICE_URL/AI_SERVICE_HOST');
+  }
+  if (missing.length) {
+    throw new Error(`Thiếu biến môi trường production: ${missing.join(', ')}`);
+  }
+}
 const path = require('path');
 const express = require('express');
 const session = require('express-session');
@@ -21,22 +35,9 @@ const aiRoutes = require('./routes/aiRoutes');
 
 const app = express();
 
-const allowedOrigins = (process.env.CORS_ORIGIN || process.env.FRONTEND_URL || '')
-  .split(',')
-  .map((origin) => origin.trim().replace(/\/$/, ''))
-  .filter(Boolean);
-
-app.use((req, res, next) => {
-  const origin = req.headers.origin ? req.headers.origin.replace(/\/$/, '') : '';
-  if (origin && allowedOrigins.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', req.headers.origin);
-    res.setHeader('Vary', 'Origin');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
-  }
-  if (req.method === 'OPTIONS') return res.sendStatus(204);
-  next();
-});
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -46,11 +47,20 @@ app.use(session({
   secret: process.env.SESSION_SECRET || process.env.JWT_SECRET || 'joblink_session_secret',
   resave: false,
   saveUninitialized: false,
-  cookie: { maxAge: 5 * 60 * 1000 } // 5 phut - chi du cho OAuth flow
+  cookie: {
+    maxAge: 5 * 60 * 1000,
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production'
+  } // 5 phut - chi du cho OAuth flow
 }));
 
 app.use(passport.initialize());
 app.use(passport.session());
+
+app.get('/health', (_req, res) => {
+  res.json({ status: 'ok', service: 'joblink-web' });
+});
 
 // File da upload
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -70,29 +80,25 @@ app.use('/api/ai', aiRoutes);
 
 // Frontend tinh
 app.get('/packages', (req, res) => res.redirect('/packages.html'));
+app.get('/packages-preview.html', (req, res) => res.redirect('/packages.html'));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Bat loi JSON
 app.use((err, req, res, next) => {
   if (err.type === 'entity.parse.failed') {
-    return res.status(400).json({ message: 'Du lieu gui len khong dung dinh dang JSON.' });
+    return res.status(400).json({ message: 'Dữ liệu gửi lên không đúng định dạng JSON.' });
   }
   next(err);
 });
 
 // Bat loi chung
 app.use((err, req, res, next) => {
-  console.error('Loi khong xu ly duoc:', err);
-  res.status(500).json({ message: 'Da xay ra loi khong mong muon tren server.' });
+  console.error('Lỗi không xử lý được:', err);
+  res.status(500).json({ message: 'Đã xảy ra lỗi không mong muốn trên server.' });
 });
 
 const PORT = process.env.PORT || 3000;
-
-if (require.main === module) {
-  app.listen(PORT, () => {
-    console.log(`JobLink server dang chay tai http://localhost:${PORT}`);
-    console.log('OAuth providers:');
-  });
-}
-
-module.exports = app;
+app.listen(PORT, () => {
+  console.log(`JobLink server đang chạy tại http://localhost:${PORT}`);
+  console.log('OAuth providers:');
+});

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bản mẫu Gói dịch vụ - JobLink</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="/css/packages-preview.css?v=20260721-1">
+</head>
+<body class="pricing-preview-page">
+
+<header class="navbar">
+  <div class="navbar-inner">
+    <a href="/index.html" class="brand"><span class="brand-mark">JL</span>JobLink</a>
+    <nav class="nav-links">
+      <a href="/index.html">Trang chủ</a>
+      <a href="/jobs.html">Việc làm</a>
+      <a href="/employers.html">Dành cho Doanh nghiệp</a>
+      <a href="/packages-preview.html" class="active">Bảng giá</a>
+    </nav>
+    <div class="nav-actions">
+      <div id="nav-auth-slot" class="flex gap-12 items-center"></div>
+      <button class="nav-toggle" type="button" aria-label="Mở menu">☰</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="pricing-intro">
+    <div class="container">
+      <div class="page-back-row">
+        <a href="/company-dashboard.html?view=subscription" class="page-back-link" data-history-back data-fallback="/company-dashboard.html?view=subscription">
+          <span aria-hidden="true">&larr;</span> Quay lại
+        </a>
+      </div>
+
+      <div class="pricing-intro-layout">
+        <div class="pricing-intro-copy">
+          <span class="pricing-eyebrow">Gói dịch vụ doanh nghiệp</span>
+          <h1>Chọn đúng gói cho kế hoạch tuyển dụng</h1>
+          <p>Mỗi gói có hiệu lực 30 ngày. Bắt đầu vừa đủ, nâng cấp khi số lượng vị trí và nhu cầu tìm ứng viên tăng lên.</p>
+        </div>
+        <ul class="pricing-assurances" aria-label="Cam kết dịch vụ">
+          <li><strong>30 ngày</strong><span>cho mỗi chu kỳ</span></li>
+          <li><strong>Kích hoạt nhanh</strong><span>với chế độ demo</span></li>
+          <li><strong>Minh bạch</strong><span>quota hiển thị rõ</span></li>
+        </ul>
+      </div>
+
+      <div class="current-plan-strip" id="current-plan" aria-live="polite">
+        <div class="current-plan-loading">
+          <span class="skeleton-line"></span>
+          <span class="skeleton-line short"></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="plans-section" id="plans">
+    <div class="container">
+      <div class="section-heading-row">
+        <div>
+          <span class="section-index">01</span>
+          <h2>Gói phù hợp theo từng quy mô</h2>
+          <p>Quyền lợi quan trọng được giữ ngay trên thẻ. Chi tiết đầy đủ nằm trong bảng so sánh bên dưới.</p>
+        </div>
+        <div class="billing-note"><strong>Theo tháng</strong><span>Không gia hạn tự động</span></div>
+      </div>
+
+      <div class="preview-pricing-grid" id="pricing-grid" aria-live="polite">
+        <div class="preview-plan-card loading-card"></div>
+        <div class="preview-plan-card loading-card"></div>
+        <div class="preview-plan-card loading-card"></div>
+        <div class="preview-plan-card loading-card"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="comparison-section">
+    <div class="container">
+      <div class="section-heading-row compact">
+        <div>
+          <span class="section-index">02</span>
+          <h2>So sánh quyền lợi</h2>
+          <p>Đối chiếu quota và phạm vi sử dụng trước khi quyết định.</p>
+        </div>
+      </div>
+
+      <div class="comparison-wrap" id="comparison-wrap">
+        <table class="comparison-table">
+          <thead id="comparison-head">
+            <tr><th>Quyền lợi</th><th>Đang tải...</th></tr>
+          </thead>
+          <tbody id="comparison-body">
+            <tr><td colspan="5"><span class="loading-inline">Đang tải dữ liệu gói</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="faq-section">
+    <div class="container faq-layout">
+      <div class="faq-heading">
+        <span class="section-index">03</span>
+        <h2>Câu hỏi thường gặp</h2>
+        <p>Các thông tin cần biết trước khi kích hoạt dịch vụ.</p>
+      </div>
+      <div class="faq-list">
+        <details open>
+          <summary>Gói được kích hoạt trong bao lâu?</summary>
+          <p>Thanh toán Demo kích hoạt ngay. Chuyển khoản ngân hàng và MoMo được kích hoạt sau khi quản trị viên xác nhận giao dịch.</p>
+        </details>
+        <details>
+          <summary>Quota được tính như thế nào?</summary>
+          <p>Quota tin đăng, tin VIP và lượt xem CV được tính trong thời gian gói còn hiệu lực và hiển thị tại trang quản lý doanh nghiệp.</p>
+        </details>
+        <details>
+          <summary>Có thể đổi sang gói cao hơn không?</summary>
+          <p>Doanh nghiệp có thể mua gói cao hơn bất cứ lúc nào. Gói mới sẽ xuất hiện trong lịch sử giao dịch sau khi được kích hoạt.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <section class="pricing-final-cta">
+    <div class="container pricing-final-inner">
+      <div>
+        <span>Chưa chắc nên chọn gói nào?</span>
+        <h2>Bắt đầu với gói vừa nhu cầu hiện tại</h2>
+      </div>
+      <a href="/company-dashboard.html?view=subscription" class="btn btn-light">Xem tình trạng tuyển dụng</a>
+    </div>
+  </section>
+</main>
+
+<div class="modal-overlay" id="purchase-modal" style="display:none;">
+  <div class="modal-box preview-purchase-modal" role="dialog" aria-modal="true" aria-labelledby="modal-pkg-name">
+    <div class="modal-head">
+      <div>
+        <span class="modal-kicker">Xác nhận dịch vụ</span>
+        <h3 class="mb-0" id="modal-pkg-name">Mua gói</h3>
+      </div>
+      <button class="modal-close" type="button" data-close-purchase aria-label="Đóng">&times;</button>
+    </div>
+    <div id="modal-alert"></div>
+
+    <div class="purchase-summary">
+      <div>
+        <span>Tổng thanh toán</span>
+        <strong id="modal-price">0 đ</strong>
+      </div>
+      <span id="modal-duration">Hiệu lực 30 ngày</span>
+    </div>
+
+    <fieldset class="payment-methods">
+      <legend>Phương thức thanh toán</legend>
+      <button class="payment-method selected" type="button" data-method="demo">
+        <span class="method-mark">D</span>
+        <span><strong>Thanh toán Demo</strong><small>Kích hoạt tức thì để thử nghiệm</small></span>
+        <span class="method-radio" aria-hidden="true"></span>
+      </button>
+      <button class="payment-method" type="button" data-method="bank_transfer">
+        <span class="method-mark">NH</span>
+        <span><strong>Chuyển khoản ngân hàng</strong><small>Xác nhận trong 1-2 giờ làm việc</small></span>
+        <span class="method-radio" aria-hidden="true"></span>
+      </button>
+      <button class="payment-method" type="button" data-method="momo">
+        <span class="method-mark momo">M</span>
+        <span><strong>Ví MoMo</strong><small>Xác nhận sau khi nhận giao dịch</small></span>
+        <span class="method-radio" aria-hidden="true"></span>
+      </button>
+    </fieldset>
+
+    <div id="bank-info-box" class="preview-bank-info" style="display:none;">
+      <div><span>Ngân hàng</span><strong>MB Bank</strong></div>
+      <div><span>Số tài khoản</span><code>0123456789</code></div>
+      <div><span>Chủ tài khoản</span><strong>CÔNG TY TNHH JOBLINK</strong></div>
+      <div><span>Số tiền</span><code id="bank-amount">0 đồng</code></div>
+      <div><span>Nội dung</span><code id="bank-content">JOBLINK ...</code></div>
+    </div>
+
+    <div class="modal-actions-row">
+      <button class="btn btn-outline" type="button" data-close-purchase>Hủy</button>
+      <button class="btn btn-primary" type="button" id="confirm-btn">Xác nhận mua gói</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="result-modal" style="display:none;">
+  <div class="modal-box preview-result-modal" role="dialog" aria-modal="true" aria-labelledby="result-title">
+    <div class="result-status-mark" id="result-icon" aria-hidden="true">✓</div>
+    <h3 id="result-title">Thanh toán thành công</h3>
+    <p id="result-msg"></p>
+    <div class="result-transaction">Mã giao dịch <code id="result-tx"></code></div>
+    <a href="/company-dashboard.html?view=subscription" class="btn btn-primary btn-block">Về quản lý gói</a>
+    <button class="btn btn-ghost btn-block" type="button" id="close-result-btn">Đóng</button>
+  </div>
+</div>
+
+<footer class="preview-footer">
+  <div class="container preview-footer-inner">
+    <div class="footer-brand"><span class="brand-mark">JL</span>JobLink</div>
+    <div class="preview-footer-links">
+      <a href="/employers.html">Giải pháp tuyển dụng</a>
+      <a href="/terms.html">Điều khoản</a>
+      <a href="/privacy.html">Bảo mật</a>
+      <a href="mailto:support@joblink.vn">support@joblink.vn</a>
+    </div>
+    <span class="preview-footer-copy">© 2026 JobLink</span>
+  </div>
+</footer>
+
+<script src="/js/api.js?v=20260720-2"></script>
+<script src="/js/navigation.js?v=20260720-3"></script>
+<script src="/js/header.js?v=20260721-6"></script>
+<script src="/js/packages-preview.js?v=20260721-1"></script>
+<script src="/js/chatbot-widget.js"></script>
+</body>
+</html>

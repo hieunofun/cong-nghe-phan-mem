@@ -21,7 +21,7 @@ async function getJobs(req, res) {
     });
   } catch (err) {
     console.error('getJobs error:', err);
-    res.status(500).json({ message: 'Loi server, vui long thu lai sau.' });
+    res.status(500).json({ message: 'Lỗi máy chủ, vui lòng thử lại sau.' });
   }
 }
 
@@ -32,7 +32,7 @@ async function getFeatured(req, res) {
     res.json(jobs);
   } catch (err) {
     console.error('getFeatured error:', err);
-    res.status(500).json({ message: 'Loi server, vui long thu lai sau.' });
+    res.status(500).json({ message: 'Lỗi máy chủ, vui lòng thử lại sau.' });
   }
 }
 
@@ -40,12 +40,24 @@ async function getFeatured(req, res) {
 async function getJobById(req, res) {
   try {
     const job = await jobModel.findById(req.params.id);
-    if (!job) return res.status(404).json({ message: 'Khong tim thay tin tuyen dung.' });
+    if (!job) return res.status(404).json({ message: 'Không tìm thấy tin tuyển dụng.' });
     await jobModel.incrementViews(req.params.id);
     res.json(job);
   } catch (err) {
     console.error('getJobById error:', err);
-    res.status(500).json({ message: 'Loi server, vui long thu lai sau.' });
+    res.status(500).json({ message: 'Lỗi máy chủ, vui lòng thử lại sau.' });
+  }
+}
+
+// GET /api/jobs/:id/availability - kiem tra tin con hoat dong ma khong tang luot xem
+async function getJobAvailability(req, res) {
+  try {
+    const job = await jobModel.findById(req.params.id);
+    if (!job) return res.status(404).json({ exists: false, active: false });
+    res.json({ exists: true, active: job.status === 'active', status: job.status });
+  } catch (err) {
+    console.error('getJobAvailability error:', err);
+    res.status(500).json({ message: 'Lỗi máy chủ, vui lòng thử lại sau.' });
   }
 }
 
@@ -53,13 +65,13 @@ async function getJobById(req, res) {
 async function getMyJobs(req, res) {
   try {
     const company = await companyModel.findByUserId(req.user.id);
-    if (!company) return res.status(404).json({ message: 'Khong tim thay ho so doanh nghiep.' });
+    if (!company) return res.status(404).json({ message: 'Không tìm thấy hồ sơ doanh nghiệp.' });
 
     const jobs = await jobModel.findByCompany(company.id);
     res.json(jobs);
   } catch (err) {
     console.error('getMyJobs error:', err);
-    res.status(500).json({ message: 'Loi server, vui long thu lai sau.' });
+    res.status(500).json({ message: 'Lỗi máy chủ, vui lòng thử lại sau.' });
   }
 }
 
@@ -67,17 +79,17 @@ async function getMyJobs(req, res) {
 async function createJob(req, res) {
   try {
     const company = await companyModel.findByUserId(req.user.id);
-    if (!company) return res.status(404).json({ message: 'Khong tim thay ho so doanh nghiep.' });
+    if (!company) return res.status(404).json({ message: 'Không tìm thấy hồ sơ doanh nghiệp.' });
 
     if (company.status !== 'approved') {
       return res.status(403).json({
-        message: 'Ho so doanh nghiep cua ban chua duoc Admin duyet. Vui long doi duyet truoc khi dang tin.'
+        message: 'Hồ sơ doanh nghiệp của bạn chưa được Admin duyệt. Vui lòng đợi duyệt trước khi đăng tin.'
       });
     }
 
     const { title, description } = req.body;
     if (!title || !description) {
-      return res.status(400).json({ message: 'Vui long nhap Tieu de va Mo ta cong viec.' });
+      return res.status(400).json({ message: 'Vui lòng nhập tiêu đề và mô tả công việc.' });
     }
 
     // Kiem tra quota dang tin theo goi dich vu
@@ -87,13 +99,13 @@ async function createJob(req, res) {
     if (sub) {
       if (sub.job_posts_used >= sub.max_job_posts) {
         return res.status(403).json({
-          message: `Goi ${sub.package_name} da het quota dang tin (${sub.max_job_posts} tin/thang). Vui long nang cap goi de dang them.`,
+          message: `Gói ${sub.package_name} đã hết hạn mức đăng tin (${sub.max_job_posts} tin/tháng). Vui lòng nâng cấp gói để đăng thêm.`,
           quota_exceeded: true
         });
       }
       if (isVip && sub.vip_posts_used >= sub.max_vip_posts) {
         return res.status(403).json({
-          message: `Goi cua ban da het quota tin VIP (${sub.max_vip_posts} tin VIP/thang).`,
+          message: `Gói của bạn đã hết hạn mức tin VIP (${sub.max_vip_posts} tin VIP/tháng).`,
           quota_exceeded: true
         });
       }
@@ -104,7 +116,7 @@ async function createJob(req, res) {
       const activeCount = await jobModel.countActiveByCompany(company.id);
       if (activeCount >= 3) {
         return res.status(403).json({
-          message: 'Tai khoan mien phi chi duoc dang toi da 3 tin dang hoat dong. Mua goi de dang them tin va co them tinh nang.',
+          message: 'Tài khoản miễn phí chỉ được đăng tối đa 3 tin đang hoạt động. Mua gói để đăng thêm tin và có thêm tính năng.',
           quota_exceeded: true,
           upgrade_required: true
         });
@@ -113,10 +125,10 @@ async function createJob(req, res) {
 
     const jobId = await jobModel.createJob(company.id, { ...req.body, is_vip: sub ? isVip : false });
     const job = await jobModel.findById(jobId);
-    res.status(201).json({ message: 'Dang tin tuyen dung thanh cong!', job });
+    res.status(201).json({ message: 'Đăng tin tuyển dụng thành công!', job });
   } catch (err) {
     console.error('createJob error:', err);
-    res.status(500).json({ message: 'Loi server, vui long thu lai sau.' });
+    res.status(500).json({ message: 'Lỗi máy chủ, vui lòng thử lại sau.' });
   }
 }
 
@@ -124,20 +136,20 @@ async function createJob(req, res) {
 async function updateJob(req, res) {
   try {
     const company = await companyModel.findByUserId(req.user.id);
-    if (!company) return res.status(404).json({ message: 'Khong tim thay ho so doanh nghiep.' });
+    if (!company) return res.status(404).json({ message: 'Không tìm thấy hồ sơ doanh nghiệp.' });
 
     const job = await jobModel.findById(req.params.id);
-    if (!job) return res.status(404).json({ message: 'Khong tim thay tin tuyen dung.' });
+    if (!job) return res.status(404).json({ message: 'Không tìm thấy tin tuyển dụng.' });
     if (job.company_id !== company.id) {
-      return res.status(403).json({ message: 'Ban khong co quyen sua tin nay.' });
+      return res.status(403).json({ message: 'Bạn không có quyền sửa tin này.' });
     }
 
     await jobModel.updateJob(req.params.id, req.body);
     const updated = await jobModel.findById(req.params.id);
-    res.json({ message: 'Cap nhat tin tuyen dung thanh cong!', job: updated });
+    res.json({ message: 'Cập nhật tin tuyển dụng thành công!', job: updated });
   } catch (err) {
     console.error('updateJob error:', err);
-    res.status(500).json({ message: 'Loi server, vui long thu lai sau.' });
+    res.status(500).json({ message: 'Lỗi máy chủ, vui lòng thử lại sau.' });
   }
 }
 
@@ -145,20 +157,23 @@ async function updateJob(req, res) {
 async function deleteJob(req, res) {
   try {
     const company = await companyModel.findByUserId(req.user.id);
-    if (!company) return res.status(404).json({ message: 'Khong tim thay ho so doanh nghiep.' });
+    if (!company) return res.status(404).json({ message: 'Không tìm thấy hồ sơ doanh nghiệp.' });
 
     const job = await jobModel.findById(req.params.id);
-    if (!job) return res.status(404).json({ message: 'Khong tim thay tin tuyen dung.' });
+    if (!job) return res.status(404).json({ message: 'Không tìm thấy tin tuyển dụng.' });
     if (job.company_id !== company.id) {
-      return res.status(403).json({ message: 'Ban khong co quyen xoa tin nay.' });
+      return res.status(403).json({ message: 'Bạn không có quyền xóa tin này.' });
     }
 
     await jobModel.deleteJob(req.params.id);
-    res.json({ message: 'Da xoa tin tuyen dung.' });
+    res.json({ message: 'Đã xóa tin tuyển dụng.' });
   } catch (err) {
     console.error('deleteJob error:', err);
-    res.status(500).json({ message: 'Loi server, vui long thu lai sau.' });
+    res.status(500).json({ message: 'Lỗi máy chủ, vui lòng thử lại sau.' });
   }
 }
 
-module.exports = { getJobs, getFeatured, getJobById, getMyJobs, createJob, updateJob, deleteJob };
+module.exports = {
+  getJobs, getFeatured, getJobById, getJobAvailability,
+  getMyJobs, createJob, updateJob, deleteJob
+};

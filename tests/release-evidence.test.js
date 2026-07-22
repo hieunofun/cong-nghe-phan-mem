@@ -86,10 +86,12 @@ test('package version matches the v0.2 release line', () => {
   assert.equal(pkg.version, '0.2.0');
 });
 
-test('configuration hygiene keeps secrets out and tracks large model via LFS', () => {
+test('configuration hygiene keeps secrets and the optional large model out of Git', () => {
   const gitignore = read('.gitignore');
-  const attrs = read('.gitattributes');
+  const renderConfig = read('render.yaml');
   assert.match(gitignore, /^\.env$/m);
+  assert.match(gitignore, /^ai_service\/models\/cv_job_matching\/$/m);
   assert.equal(exists('.env.example'), true);
-  assert.match(attrs, /ai_service\/models\/cv_job_matching\/model\.safetensors filter=lfs/);
+  assert.equal(exists('.gitattributes'), false);
+  assert.match(renderConfig, /key: AI_LIGHTWEIGHT_MODE\s+value: ['"]true['"]/);
 });

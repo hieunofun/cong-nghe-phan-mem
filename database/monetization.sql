@@ -29,8 +29,14 @@ CREATE TABLE IF NOT EXISTS payments (
   package_id INT NOT NULL,
   amount INT NOT NULL,
   status ENUM('pending','completed','failed','refunded') NOT NULL DEFAULT 'pending',
-  payment_method ENUM('bank_transfer','momo','demo') NOT NULL DEFAULT 'demo',
-  transaction_code VARCHAR(100),
+  payment_method ENUM('bank_transfer','momo','demo') NOT NULL DEFAULT 'bank_transfer',
+  transaction_code VARCHAR(100) UNIQUE,
+  expires_at DATETIME NULL,
+  terms_accepted_at DATETIME NULL,
+  terms_version VARCHAR(20) NULL,
+  privacy_version VARCHAR(20) NULL,
+  accepted_ip VARCHAR(64) NULL,
+  accepted_user_agent VARCHAR(500) NULL,
   note TEXT,
   paid_at TIMESTAMP NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -45,7 +51,7 @@ CREATE TABLE IF NOT EXISTS company_subscriptions (
   package_id INT NOT NULL,
   payment_id INT NULL,
   started_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  expires_at TIMESTAMP NOT NULL,
+  expires_at DATETIME NOT NULL,
   job_posts_used INT NOT NULL DEFAULT 0,
   vip_posts_used INT NOT NULL DEFAULT 0,
   cv_views_used INT NOT NULL DEFAULT 0,
@@ -55,17 +61,26 @@ CREATE TABLE IF NOT EXISTS company_subscriptions (
   FOREIGN KEY (payment_id) REFERENCES payments(id)
 );
 
--- 4. Them cot VIP vao jobs (bo qua neu da co)
-ALTER TABLE jobs ADD COLUMN is_vip BOOLEAN NOT NULL DEFAULT FALSE;
-ALTER TABLE jobs ADD COLUMN is_featured BOOLEAN NOT NULL DEFAULT FALSE;
+-- 4. Them cot VIP vao jobs (an toan khi chay lai migration)
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS is_vip BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS is_featured BOOLEAN NOT NULL DEFAULT FALSE;
 
 -- 5. Cho phep ung vien opt-in kho CV
-ALTER TABLE candidates ADD COLUMN is_searchable BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE candidates ADD COLUMN IF NOT EXISTS is_searchable BOOLEAN NOT NULL DEFAULT TRUE;
 
 -- 6. Seed goi dich vu
 INSERT INTO packages (name, code, price, duration_days, max_job_posts, max_vip_posts, can_search_cv, max_cv_views, description, sort_order) VALUES
-  ('Mien phi', 'free', 0, 30, 3, 0, FALSE, 0, 'Dang toi da 3 tin/thang, khong co tin VIP.', 0),
-  ('Basic', 'basic', 1500000, 30, 10, 2, FALSE, 0, '10 tin/thang, 2 tin VIP noi bat.', 1),
-  ('Pro', 'pro', 3500000, 30, 30, 10, TRUE, 50, '30 tin/thang, 10 tin VIP, tim kiem 50 CV ung vien.', 2),
-  ('Enterprise', 'enterprise', 8000000, 30, 999, 999, TRUE, 999, 'Khong gioi han tin dang, tin VIP va xem CV ung vien.', 3)
-ON DUPLICATE KEY UPDATE name = VALUES(name);
+  ('Miễn phí', 'free', 0, 30, 3, 0, FALSE, 0, 'Đăng tối đa 3 tin/tháng, không có tin VIP.', 0),
+  ('Basic', 'basic', 1500000, 30, 10, 2, TRUE, 10, '10 tin/tháng, 2 tin VIP và 10 lượt xem CV ứng viên.', 1),
+  ('Pro', 'pro', 3500000, 30, 30, 10, TRUE, 50, '30 tin/tháng, 10 tin VIP, tìm kiếm 50 CV ứng viên.', 2),
+  ('Enterprise', 'enterprise', 8000000, 30, 999, 999, TRUE, 999, 'Không giới hạn tin đăng, tin VIP và xem CV ứng viên.', 3)
+ON DUPLICATE KEY UPDATE
+  name = VALUES(name),
+  price = VALUES(price),
+  duration_days = VALUES(duration_days),
+  max_job_posts = VALUES(max_job_posts),
+  max_vip_posts = VALUES(max_vip_posts),
+  can_search_cv = VALUES(can_search_cv),
+  max_cv_views = VALUES(max_cv_views),
+  description = VALUES(description),
+  sort_order = VALUES(sort_order);

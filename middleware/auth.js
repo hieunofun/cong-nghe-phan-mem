@@ -8,7 +8,7 @@ function verifyToken(req, res, next) {
   const authHeader = req.headers['authorization'];
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ message: 'Ban chua dang nhap hoac thieu token.' });
+    return res.status(401).json({ message: 'Bạn chưa đăng nhập hoặc thiếu token.' });
   }
 
   const token = authHeader.split(' ')[1];
@@ -19,7 +19,7 @@ function verifyToken(req, res, next) {
     req.user = decoded;
     next();
   } catch (err) {
-    return res.status(401).json({ message: 'Token khong hop le hoac da het han.' });
+    return res.status(401).json({ message: 'Token không hợp lệ hoặc đã hết hạn.' });
   }
 }
 
@@ -27,10 +27,10 @@ function verifyToken(req, res, next) {
 function requireRole(...allowedRoles) {
   return (req, res, next) => {
     if (!req.user) {
-      return res.status(401).json({ message: 'Ban chua dang nhap.' });
+      return res.status(401).json({ message: 'Bạn chưa đăng nhập.' });
     }
     if (!allowedRoles.includes(req.user.role)) {
-      return res.status(403).json({ message: 'Ban khong co quyen truy cap chuc nang nay.' });
+      return res.status(403).json({ message: 'Bạn không có quyền truy cập chức năng này.' });
     }
     next();
   };

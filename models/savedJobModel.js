@@ -22,6 +22,10 @@ async function findByCandidate(candidateId) {
      JOIN jobs j ON j.id = s.job_id
      JOIN companies c ON c.id = j.company_id
      WHERE s.candidate_id = ?
+       AND NOT EXISTS (
+         SELECT 1 FROM applications a
+         WHERE a.candidate_id = s.candidate_id AND a.job_id = s.job_id
+       )
      ORDER BY s.saved_at DESC`,
     [candidateId]
   );

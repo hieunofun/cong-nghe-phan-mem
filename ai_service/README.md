@@ -1,7 +1,7 @@
 # JobLink AI Service
 
 Flask microservice cung cấp 4 tính năng AI cho hệ thống JobLink.
-Chatbot hiện dùng Groq API + RAG: truy xuất dữ liệu FAQ nội bộ và dữ liệu JobLink realtime trong MySQL, sau đó đưa context vào LLM để trả lời.
+Chatbot hiện dùng Groq API + RAG: truy xuất dữ liệu FAQ nội bộ và dữ liệu JobLink realtime trong MySQL local hoặc PostgreSQL/Supabase production, sau đó đưa context vào LLM để trả lời.
 
 ## Kiến trúc tổng thể
 
@@ -33,7 +33,7 @@ Sau khi tải về, copy toàn bộ nội dung vào thư mục `ai_service/model
 ```
 ai_service/
 └── models/
-    ├── cv_job_matching/          ← thư mục model sentence-transformer
+    ├── cv_job_matching/          ← model sentence-transformer tùy chọn, chỉ lưu local
     │   ├── config.json
     │   ├── pytorch_model.bin
     │   └── ...
@@ -45,7 +45,7 @@ ai_service/
         └── faq_data.json        ← dữ liệu tri thức FAQ, service tự build RAG index khi chạy
 ```
 
-> **Lưu ý:** Nếu chưa có models (chưa train xong), Flask service vẫn chạy được với chế độ fallback — matching dùng model base chưa fine-tune, CV analyzer dùng rule-based đơn giản.
+> **Lưu ý:** Model Sentence Transformer không được đưa lên Git và Render Free không tải model này. Flask service vẫn chấm điểm thật bằng TF-IDF + độ phủ kỹ năng. CV analyzer dùng rule-based khi classifier không tải được.
 > Chatbot không cần `tfidf_vectorizer.pkl` nữa. File này đã được thay bằng RAG index tạo động từ `faq_data.json`.
 
 ### Bước 3 — Cài đặt dependencies Python
@@ -53,10 +53,16 @@ ai_service/
 Cần Python 3.10+ và pip. Mở terminal trong thư mục `ai_service/`:
 
 ```bash
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 ```
 
-Lần đầu cài có thể mất 5–10 phút vì PyTorch và sentence-transformers khá nặng (~2GB).
+File `requirements.txt` dành cho máy local muốn dùng đầy đủ PyTorch và sentence-transformers nên có thể tải khoảng 2 GB. Render Free dùng `requirements.render.txt` nhẹ hơn.
+
+Trên Windows, nếu PyTorch báo lỗi DLL, cài lại bản CPU chính thức:
+
+```bash
+python -m pip install --force-reinstall torch==2.11.0 --index-url https://download.pytorch.org/whl/cpu
+```
 
 ### Bước 3.1 — Cấu hình Groq cho chatbot RAG
 
@@ -72,7 +78,7 @@ Nếu chưa có `GROQ_API_KEY`, chatbot vẫn chạy fallback bằng FAQ RAG nh�
 ### Bước 4 — Chạy Flask service
 
 ```bash
-python app.py
+npm run ai
 ```
 
 Service sẽ chạy tại `http://localhost:5000`. Để cửa sổ terminal này mở trong khi dùng JobLink.
@@ -84,6 +90,8 @@ npm start
 ```
 
 Node.js sẽ tự động gọi sang Flask khi cần AI. Nếu Flask chưa chạy, các tính năng AI sẽ hiển thị thông báo lỗi nhẹ, không ảnh hưởng đến các tính năng khác.
+
+CV tải lên được đọc trực tiếp khi phân tích/chấm điểm. Hệ thống hỗ trợ PDF và DOCX; file `.doc` cũ cần chuyển sang một trong hai định dạng này.
 
 ## Endpoints
 
@@ -99,7 +107,7 @@ Node.js sẽ tự động gọi sang Flask khi cần AI. Nếu Flask chưa chạ
 
 1. Nhận câu hỏi và lịch sử hội thoại gần nhất từ widget.
 2. Truy xuất dữ liệu phù hợp từ `models/chatbot/faq_data.json`.
-3. Nếu câu hỏi liên quan việc làm/công ty/lương/ngành nghề, service query MySQL để lấy context JobLink realtime.
+3. Nếu câu hỏi liên quan việc làm/công ty/lương/ngành nghề, service query MySQL/PostgreSQL để lấy context JobLink realtime.
 4. Gửi context + câu hỏi + lịch sử hội thoại sang Groq Chat Completions.
 5. Nếu Groq lỗi hoặc chưa cấu hình key, trả lời fallback bằng FAQ phù hợp nhất.
 

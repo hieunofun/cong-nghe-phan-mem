@@ -10,7 +10,7 @@ router.get('/', async (req, res) => {
     res.json(categories);
   } catch (err) {
     console.error('getCategories (public) error:', err);
-    res.status(500).json({ message: 'Loi server, vui long thu lai sau.' });
+    res.status(500).json({ message: 'Lỗi máy chủ, vui lòng thử lại sau.' });
   }
 });
 

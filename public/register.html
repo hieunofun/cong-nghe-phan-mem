@@ -27,6 +27,10 @@
     </aside>
 
     <div class="auth-form-panel auth-form-panel-wide">
+      <button type="button" class="auth-back-btn" data-history-back data-fallback="/index.html">
+        <span aria-hidden="true">&larr;</span> Quay lại
+      </button>
+
       <div class="auth-form-head">
         <p class="auth-kicker">Tham gia JobLink</p>
         <h2 id="register-title">Tạo tài khoản mới</h2>
@@ -94,7 +98,7 @@
 
         <label class="check-field terms-check">
           <input type="checkbox" id="terms" required>
-          <span>Tôi đã đọc và đồng ý với <a href="/terms.html" target="_blank">Điều khoản sử dụng</a> và <a href="/privacy.html" target="_blank">Chính sách bảo mật</a> của JobLink.</span>
+          <span>Tôi đã đọc và đồng ý với <a href="/terms.html">Điều khoản sử dụng</a> và <a href="/privacy.html">Chính sách bảo mật</a> của JobLink.</span>
         </label>
 
         <button type="submit" class="btn btn-primary btn-block auth-submit" id="submit-btn">Tạo tài khoản</button>
@@ -106,9 +110,10 @@
 </main>
 
 <script src="/js/env.js"></script>
-<script src="/js/api.js"></script>
+<script src="/js/api.js?v=20260720-2"></script>
+<script src="/js/navigation.js?v=20260720-3"></script>
 <script src="/js/social-login.js"></script>
-<script src="/js/auth.js"></script>
+<script src="/js/auth.js?v=20260720-6"></script>
 <script>renderSocialButtons('social-login-container');</script>
 </body>
 </html>

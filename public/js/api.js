@@ -5,6 +5,12 @@ const API_ORIGIN = (window.JOBLINK_API_BASE_URL || '').trim().replace(/\/$/, '')
 const API_BASE = `${API_ORIGIN}/api`;
 window.JOBLINK_API_BASE = API_BASE;
 
+function dashboardUrlForRole(role) {
+  if (role === 'admin') return '/admin-dashboard.html';
+  if (role === 'company') return '/company-dashboard.html';
+  return '/candidate-dashboard.html';
+}
+
 function apiEndpoint(path) {
   return `${API_BASE}${path}`;
 }
@@ -79,37 +85,37 @@ async function apiUpload(path, formData, method = 'POST') {
 }
 
 function formatSalary(min, max, negotiable) {
-  if (negotiable && !min && !max) return 'Thoa thuan';
-  const fmt = (n) => (n >= 1000000 ? `${(n / 1000000).toFixed(n % 1000000 === 0 ? 0 : 1)} trieu` : n.toLocaleString('vi-VN'));
+  if (negotiable && !min && !max) return 'Thỏa thuận';
+  const fmt = (n) => (n >= 1000000 ? `${(n / 1000000).toFixed(n % 1000000 === 0 ? 0 : 1)} triệu` : n.toLocaleString('vi-VN'));
   if (min && max) return `${fmt(min)} - ${fmt(max)}`;
-  if (min) return `Tu ${fmt(min)}`;
-  if (max) return `Toi ${fmt(max)}`;
-  return 'Thoa thuan';
+  if (min) return `Từ ${fmt(min)}`;
+  if (max) return `Tới ${fmt(max)}`;
+  return 'Thỏa thuận';
 }
 
 const JOB_TYPE_LABELS = {
-  'full-time': 'Toan thoi gian',
-  'part-time': 'Ban thoi gian',
-  'internship': 'Thuc tap',
-  'remote': 'Lam tu xa'
+  'full-time': 'Toàn thời gian',
+  'part-time': 'Bán thời gian',
+  'internship': 'Thực tập',
+  'remote': 'Làm từ xa'
 };
 
 const STATUS_LABELS = {
-  pending: 'Cho duyet', reviewing: 'Dang xem xet', interview: 'Phong van',
-  accepted: 'Da nhan', rejected: 'Da tu choi',
-  approved: 'Da duyet', active: 'Dang hoat dong', closed: 'Da dong',
-  expired: 'Het han', banned: 'Bi khoa'
+  pending: 'Chờ duyệt', reviewing: 'Đang xem xét', interview: 'Phỏng vấn',
+  accepted: 'Đã nhận', rejected: 'Đã từ chối',
+  approved: 'Đã duyệt', active: 'Đang hoạt động', closed: 'Đã đóng',
+  expired: 'Hết hạn', banned: 'Bị khóa'
 };
 
 function timeAgo(dateStr) {
   const diffMs = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diffMs / 60000);
-  if (mins < 1) return 'Vua xong';
-  if (mins < 60) return `${mins} phut truoc`;
+  if (mins < 1) return 'Vừa xong';
+  if (mins < 60) return `${mins} phút trước`;
   const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours} gio truoc`;
+  if (hours < 24) return `${hours} giờ trước`;
   const days = Math.floor(hours / 24);
-  if (days < 30) return `${days} ngay truoc`;
+  if (days < 30) return `${days} ngày trước`;
   return new Date(dateStr).toLocaleDateString('vi-VN');
 }
 

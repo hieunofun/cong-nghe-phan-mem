@@ -7,6 +7,7 @@ function getJobIdFromUrl() {
 let currentJob = null;
 let candidateProfile = null;
 let isSaved = false;
+let hasApplied = false;
 
 function renderActionButtons() {
   const user = getUser();
@@ -17,6 +18,13 @@ function renderActionButtons() {
 
   if (user.role !== 'candidate') {
     return `<div class="alert alert-info mb-0">Chỉ ứng viên mới có thể ứng tuyển vào tin tuyển dụng.</div>`;
+  }
+
+  if (hasApplied) {
+    return `
+      <div class="alert alert-success">Bạn đã ứng tuyển vào tin này.</div>
+      <a href="/candidate-dashboard.html?view=applications" class="btn btn-outline btn-block">Theo dõi đơn ứng tuyển</a>
+    `;
   }
 
   if (currentJob.status !== 'active') {
@@ -79,7 +87,7 @@ function renderJob() {
 
       <aside class="sticky-side">
         <div class="card detail-section" id="action-card">
-          ${renderActionButtons()}
+          <div id="job-action-buttons">${renderActionButtons()}</div>
           <div style="margin-top:16px; font-size:0.85rem; color:var(--ink-faint);">
             <div style="margin-bottom:6px;">👥 Tuyển ${job.vacancies || 1} người</div>
             ${job.experience_level ? `<div style="margin-bottom:6px;">📈 Kinh nghiệm: ${escapeHtml(job.experience_level)}</div>` : ''}
@@ -100,6 +108,13 @@ function renderJob() {
   attachActionHandlers();
 }
 
+function renderJobActions() {
+  const actionSlot = document.getElementById('job-action-buttons');
+  if (!actionSlot) return;
+  actionSlot.innerHTML = renderActionButtons();
+  attachActionHandlers();
+}
+
 async function loadMatchScore(jobId) {
   const user = getUser();
   if (!user || user.role !== 'candidate') return;
@@ -117,6 +132,7 @@ async function loadMatchScore(jobId) {
     const color = data.score >= 70 ? 'var(--success)' : data.score >= 45 ? 'var(--warning)' : 'var(--ink-faint)';
     scoreDiv.innerHTML = `
       <div style="font-size:0.78rem; color:var(--ink-faint); margin-bottom:6px;">🤖 Độ phù hợp với CV của bạn</div>
+      ${data.cv_read_warning ? `<div style="font-size:0.75rem; color:var(--warning); margin-bottom:6px;">${escapeHtml(data.cv_read_warning)}</div>` : ''}
       <div style="display:flex; align-items:center; gap:10px;">
         <div style="font-family:var(--font-mono); font-size:1.6rem; font-weight:800; color:${color};">${data.score}%</div>
         <div>
@@ -157,9 +173,14 @@ async function toggleSaveJob() {
     }
     btn.innerHTML = isSaved ? '★ Đã lưu' : '☆ Lưu tin này';
   } catch (err) {
+    if (err.status === 409) {
+      hasApplied = true;
+      isSaved = false;
+      renderJobActions();
+    }
     showToast(err.message, 'error');
   } finally {
-    btn.disabled = false;
+    if (document.body.contains(btn)) btn.disabled = false;
   }
 }
 
@@ -183,8 +204,8 @@ function openApplyModal() {
         <div class="form-group">
           <label>CV ứng tuyển</label>
           ${hasCv ? `<div class="alert alert-info">Sẽ dùng CV hiện có trong hồ sơ của bạn. Bạn có thể chọn file khác bên dưới nếu muốn dùng CV mới.</div>` : `<div class="alert alert-error">Bạn chưa có CV trong hồ sơ — vui lòng tải lên CV để ứng tuyển.</div>`}
-          <input type="file" id="cv-file" class="input" accept=".pdf,.doc,.docx">
-          <p class="form-hint">Chấp nhận file .pdf, .doc, .docx — tối đa 5MB.</p>
+          <input type="file" id="cv-file" class="input" accept=".pdf,.docx">
+          <p class="form-hint">Chấp nhận file .pdf, .docx — tối đa 5MB.</p>
         </div>
         <button type="submit" class="btn btn-accent btn-block" id="apply-submit-btn">Gửi hồ sơ ứng tuyển</button>
       </form>
@@ -217,13 +238,19 @@ function openApplyModal() {
 
       await apiUpload(`/applications/${currentJob.id}`, formData);
       overlay.remove();
-      showToast('Ứng tuyển thành công! Bạn có thể theo dõi trạng thái trong "Hồ sơ của tôi".', 'success');
-
-      const applyBtn = document.getElementById('apply-btn');
-      if (applyBtn) {
-        applyBtn.outerHTML = `<div class="alert alert-success mb-0">✓ Bạn đã ứng tuyển vào tin này</div>`;
-      }
+      hasApplied = true;
+      isSaved = false;
+      renderJobActions();
+      showToast('Ứng tuyển thành công! Tin đã được chuyển sang mục Đơn đã ứng tuyển.', 'success');
     } catch (err) {
+      if (err.status === 409) {
+        overlay.remove();
+        hasApplied = true;
+        isSaved = false;
+        renderJobActions();
+        showToast('Bạn đã ứng tuyển vào tin này rồi.', 'info');
+        return;
+      }
       alertSlot.innerHTML = `<div class="alert alert-error">${escapeHtml(err.message)}</div>`;
       submitBtn.disabled = false;
       submitBtn.innerHTML = 'Gửi hồ sơ ứng tuyển';
@@ -244,9 +271,14 @@ async function init() {
     const user = getUser();
     if (user && user.role === 'candidate') {
       try {
-        candidateProfile = await apiFetch('/candidates/me');
-        const savedJobs = await apiFetch('/candidates/me/saved-jobs');
-        isSaved = savedJobs.some((j) => j.id === currentJob.id);
+        const [profile, savedJobs, applications] = await Promise.all([
+          apiFetch('/candidates/me'),
+          apiFetch('/candidates/me/saved-jobs'),
+          apiFetch('/candidates/me/applications')
+        ]);
+        candidateProfile = profile;
+        hasApplied = applications.some((application) => Number(application.job_id) === Number(currentJob.id));
+        isSaved = !hasApplied && savedJobs.some((job) => Number(job.id) === Number(currentJob.id));
       } catch (e) { /* khong chan render chinh neu loi phu */ }
     }
 

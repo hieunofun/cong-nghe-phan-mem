@@ -25,7 +25,7 @@ async function getStats(req, res) {
     });
   } catch (err) {
     console.error('getStats error:', err);
-    res.status(500).json({ message: 'Loi server, vui long thu lai sau.' });
+    res.status(500).json({ message: 'Lỗi máy chủ, vui lòng thử lại sau.' });
   }
 }
 
@@ -36,27 +36,27 @@ async function getCompanies(req, res) {
     res.json(companies);
   } catch (err) {
     console.error('getCompanies error:', err);
-    res.status(500).json({ message: 'Loi server, vui long thu lai sau.' });
+    res.status(500).json({ message: 'Lỗi máy chủ, vui lòng thử lại sau.' });
   }
 }
 
 async function approveCompany(req, res) {
   try {
     await companyModel.updateStatus(req.params.id, 'approved');
-    res.json({ message: 'Da duyet ho so doanh nghiep.' });
+    res.json({ message: 'Đã duyệt hồ sơ doanh nghiệp.' });
   } catch (err) {
     console.error('approveCompany error:', err);
-    res.status(500).json({ message: 'Loi server, vui long thu lai sau.' });
+    res.status(500).json({ message: 'Lỗi máy chủ, vui lòng thử lại sau.' });
   }
 }
 
 async function rejectCompany(req, res) {
   try {
     await companyModel.updateStatus(req.params.id, 'rejected');
-    res.json({ message: 'Da tu choi ho so doanh nghiep.' });
+    res.json({ message: 'Đã từ chối hồ sơ doanh nghiệp.' });
   } catch (err) {
     console.error('rejectCompany error:', err);
-    res.status(500).json({ message: 'Loi server, vui long thu lai sau.' });
+    res.status(500).json({ message: 'Lỗi máy chủ, vui lòng thử lại sau.' });
   }
 }
 
@@ -67,7 +67,7 @@ async function getUsers(req, res) {
     res.json(users);
   } catch (err) {
     console.error('getUsers error:', err);
-    res.status(500).json({ message: 'Loi server, vui long thu lai sau.' });
+    res.status(500).json({ message: 'Lỗi máy chủ, vui lòng thử lại sau.' });
   }
 }
 
@@ -75,13 +75,13 @@ async function setUserStatus(req, res) {
   try {
     const { status } = req.body;
     if (!['active', 'banned'].includes(status)) {
-      return res.status(400).json({ message: "Trang thai chi co the la 'active' hoac 'banned'." });
+      return res.status(400).json({ message: "Trạng thái chỉ có thể là 'active' hoặc 'banned'." });
     }
     await userModel.updateStatus(req.params.id, status);
-    res.json({ message: 'Da cap nhat trang thai tai khoan.' });
+    res.json({ message: 'Đã cập nhật trạng thái tài khoản.' });
   } catch (err) {
     console.error('setUserStatus error:', err);
-    res.status(500).json({ message: 'Loi server, vui long thu lai sau.' });
+    res.status(500).json({ message: 'Lỗi máy chủ, vui lòng thử lại sau.' });
   }
 }
 
@@ -91,7 +91,7 @@ async function getCandidates(req, res) {
     res.json(candidates);
   } catch (err) {
     console.error('getCandidates error:', err);
-    res.status(500).json({ message: 'Loi server, vui long thu lai sau.' });
+    res.status(500).json({ message: 'Lỗi máy chủ, vui lòng thử lại sau.' });
   }
 }
 
@@ -102,17 +102,17 @@ async function getAllJobs(req, res) {
     res.json(jobs);
   } catch (err) {
     console.error('getAllJobs error:', err);
-    res.status(500).json({ message: 'Loi server, vui long thu lai sau.' });
+    res.status(500).json({ message: 'Lỗi máy chủ, vui lòng thử lại sau.' });
   }
 }
 
 async function deleteAnyJob(req, res) {
   try {
     await jobModel.deleteJob(req.params.id);
-    res.json({ message: 'Da xoa tin tuyen dung.' });
+    res.json({ message: 'Đã xóa tin tuyển dụng.' });
   } catch (err) {
     console.error('deleteAnyJob error:', err);
-    res.status(500).json({ message: 'Loi server, vui long thu lai sau.' });
+    res.status(500).json({ message: 'Lỗi máy chủ, vui lòng thử lại sau.' });
   }
 }
 
@@ -123,14 +123,14 @@ async function getCategories(req, res) {
     res.json(categories);
   } catch (err) {
     console.error('getCategories error:', err);
-    res.status(500).json({ message: 'Loi server, vui long thu lai sau.' });
+    res.status(500).json({ message: 'Lỗi máy chủ, vui lòng thử lại sau.' });
   }
 }
 
 async function createCategory(req, res) {
   try {
     const { name } = req.body;
-    if (!name) return res.status(400).json({ message: 'Vui long nhap ten nganh nghe.' });
+    if (!name) return res.status(400).json({ message: 'Vui lòng nhập tên ngành nghề.' });
 
     const slug = name
       .toLowerCase()
@@ -140,20 +140,20 @@ async function createCategory(req, res) {
       .replace(/(^-|-$)/g, '');
 
     const id = await categoryModel.create({ name, slug });
-    res.status(201).json({ message: 'Da them nganh nghe moi.', id });
+    res.status(201).json({ message: 'Đã thêm ngành nghề mới.', id });
   } catch (err) {
     console.error('createCategory error:', err);
-    res.status(500).json({ message: 'Loi server, vui long thu lai sau.' });
+    res.status(500).json({ message: 'Lỗi máy chủ, vui lòng thử lại sau.' });
   }
 }
 
 async function deleteCategory(req, res) {
   try {
     await categoryModel.remove(req.params.id);
-    res.json({ message: 'Da xoa nganh nghe.' });
+    res.json({ message: 'Đã xóa ngành nghề.' });
   } catch (err) {
     console.error('deleteCategory error:', err);
-    res.status(500).json({ message: 'Loi server, vui long thu lai sau.' });
+    res.status(500).json({ message: 'Lỗi máy chủ, vui lòng thử lại sau.' });
   }
 }
 

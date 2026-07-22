@@ -5,6 +5,21 @@ const user = requireAuth(['company']);
 let companyProfile = null;
 let myJobs = [];
 let currentSub = null;
+let applicantRequestId = 0;
+let applicantSearchTimer = null;
+
+const applicantState = {
+  jobId: null,
+  status: '',
+  search: '',
+  skill: '',
+  sort: 'newest',
+  page: 1,
+  limit: 20,
+  total: 0,
+  totalPages: 0,
+  counts: {}
+};
 
 const VIEW_META = {
   overview: { title: 'Tổng quan', subtitle: 'Tình hình tuyển dụng của doanh nghiệp bạn.' },
@@ -14,15 +29,20 @@ const VIEW_META = {
 };
 
 function switchView(view) {
+  if (!VIEW_META[view]) return;
   document.querySelectorAll('.dash-nav a').forEach((a) => a.classList.toggle('active', a.dataset.view === view));
   document.querySelectorAll('.dash-view').forEach((el) => { el.style.display = el.id === `view-${view}` ? 'block' : 'none'; });
   document.getElementById('view-title').textContent = VIEW_META[view].title;
   document.getElementById('view-subtitle').textContent = VIEW_META[view].subtitle;
   renderHeaderAction(view);
+  if (typeof syncDashboardView === 'function') syncDashboardView(view);
 }
 
-document.querySelectorAll('.dash-nav a').forEach((a) => {
-  a.addEventListener('click', (e) => { e.preventDefault(); switchView(a.dataset.view); });
+document.querySelectorAll('.dash-nav a[data-view]').forEach((a) => {
+  a.addEventListener('click', (e) => {
+    e.preventDefault();
+    (window.switchView || switchView)(a.dataset.view);
+  });
 });
 
 function renderHeaderAction(view) {
@@ -225,6 +245,30 @@ async function getCategories() {
   return categoriesCache;
 }
 
+const MAX_JOB_SALARY = 2000000000;
+
+function getVndDigits(value) {
+  return String(value ?? '')
+    .replace(/\D/g, '')
+    .replace(/^0+(?=\d)/, '');
+}
+
+function formatVndInput(value) {
+  const digits = getVndDigits(value);
+  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+
+function parseVndInput(value) {
+  const digits = getVndDigits(value);
+  return digits ? Number(digits) : null;
+}
+
+function setupVndInput(input) {
+  input.addEventListener('input', () => {
+    input.value = formatVndInput(input.value);
+  });
+}
+
 async function openJobModal(job) {
   const categories = await getCategories();
   const sub = currentSub;
@@ -274,13 +318,16 @@ async function openJobModal(job) {
         <div class="form-row">
           <div class="form-group">
             <label>Lương tối thiểu (VNĐ)</label>
-            <input type="number" id="jf-salary-min" class="input" value="${job?.salary_min || ''}">
+            <input type="text" id="jf-salary-min" class="input" inputmode="numeric" autocomplete="off"
+              maxlength="13" placeholder="Ví dụ: 10.000.000" value="${formatVndInput(job?.salary_min)}">
           </div>
           <div class="form-group">
             <label>Lương tối đa (VNĐ)</label>
-            <input type="number" id="jf-salary-max" class="input" value="${job?.salary_max || ''}">
+            <input type="text" id="jf-salary-max" class="input" inputmode="numeric" autocomplete="off"
+              maxlength="13" placeholder="Ví dụ: 20.000.000" value="${formatVndInput(job?.salary_max)}">
           </div>
         </div>
+        <p class="form-hint" style="margin-top:-12px; margin-bottom:18px;">Để trống cả hai ô nếu mức lương thỏa thuận.</p>
         <div class="form-row">
           <div class="form-group">
             <label>Địa điểm làm việc</label>
@@ -316,13 +363,35 @@ async function openJobModal(job) {
   document.getElementById('job-modal-close').addEventListener('click', () => overlay.remove());
   overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
 
+  const salaryMinInput = document.getElementById('jf-salary-min');
+  const salaryMaxInput = document.getElementById('jf-salary-max');
+  setupVndInput(salaryMinInput);
+  setupVndInput(salaryMaxInput);
+
   document.getElementById('job-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const btn = document.getElementById('job-submit-btn');
     const alertSlot = document.getElementById('job-modal-alert');
     alertSlot.innerHTML = '';
-    btn.disabled = true;
-    btn.innerHTML = `<span class="loading-spinner"></span> Đang xử lý...`;
+
+    const salaryMin = parseVndInput(salaryMinInput.value);
+    const salaryMax = parseVndInput(salaryMaxInput.value);
+
+    if ((salaryMin !== null && salaryMin <= 0) || (salaryMax !== null && salaryMax <= 0)) {
+      alertSlot.innerHTML = '<div class="alert alert-error">Mức lương phải lớn hơn 0 VNĐ.</div>';
+      (salaryMin !== null && salaryMin <= 0 ? salaryMinInput : salaryMaxInput).focus();
+      return;
+    }
+    if ((salaryMin !== null && salaryMin > MAX_JOB_SALARY) || (salaryMax !== null && salaryMax > MAX_JOB_SALARY)) {
+      alertSlot.innerHTML = '<div class="alert alert-error">Mức lương không được vượt quá 2.000.000.000 VNĐ.</div>';
+      (salaryMin !== null && salaryMin > MAX_JOB_SALARY ? salaryMinInput : salaryMaxInput).focus();
+      return;
+    }
+    if (salaryMin !== null && salaryMax !== null && salaryMin > salaryMax) {
+      alertSlot.innerHTML = '<div class="alert alert-error">Lương tối thiểu không được lớn hơn lương tối đa.</div>';
+      salaryMaxInput.focus();
+      return;
+    }
 
     const body = {
       title: document.getElementById('jf-title').value.trim(),
@@ -331,14 +400,18 @@ async function openJobModal(job) {
       description: document.getElementById('jf-description').value.trim(),
       requirements: document.getElementById('jf-requirements').value.trim(),
       benefits: document.getElementById('jf-benefits').value.trim(),
-      salary_min: document.getElementById('jf-salary-min').value || null,
-      salary_max: document.getElementById('jf-salary-max').value || null,
+      salary_min: salaryMin,
+      salary_max: salaryMax,
+      salary_negotiable: salaryMin === null && salaryMax === null,
       location: document.getElementById('jf-location').value.trim(),
       vacancies: document.getElementById('jf-vacancies').value || 1,
       experience_level: document.getElementById('jf-experience').value.trim(),
       deadline: document.getElementById('jf-deadline').value || null,
       is_vip: document.getElementById('jf-vip') ? document.getElementById('jf-vip').checked : false
     };
+
+    btn.disabled = true;
+    btn.innerHTML = `<span class="loading-spinner"></span> Đang xử lý...`;
 
     try {
       if (isEdit) {
@@ -364,11 +437,19 @@ function populateJobSelect() {
   if (myJobs.length === 0) {
     select.innerHTML = `<option>Chưa có tin tuyển dụng</option>`;
     document.getElementById('pipeline').innerHTML = '';
+    document.getElementById('applicant-stage-tabs').innerHTML = '';
+    document.getElementById('applicant-results-summary').textContent = 'Hãy đăng tin tuyển dụng trước để nhận hồ sơ.';
     return;
   }
   select.innerHTML = myJobs.map((j) => `<option value="${j.id}">${escapeHtml(j.title)} (${j.application_count || 0} ứng viên)</option>`).join('');
-  select.onchange = () => loadApplicants(select.value);
-  loadApplicants(select.value);
+  const selectedJob = myJobs.find((job) => Number(job.id) === Number(applicantState.jobId)) || myJobs[0];
+  select.value = selectedJob.id;
+  select.onchange = () => {
+    applicantState.status = '';
+    applicantState.page = 1;
+    loadApplicants(select.value, { resetPage: true });
+  };
+  loadApplicants(selectedJob.id, { resetPage: Number(applicantState.jobId) !== Number(selectedJob.id) });
 }
 
 const PIPELINE_STAGES = [
@@ -379,63 +460,343 @@ const PIPELINE_STAGES = [
   { key: 'rejected', label: 'Đã từ chối' }
 ];
 
+const ALL_APPLICANT_STAGE = { key: '', label: 'Tất cả' };
+
+const PIPELINE_TRANSITIONS = {
+  pending: ['reviewing', 'rejected'],
+  reviewing: ['pending', 'interview', 'rejected'],
+  interview: ['reviewing', 'accepted', 'rejected'],
+  accepted: ['reviewing'],
+  rejected: ['reviewing']
+};
+
+function statusOptionsHtml(app) {
+  const allowed = new Set([app.status, ...(PIPELINE_TRANSITIONS[app.status] || [])]);
+  return PIPELINE_STAGES
+    .filter((stage) => allowed.has(stage.key))
+    .map((stage) => `<option value="${stage.key}" ${app.status === stage.key ? 'selected' : ''}>${stage.label}</option>`)
+    .join('');
+}
+
 function applicantCardHtml(app) {
+  const displayName = String(app.display_name || app.full_name || app.email || 'Ứng viên chưa cập nhật tên').trim();
+  const initials = displayName.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase();
+  const hasScore = app.ai_score !== null && app.ai_score !== undefined && app.ai_score !== '';
+  const appliedDate = app.applied_at ? new Date(app.applied_at).toLocaleDateString('vi-VN') : 'Chưa rõ';
   return `
     <div class="applicant-card">
-      <div class="ac-name">${escapeHtml(app.full_name)}</div>
-      <div class="ac-meta">${escapeHtml(app.phone || 'Chưa có SĐT')}</div>
-      ${app.skills ? `<div class="ac-meta">${escapeHtml(app.skills.slice(0, 60))}${app.skills.length > 60 ? '...' : ''}</div>` : ''}
-      ${app.cv_url ? `<a href="${app.cv_url}" target="_blank" class="btn btn-ghost btn-sm" style="padding:4px 10px; font-size:0.75rem;">Xem CV</a>` : ''}
-      <select onchange="updateApplicationStatus(${app.id}, this.value)">
-        ${PIPELINE_STAGES.map((s) => `<option value="${s.key}" ${app.status === s.key ? 'selected' : ''}>${s.label}</option>`).join('')}
-      </select>
+      <div class="ac-head">
+        <div class="ac-avatar">${escapeHtml(initials || '?')}</div>
+        <div class="ac-primary">
+          <div class="ac-name">${escapeHtml(displayName)}</div>
+          <div class="ac-email">${escapeHtml(app.email || 'Chưa có email')}</div>
+        </div>
+        <div class="ac-score ${hasScore ? 'has-score' : ''}" title="${escapeHtml(app.ai_label || 'Chưa phân tích mức độ phù hợp')}">
+          ${hasScore ? `${Number(app.ai_score).toLocaleString('vi-VN')} điểm` : 'Chưa chấm AI'}
+        </div>
+      </div>
+      <div class="ac-details">
+        <div>
+          <div class="ac-detail-label">Số điện thoại</div>
+          <div class="ac-detail-value">${escapeHtml(app.phone || 'Chưa cập nhật')}</div>
+        </div>
+        <div>
+          <div class="ac-detail-label">Ngày ứng tuyển</div>
+          <div class="ac-detail-value">${appliedDate}</div>
+        </div>
+        <div class="ac-skills">
+          <div class="ac-detail-label">Kỹ năng</div>
+          <div class="ac-detail-value">${escapeHtml(app.skills ? `${app.skills.slice(0, 140)}${app.skills.length > 140 ? '...' : ''}` : 'Chưa cập nhật')}</div>
+        </div>
+      </div>
+      ${app.status_note ? `<div class="ac-note"><strong>Ghi chú:</strong> ${escapeHtml(app.status_note)}</div>` : ''}
+      <div class="ac-actions">
+        ${app.cv_url ? `<a href="${app.cv_url}" target="_blank" rel="noopener" class="btn btn-ghost btn-sm">Xem CV</a>` : ''}
+        <button type="button" class="btn btn-outline btn-sm" onclick="analyzeCandidate(${app.id})">AI phân tích</button>
+        <button type="button" class="btn btn-ghost btn-sm" data-status-history="${app.id}">Lịch sử</button>
+        <select class="input ac-status" aria-label="Trạng thái hồ sơ" data-application-status="${app.id}" data-current-status="${app.status}">
+          ${statusOptionsHtml(app)}
+        </select>
+      </div>
     </div>
   `;
 }
 
-async function loadApplicants(jobId) {
+function requestStatusChange(app, nextStatus) {
+  const nextLabel = PIPELINE_STAGES.find((stage) => stage.key === nextStatus)?.label || nextStatus;
+  const isReopening = ['accepted', 'rejected'].includes(app.status);
+  const needsReason = nextStatus === 'rejected';
+
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML = `
+      <div class="modal-box" style="max-width:480px;" role="dialog" aria-modal="true">
+        <div class="modal-head">
+          <h3 class="mb-0">${isReopening ? 'Mở lại hồ sơ' : `Chuyển sang “${nextLabel}”`}</h3>
+          <button type="button" class="modal-close" data-status-cancel>&times;</button>
+        </div>
+        <p style="color:var(--ink-soft); margin-bottom:16px;">
+          ${isReopening
+            ? 'Hồ sơ này đã kết thúc. Sau khi mở lại, hồ sơ sẽ chuyển về giai đoạn Đang xem xét.'
+            : `Xác nhận cập nhật trạng thái của ${escapeHtml(app.display_name || app.email)}.`}
+        </p>
+        ${needsReason ? `
+          <div class="form-group">
+            <label for="status-change-note">Lý do từ chối *</label>
+            <textarea id="status-change-note" class="input" maxlength="1000" required placeholder="Nêu lý do ngắn gọn để ứng viên hiểu kết quả..."></textarea>
+          </div>` : ''}
+        <div id="status-change-alert"></div>
+        <div style="display:flex; justify-content:flex-end; gap:10px;">
+          <button type="button" class="btn btn-outline" data-status-cancel>Hủy</button>
+          <button type="button" class="btn btn-primary" id="status-change-confirm">Xác nhận</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    let settled = false;
+    const close = (result) => {
+      if (settled) return;
+      settled = true;
+      overlay.remove();
+      resolve(result);
+    };
+    overlay.querySelectorAll('[data-status-cancel]').forEach((button) => {
+      button.addEventListener('click', () => close(null));
+    });
+    overlay.addEventListener('click', (event) => {
+      if (event.target === overlay) close(null);
+    });
+    overlay.querySelector('#status-change-confirm').addEventListener('click', () => {
+      const note = overlay.querySelector('#status-change-note')?.value.trim() || '';
+      if (needsReason && note.length < 3) {
+        overlay.querySelector('#status-change-alert').innerHTML = '<div class="alert alert-error">Vui lòng nhập lý do từ chối.</div>';
+        overlay.querySelector('#status-change-note').focus();
+        return;
+      }
+      close({ note, confirm_reopen: isReopening });
+    });
+    overlay.querySelector('#status-change-note')?.focus();
+  });
+}
+
+async function showApplicationHistory(applicationId) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal-box" style="max-width:520px;" role="dialog" aria-modal="true">
+      <div class="modal-head">
+        <h3 class="mb-0">Lịch sử xử lý hồ sơ</h3>
+        <button type="button" class="modal-close">&times;</button>
+      </div>
+      <div id="status-history-content"><div class="loading-spinner"></div></div>
+    </div>`;
+  document.body.appendChild(overlay);
+  const close = () => overlay.remove();
+  overlay.querySelector('.modal-close').addEventListener('click', close);
+  overlay.addEventListener('click', (event) => { if (event.target === overlay) close(); });
+
+  try {
+    const history = await apiFetch(`/applications/${applicationId}/history`);
+    document.getElementById('status-history-content').innerHTML = history.length
+      ? history.map((item) => `
+          <div style="padding:12px 0; border-bottom:1px solid var(--border);">
+            <div style="font-weight:600; font-size:0.88rem;">${STATUS_LABELS[item.from_status] || item.from_status} → ${STATUS_LABELS[item.to_status] || item.to_status}</div>
+            <div class="form-hint">${new Date(item.changed_at).toLocaleString('vi-VN')} · ${escapeHtml(item.changed_by_email || 'Tài khoản đã xóa')}</div>
+            ${item.note ? `<p style="font-size:0.82rem; margin:6px 0 0;">${escapeHtml(item.note)}</p>` : ''}
+          </div>`).join('')
+      : '<div class="empty-state" style="padding:28px 0;">Chưa có thay đổi trạng thái nào.</div>';
+  } catch (err) {
+    document.getElementById('status-history-content').innerHTML = `<div class="alert alert-error">${escapeHtml(err.message)}</div>`;
+  }
+}
+
+function renderApplicantStageTabs() {
+  const stages = [ALL_APPLICANT_STAGE, ...PIPELINE_STAGES];
+  const total = PIPELINE_STAGES.reduce((sum, stage) => sum + Number(applicantState.counts[stage.key] || 0), 0);
+  const tabs = document.getElementById('applicant-stage-tabs');
+  tabs.innerHTML = stages.map((stage) => {
+    const count = stage.key ? Number(applicantState.counts[stage.key] || 0) : total;
+    return `
+      <button type="button" role="tab" class="applicant-stage-tab ${applicantState.status === stage.key ? 'active' : ''}"
+        aria-selected="${applicantState.status === stage.key}" data-applicant-stage="${stage.key}">
+        ${stage.label}<span class="applicant-stage-count">${count}</span>
+      </button>`;
+  }).join('');
+
+  tabs.querySelectorAll('[data-applicant-stage]').forEach((button) => {
+    button.addEventListener('click', () => {
+      if (applicantState.status === button.dataset.applicantStage) return;
+      applicantState.status = button.dataset.applicantStage;
+      applicantState.page = 1;
+      loadApplicants(applicantState.jobId);
+    });
+  });
+}
+
+function renderApplicantPagination() {
+  const el = document.getElementById('applicant-pagination');
+  if (applicantState.totalPages <= 1) {
+    el.innerHTML = '';
+    return;
+  }
+  el.innerHTML = `
+    <button type="button" class="btn btn-outline btn-sm" data-applicant-page="prev" ${applicantState.page <= 1 ? 'disabled' : ''}>Trước</button>
+    <span class="applicant-pagination-info">Trang ${applicantState.page}/${applicantState.totalPages}</span>
+    <button type="button" class="btn btn-outline btn-sm" data-applicant-page="next" ${applicantState.page >= applicantState.totalPages ? 'disabled' : ''}>Sau</button>
+  `;
+  el.querySelector('[data-applicant-page="prev"]').addEventListener('click', () => {
+    applicantState.page -= 1;
+    loadApplicants(applicantState.jobId);
+  });
+  el.querySelector('[data-applicant-page="next"]').addEventListener('click', () => {
+    applicantState.page += 1;
+    loadApplicants(applicantState.jobId);
+  });
+}
+
+function bindApplicantCardEvents(apps, jobId) {
+  const pipelineEl = document.getElementById('pipeline');
+  pipelineEl.querySelectorAll('[data-application-status]').forEach((select) => {
+    select.addEventListener('change', async () => {
+      const app = apps.find((item) => Number(item.id) === Number(select.dataset.applicationStatus));
+      const previousStatus = select.dataset.currentStatus;
+      const nextStatus = select.value;
+      select.value = previousStatus;
+      if (!app || nextStatus === previousStatus) return;
+
+      const confirmation = await requestStatusChange(app, nextStatus);
+      if (!confirmation) return;
+
+      select.disabled = true;
+      try {
+        await apiFetch(`/applications/${app.id}/status`, {
+          method: 'PUT',
+          body: { status: nextStatus, ...confirmation }
+        });
+        showToast('Đã cập nhật trạng thái ứng viên.', 'success');
+        await loadApplicants(jobId);
+      } catch (err) {
+        showToast(err.message, 'error');
+        select.disabled = false;
+      }
+    });
+  });
+  pipelineEl.querySelectorAll('[data-status-history]').forEach((button) => {
+    button.addEventListener('click', () => showApplicationHistory(Number(button.dataset.statusHistory)));
+  });
+}
+
+async function loadApplicants(jobId, { resetPage = false } = {}) {
   if (!jobId) return;
+  applicantState.jobId = Number(jobId);
+  if (resetPage) applicantState.page = 1;
+  const requestId = ++applicantRequestId;
   const pipelineEl = document.getElementById('pipeline');
   const emptyEl = document.getElementById('applicants-empty');
+  const summaryEl = document.getElementById('applicant-results-summary');
+  pipelineEl.classList.add('is-loading');
+  pipelineEl.innerHTML = '<span class="loading-spinner"></span>';
+  emptyEl.style.display = 'none';
+  document.getElementById('applicant-pagination').innerHTML = '';
+
+  const params = new URLSearchParams({
+    page: String(applicantState.page),
+    limit: String(applicantState.limit),
+    sort: applicantState.sort
+  });
+  if (applicantState.status) params.set('status', applicantState.status);
+  if (applicantState.search) params.set('search', applicantState.search);
+  if (applicantState.skill) params.set('skill', applicantState.skill);
+
   try {
-    const apps = await apiFetch(`/applications/job/${jobId}`);
+    const data = await apiFetch(`/applications/job/${jobId}?${params.toString()}`);
+    if (requestId !== applicantRequestId) return;
+
+    applicantState.total = Number(data.total || 0);
+    applicantState.totalPages = Number(data.totalPages || 0);
+    applicantState.counts = data.counts || {};
+    const apps = data.applications || [];
+
+    if (applicantState.totalPages > 0 && applicantState.page > applicantState.totalPages) {
+      applicantState.page = applicantState.totalPages;
+      return loadApplicants(jobId);
+    }
+
+    renderApplicantStageTabs();
+    const activeStage = PIPELINE_STAGES.find((stage) => stage.key === applicantState.status);
+    document.getElementById('applicant-results-title').textContent = activeStage ? activeStage.label : 'Tất cả ứng viên';
+    const start = applicantState.total ? ((applicantState.page - 1) * applicantState.limit) + 1 : 0;
+    const end = Math.min(applicantState.page * applicantState.limit, applicantState.total);
+    summaryEl.textContent = applicantState.total
+      ? `Hiển thị ${start}-${end} trong ${applicantState.total} hồ sơ`
+      : 'Không tìm thấy hồ sơ phù hợp';
+
+    pipelineEl.classList.remove('is-loading');
     if (apps.length === 0) {
       pipelineEl.innerHTML = '';
       emptyEl.style.display = 'block';
+      emptyEl.querySelector('p').textContent = applicantState.search || applicantState.skill
+        ? 'Không có ứng viên phù hợp với từ khóa và bộ lọc hiện tại.'
+        : activeStage
+          ? `Chưa có ứng viên ở giai đoạn “${activeStage.label}”.`
+          : 'Chưa có ứng viên nào ứng tuyển vào tin này.';
+      renderApplicantPagination();
       return;
     }
     emptyEl.style.display = 'none';
-    pipelineEl.innerHTML = PIPELINE_STAGES.map((stage) => {
-      const stageApps = apps.filter((a) => a.status === stage.key);
-      return `
-        <div class="pipeline-col">
-          <h4>${stage.label} (${stageApps.length})</h4>
-          ${stageApps.map(applicantCardHtml).join('') || '<p style="font-size:0.8rem; color:var(--ink-faint);">Không có</p>'}
-        </div>
-      `;
-    }).join('');
+    pipelineEl.innerHTML = apps.map(applicantCardHtml).join('');
+    bindApplicantCardEvents(apps, jobId);
+    renderApplicantPagination();
   } catch (err) {
+    if (requestId !== applicantRequestId) return;
+    pipelineEl.classList.remove('is-loading');
+    pipelineEl.innerHTML = `<div class="alert alert-error" style="grid-column:1/-1;">${escapeHtml(err.message)}</div>`;
+    summaryEl.textContent = 'Không tải được dữ liệu ứng viên.';
     showToast('Không tải được danh sách ứng viên: ' + err.message, 'error');
   }
 }
 
-window.updateApplicationStatus = async function (appId, status) {
-  try {
-    await apiFetch(`/applications/${appId}/status`, { method: 'PUT', body: { status } });
-    showToast('Đã cập nhật trạng thái ứng viên.', 'success');
-    const jobId = document.getElementById('job-select').value;
-    loadApplicants(jobId);
-    loadJobs();
-  } catch (err) {
-    showToast(err.message, 'error');
-  }
-};
+function setupApplicantFilters() {
+  const triggerSearch = () => {
+    clearTimeout(applicantSearchTimer);
+    applicantSearchTimer = setTimeout(() => {
+      applicantState.search = document.getElementById('applicant-search').value.trim();
+      applicantState.skill = document.getElementById('applicant-skill').value.trim();
+      applicantState.page = 1;
+      loadApplicants(applicantState.jobId);
+    }, 350);
+  };
+  document.getElementById('applicant-search').addEventListener('input', triggerSearch);
+  document.getElementById('applicant-skill').addEventListener('input', triggerSearch);
+  document.getElementById('applicant-sort').addEventListener('change', (event) => {
+    applicantState.sort = event.target.value;
+    applicantState.page = 1;
+    loadApplicants(applicantState.jobId);
+  });
+  document.getElementById('applicant-clear-filters').addEventListener('click', () => {
+    clearTimeout(applicantSearchTimer);
+    document.getElementById('applicant-search').value = '';
+    document.getElementById('applicant-skill').value = '';
+    document.getElementById('applicant-sort').value = 'newest';
+    Object.assign(applicantState, { search: '', skill: '', sort: 'newest', status: '', page: 1 });
+    loadApplicants(applicantState.jobId);
+  });
+}
+
+setupApplicantFilters();
 
 async function init() {
   await loadProfile();
   await loadJobs();
   try { currentSub = await apiFetch('/payments/subscription'); } catch(e) { currentSub = null; }
-  renderHeaderAction('overview');
+  const requestedView = new URLSearchParams(window.location.search).get('view');
+  if (requestedView && VIEW_META[requestedView]) {
+    (window.switchView || switchView)(requestedView);
+  } else {
+    renderHeaderAction('overview');
+  }
 }
 
 init();
@@ -475,7 +836,7 @@ async function loadSubscription() {
             }
           </div>
           <a href="/packages.html" class="btn btn-primary">
-            ${sub ? '⬆️ Nâng cấp gói' : '💎 Mua gói ngay'}
+            ${sub ? 'Nâng cấp gói' : 'Xem và chọn gói'}
           </a>
         </div>
 
@@ -506,15 +867,17 @@ async function loadSubscription() {
           ? `<div class="empty-state" style="padding:24px 0;"><div class="empty-icon">📄</div><p>Chưa có giao dịch nào.</p></div>`
           : `<div class="table-wrap">
                <table>
-                 <thead><tr><th>Gói</th><th>Số tiền</th><th>Phương thức</th><th>Trạng thái</th><th>Ngày</th></tr></thead>
+                 <thead><tr><th>Gói</th><th>Mã đơn</th><th>Số tiền</th><th>Phương thức</th><th>Trạng thái</th><th>Ngày</th><th></th></tr></thead>
                  <tbody>
                    ${payments.map(p => `
                      <tr>
                        <td><strong>${escapeHtml(p.package_name)}</strong></td>
+                       <td style="font-family:var(--font-mono); font-size:.78rem;">${escapeHtml(p.transaction_code || '—')}</td>
                        <td style="font-family:var(--font-mono);">${Number(p.amount).toLocaleString('vi-VN')} đ</td>
-                       <td>${p.payment_method === 'demo' ? '⚡ Demo' : p.payment_method === 'bank_transfer' ? '🏦 Chuyển khoản' : '📱 MoMo'}</td>
-                       <td><span class="badge badge-${p.status === 'completed' ? 'accepted' : p.status === 'pending' ? 'pending' : 'rejected'}">${p.status === 'completed' ? 'Hoàn tất' : p.status === 'pending' ? 'Chờ duyệt' : 'Thất bại'}</span></td>
+                       <td>${p.payment_method === 'bank_transfer' ? 'Chuyển khoản' : p.payment_method === 'demo' ? 'Demo cũ' : 'MoMo cũ'}</td>
+                       <td><span class="badge badge-${p.status === 'completed' ? 'accepted' : p.status === 'pending' ? 'pending' : 'rejected'}">${p.status === 'completed' ? 'Hoàn tất' : p.status === 'pending' ? 'Chờ thanh toán' : p.status === 'expired' ? 'Hết hạn' : 'Thất bại'}</span></td>
                        <td style="font-size:0.82rem; color:var(--ink-faint);">${new Date(p.created_at).toLocaleDateString('vi-VN')}</td>
+                       <td>${p.transaction_code ? `<a class="btn btn-outline btn-sm" href="/packages.html?payment=${p.id}">Xem đơn</a>` : ''}</td>
                      </tr>
                    `).join('')}
                  </tbody>
@@ -535,13 +898,8 @@ window.switchView = function(view) {
   if (view === 'subscription') loadSubscription();
 };
 
-// Overwrite nav listeners to use the new switchView
-document.querySelectorAll('.dash-nav a[data-view]').forEach((a) => {
-  a.onclick = (e) => { e.preventDefault(); window.switchView(a.dataset.view); };
-});
-
 // ── AI PHAN TICH UNG VIEN ─────────────────────────────────────
-window.analyzeCandidate = async function(candidateId) {
+window.analyzeCandidate = async function(applicationId) {
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
   overlay.innerHTML = `
@@ -559,7 +917,7 @@ window.analyzeCandidate = async function(candidateId) {
   overlay.addEventListener('click', e => { if(e.target===overlay) overlay.remove(); });
 
   try {
-    const data = await apiFetch('/ai/analyze-cv/' + candidateId);
+    const data = await apiFetch('/ai/analyze-application/' + applicationId);
     const EXP_LABEL = { fresher:'Fresher (Mới ra trường)', junior:'Junior (1-2 năm)', middle:'Middle (3-5 năm)', senior:'Senior (5+ năm)' };
     document.getElementById('ai-analyze-result').innerHTML = `
       <div style="text-align:left;">
@@ -567,6 +925,14 @@ window.analyzeCandidate = async function(candidateId) {
           <strong>${escapeHtml(data.candidate_name || 'Ứng viên')}</strong><br>
           <span style="font-size:0.85rem; color:var(--primary-dark);">${escapeHtml(data.summary)}</span>
         </div>
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; border:1px solid var(--border); border-radius:8px; padding:12px; margin-bottom:14px;">
+          <div>
+            <div class="form-hint mb-0" style="margin-bottom:3px;">Mức độ phù hợp với tin tuyển dụng</div>
+            <strong>${escapeHtml(data.match_label || 'Chưa xác định')}</strong>
+          </div>
+          <div style="font-family:var(--font-mono); font-size:1.35rem; font-weight:700; color:var(--primary-dark);">${Number(data.match_score || 0).toLocaleString('vi-VN')} điểm</div>
+        </div>
+        ${data.cv_read_warning ? `<div class="alert alert-warning" style="margin-bottom:14px;">${escapeHtml(data.cv_read_warning)}</div>` : ''}
         <div style="display:flex; gap:16px; margin-bottom:14px;">
           <div><div class="form-hint mb-0" style="margin-bottom:4px;">Cấp độ</div><span class="badge badge-accepted">${EXP_LABEL[data.experience_level]||data.experience_level}</span></div>
           <div><div class="form-hint mb-0" style="margin-bottom:4px;">Số kỹ năng</div><div style="font-family:var(--font-mono); font-weight:700; font-size:1.2rem;">${data.skill_count}</div></div>
@@ -574,6 +940,7 @@ window.analyzeCandidate = async function(candidateId) {
         ${data.tech_skills?.length ? `<div style="margin-bottom:12px;"><div class="form-hint mb-0" style="margin-bottom:6px;">Kỹ năng kỹ thuật</div><div style="display:flex;flex-wrap:wrap;gap:5px;">${data.tech_skills.slice(0,12).map(s=>`<span class="badge badge-reviewing">${escapeHtml(s)}</span>`).join('')}</div></div>` : ''}
         ${data.suggested_titles?.length ? `<div><div class="form-hint mb-0" style="margin-bottom:6px;">Vị trí phù hợp</div><div style="display:flex;flex-wrap:wrap;gap:5px;">${data.suggested_titles.map(t=>`<span class="badge badge-interview">${escapeHtml(t)}</span>`).join('')}</div></div>` : ''}
       </div>`;
+    loadApplicants(applicantState.jobId);
   } catch (err) {
     document.getElementById('ai-analyze-result').innerHTML =
       `<div class="alert alert-error">${err.ai_offline ? '⚠️ AI Service chưa chạy. Khởi động: python ai_service/app.py' : escapeHtml(err.message)}</div>`;

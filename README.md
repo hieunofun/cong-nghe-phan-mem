@@ -1,6 +1,8 @@
 # JobLink — Nền tảng tuyển dụng nhân sự
 
-Một nền tảng tuyển dụng kiểu TopCV, xây dựng bằng **Node.js / Express / MySQL** cho backend và **HTML / CSS / JavaScript thuần** cho frontend. Hỗ trợ 3 vai trò: **Ứng viên**, **Doanh nghiệp**, **Quản trị viên (Admin)**.
+> Triển khai production trên Render Free + Supabase: xem [RENDER_FREE_DEPLOY.md](./RENDER_FREE_DEPLOY.md).
+
+Một nền tảng tuyển dụng kiểu TopCV, xây dựng bằng **Node.js / Express / MySQL hoặc Supabase PostgreSQL** cho backend và **HTML / CSS / JavaScript thuần** cho frontend. Hỗ trợ 3 vai trò: **Ứng viên**, **Doanh nghiệp**, **Quản trị viên (Admin)**.
 
 ## Tính năng chính
 
@@ -12,9 +14,9 @@ Một nền tảng tuyển dụng kiểu TopCV, xây dựng bằng **Node.js / E
 
 ## Công nghệ sử dụng
 
-- **Backend:** Node.js, Express, MySQL (mysql2), JWT (jsonwebtoken), bcryptjs, multer (upload file)
+- **Backend:** Node.js, Express, MySQL (mysql2) hoặc Supabase PostgreSQL (pg), JWT (jsonwebtoken), bcryptjs, multer (upload file)
 - **Frontend:** HTML/CSS/JavaScript thuần (không dùng framework), thiết kế responsive
-- **Database:** MySQL 8.0
+- **Database:** MySQL 8.0 hoặc Supabase PostgreSQL
 - **AI chatbot:** Flask AI service, Groq API, RAG từ FAQ nội bộ + dữ liệu JobLink realtime trong MySQL
 
 ## Yêu cầu hệ thống
@@ -26,6 +28,8 @@ Một nền tảng tuyển dụng kiểu TopCV, xây dựng bằng **Node.js / E
 ## Hướng dẫn cài đặt
 
 ### 1. Cài đặt MySQL và tạo database
+
+Neu muon dung Supabase thay vi MySQL, xem file `SUPABASE_SETUP.md`.
 
 Nếu chưa có MySQL, cài đặt theo hệ điều hành của bạn rồi đăng nhập vào MySQL với quyền root:
 
@@ -142,24 +146,6 @@ Tất cả endpoint có tiền tố `/api`. Các route cần đăng nhập sẽ 
 - `GET/PUT /companies/me/profile`, `POST /companies/me/logo`, `GET /companies/:id` (public)
 - `GET /admin/stats`, `GET/PUT /admin/companies`, `GET/PUT /admin/users`, `GET/DELETE /admin/jobs`, `GET/POST/DELETE /admin/categories`
 - `GET /categories` (public)
-
-## Release v0.2 Beta và tài liệu chấm điểm
-
-- Release Notes: [`docs/RELEASE_v0.2.md`](docs/RELEASE_v0.2.md)
-- Changelog: [`CHANGELOG.md`](CHANGELOG.md)
-- Release Traceability: [`docs/RELEASE_TRACEABILITY.md`](docs/RELEASE_TRACEABILITY.md)
-- User Stories / Acceptance Criteria: [`docs/USER_STORIES.md`](docs/USER_STORIES.md)
-- Architecture: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
-- API Documentation: [`docs/API.md`](docs/API.md)
-- Deployment Notes: [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)
-- Testing Plan: [`docs/TEST_PLAN.md`](docs/TEST_PLAN.md)
-- Self Assessment theo rubric Sommerville 80/20: [`SELF_ASSESSMENT.md`](SELF_ASSESSMENT.md)
-
-## Kiểm thử
-
-```bash
-npm test
-```
 
 ## Ghi chú quan trọng
 

@@ -1,11 +1,13 @@
 # Deployment Notes
 
+Hướng dẫn production miễn phí hiện tại nằm tại [`RENDER_FREE_DEPLOY.md`](../RENDER_FREE_DEPLOY.md). Cấu hình chuẩn gồm hai Render Web Services và một dự án Supabase.
+
 ## Required Services
 
-- Node.js 18+
-- MySQL 8+ or compatible MariaDB
-- Python 3.10+ for AI service
-- Git LFS for the large model file
+- Render Free cho Node.js web service
+- Render Free cho Python AI service ở lightweight mode
+- Supabase Free cho PostgreSQL và Storage
+- Groq API key nếu muốn chatbot dùng mô hình Groq
 
 ## Environment Variables
 
@@ -14,20 +16,22 @@ Use `.env.example` as the template.
 Important variables:
 
 - `PORT`
-- `DB_HOST`
-- `DB_USER`
-- `DB_PASSWORD`
-- `DB_NAME`
+- `DATABASE_URL`
+- `DB_CLIENT=postgres`
 - `JWT_SECRET`
 - `SESSION_SECRET`
-- `AI_SERVICE_URL`
+- `AI_SERVICE_HOST`
+- `AI_SERVICE_TOKEN`
+- `SUPABASE_URL`
+- `SUPABASE_SECRET_KEY`
 - `GROQ_API_KEY`
 - OAuth provider IDs/secrets when social login is enabled
 
-For an existing v0.2 database, apply the authentication migration once:
+Chạy migrations bằng tài khoản database backend:
 
 ```bash
-mysql -u root -p < database/auth_enhancements.sql
+npm run supabase:migrate
+npm run supabase:storage
 ```
 
 In development, the forgot-password API returns a reset link so the flow can be tested without an email server. Production deployments must configure an email delivery service and must not expose reset links in API responses.
@@ -35,7 +39,6 @@ In development, the forgot-password API returns a reset link so the flow can be 
 ## Local Run
 
 ```bash
-git lfs pull
 npm install
 cp .env.example .env
 mysql -u <user> -p <database> < database/schema.sql
@@ -60,10 +63,11 @@ http://localhost:3000
 ## Production Notes
 
 - Configure environment variables in the hosting platform instead of committing `.env`.
-- Use a managed MySQL instance.
-- Deploy the Flask AI service separately and set `AI_SERVICE_URL`.
+- Use Supabase PostgreSQL through its session pooler.
+- Deploy the Flask AI service separately and use the generated shared token.
 - Use HTTPS.
-- Replace local upload storage with persistent storage or object storage.
+- Store production uploads in Supabase Storage.
+- Keep `AI_LIGHTWEIGHT_MODE=true`; the optional large Transformer model is not shipped to Render Free.
 - Run `npm test` during CI before deployment.
 
 ## Rollback
