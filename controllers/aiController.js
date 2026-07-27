@@ -18,7 +18,13 @@ function aiUnavailable(res, err) {
 
 function handleAIControllerError(res, err, label) {
   if (
-    ['AI_CONFIG_ERROR', 'AI_CONNECTION_ERROR', 'AI_TIMEOUT'].includes(err.code)
+    [
+      'AI_CONFIG_ERROR',
+      'AI_CONNECTION_ERROR',
+      'AI_INVALID_RESPONSE',
+      'AI_TIMEOUT',
+      'AI_UPSTREAM_UNAVAILABLE'
+    ].includes(err.code)
     || /kết nối|ket noi|timeout|hết thời gian|cấu hình địa chỉ/i.test(err.message)
   ) {
     return aiUnavailable(res, err);
