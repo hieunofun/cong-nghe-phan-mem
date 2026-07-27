@@ -46,11 +46,11 @@ services:
           type: web
           name: joblink-ai
           envVarKey: DATABASE_URL
-      - key: AI_SERVICE_HOST
+      - key: AI_SERVICE_URL
         fromService:
           type: web
           name: joblink-ai
-          envVarKey: RENDER_EXTERNAL_HOSTNAME
+          envVarKey: RENDER_EXTERNAL_URL
       - key: AI_TIMEOUT_MS
         value: '120000'
       - key: JWT_SECRET
