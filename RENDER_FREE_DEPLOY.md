@@ -72,7 +72,7 @@ Trong Render:
    - `SUPABASE_URL`: URL project Supabase.
    - `SUPABASE_SECRET_KEY`: secret key cua Supabase.
 
-`JWT_SECRET`, `SESSION_SECRET` va `AI_SERVICE_TOKEN` duoc Render tu sinh. URL public cua AI cung duoc Blueprint noi tu dong sang Node.
+`JWT_SECRET`, `SESSION_SECRET` va `AI_SERVICE_TOKEN` duoc Render tu sinh. `AI_SERVICE_URL` duoc Blueprint lay tu `RENDER_EXTERNAL_URL` cua AI service va noi tu dong sang Node.
 
 ## 5. Cau hinh email va thanh toan
 

@@ -1,6 +1,7 @@
 // models/paymentModel.js
 const pool = require('../config/db');
 const crypto = require('crypto');
+const { withEffectivePaymentStatus } = require('../utils/paymentStatus');
 
 function createTransactionCode() {
   const timePart = Date.now().toString(36).toUpperCase();
@@ -68,12 +69,7 @@ async function findById(id) {
 
 async function findByCompany(companyId) {
   const [rows] = await pool.query(
-    `SELECT p.id, p.package_id, p.amount,
-            CASE
-              WHEN p.status = 'pending' AND p.expires_at IS NOT NULL AND p.expires_at <= NOW() THEN 'expired'
-              ELSE p.status
-            END AS status,
-            p.payment_method,
+    `SELECT p.id, p.package_id, p.amount, p.status, p.payment_method,
             p.transaction_code, p.expires_at, p.paid_at, p.created_at,
             pk.name AS package_name, pk.code AS package_code
      FROM payments p
@@ -82,7 +78,7 @@ async function findByCompany(companyId) {
      ORDER BY p.created_at DESC`,
     [companyId]
   );
-  return rows;
+  return rows.map((payment) => withEffectivePaymentStatus(payment));
 }
 
 async function findReusablePending(companyId, packageId, termsVersion, privacyVersion) {

@@ -17,7 +17,10 @@ function aiUnavailable(res, err) {
 }
 
 function handleAIControllerError(res, err, label) {
-  if (/kết nối|ket noi|timeout|hết thời gian/i.test(err.message)) {
+  if (
+    ['AI_CONFIG_ERROR', 'AI_CONNECTION_ERROR', 'AI_TIMEOUT'].includes(err.code)
+    || /kết nối|ket noi|timeout|hết thời gian|cấu hình địa chỉ/i.test(err.message)
+  ) {
     return aiUnavailable(res, err);
   }
   if (err.aiStatus) {
@@ -36,7 +39,8 @@ async function getAIHealth(req, res) {
     const resp = await fetchAIHealth();
     res.json({ online: true, ...resp });
   } catch (err) {
-    res.json({ online: false, message: 'Dịch vụ AI chưa chạy (python ai_service/app.py)' });
+    console.error('getAIHealth error:', err.message);
+    res.json({ online: false, message: 'Dịch vụ AI chưa sẵn sàng hoặc cấu hình kết nối chưa đúng.' });
   }
 }
 
