@@ -4,6 +4,11 @@ const path = require('node:path');
 const test = require('node:test');
 
 const { normalizeAIServiceUrl } = require('../utils/aiServiceUrl');
+const {
+  DEFAULT_AI_RETRY_DELAYS_MS,
+  parseAIRetryDelays,
+  isRetryableAIError
+} = require('../utils/aiRetry');
 const { effectivePaymentStatus } = require('../utils/paymentStatus');
 const root = path.resolve(__dirname, '..');
 
@@ -36,6 +41,16 @@ test('Render passes the complete external AI URL to the web service', () => {
     renderConfig,
     /key: AI_SERVICE_URL\s+fromService:\s+type: web\s+name: joblink-ai\s+envVarKey: RENDER_EXTERNAL_URL/
   );
+});
+
+test('AI bridge retries transient Render cold-start responses', () => {
+  assert.deepEqual(parseAIRetryDelays('100, 250, invalid, -1'), [100, 250]);
+  assert.deepEqual(parseAIRetryDelays(''), DEFAULT_AI_RETRY_DELAYS_MS);
+  assert.equal(isRetryableAIError({ code: 'AI_CONNECTION_ERROR' }), true);
+  assert.equal(isRetryableAIError({ code: 'AI_INVALID_RESPONSE' }), true);
+  assert.equal(isRetryableAIError({ aiStatus: 502 }), true);
+  assert.equal(isRetryableAIError({ aiStatus: 400 }), false);
+  assert.equal(isRetryableAIError({ code: 'AI_TIMEOUT' }), false);
 });
 
 test('expired pending payments are mapped in JavaScript without mixing PostgreSQL enum types', () => {

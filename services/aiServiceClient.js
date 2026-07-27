@@ -1,6 +1,7 @@
 const http = require('http');
 const https = require('https');
 const { normalizeAIServiceUrl } = require('../utils/aiServiceUrl');
+const { parseAIRetryDelays, isRetryableAIError } = require('../utils/aiRetry');
 
 const AI_SERVICE_URL = normalizeAIServiceUrl({
   serviceUrl: process.env.AI_SERVICE_URL,
@@ -9,8 +10,9 @@ const AI_SERVICE_URL = normalizeAIServiceUrl({
 });
 const AI_TIMEOUT_MS = Number(process.env.AI_TIMEOUT_MS || 120000);
 const AI_SERVICE_TOKEN = process.env.AI_SERVICE_TOKEN || '';
+const AI_RETRY_DELAYS_MS = parseAIRetryDelays(process.env.AI_RETRY_DELAYS_MS);
 
-function requestAI(endpoint, { method = 'GET', body, timeout = AI_TIMEOUT_MS } = {}) {
+function requestAIOnce(endpoint, { method = 'GET', body, timeout = AI_TIMEOUT_MS } = {}) {
   return new Promise((resolve, reject) => {
     const payload = body === undefined ? null : JSON.stringify(body);
     let url;
@@ -47,19 +49,33 @@ function requestAI(endpoint, { method = 'GET', body, timeout = AI_TIMEOUT_MS } =
       let data = '';
       res.on('data', (chunk) => { data += chunk; });
       res.on('end', () => {
+        let parsed = null;
         try {
-          const parsed = data ? JSON.parse(data) : {};
-          if (res.statusCode >= 400) {
-            const err = new Error(parsed.message || parsed.error || `Dịch vụ AI trả về lỗi ${res.statusCode}`);
-            err.aiStatus = res.statusCode;
-            err.aiPayload = parsed;
-            reject(err);
-            return;
-          }
-          resolve(parsed);
-        } catch (_err) {
-          reject(new Error('Phản hồi AI không hợp lệ'));
+          parsed = data ? JSON.parse(data) : {};
+        } catch (_error) {
+          // Render co the tra HTML 502/503 trong luc danh thuc Free service.
         }
+
+        if (res.statusCode >= 400) {
+          const error = new Error(
+            parsed?.message || parsed?.error || `Dịch vụ AI tạm thời trả về lỗi ${res.statusCode}.`
+          );
+          error.aiStatus = res.statusCode;
+          error.aiPayload = parsed || {};
+          if ([408, 425, 429, 502, 503, 504].includes(res.statusCode)) {
+            error.code = 'AI_UPSTREAM_UNAVAILABLE';
+          }
+          reject(error);
+          return;
+        }
+
+        if (parsed === null) {
+          const error = new Error('Phản hồi AI không hợp lệ.');
+          error.code = 'AI_INVALID_RESPONSE';
+          reject(error);
+          return;
+        }
+        resolve(parsed);
       });
     });
 
@@ -80,6 +96,29 @@ function requestAI(endpoint, { method = 'GET', body, timeout = AI_TIMEOUT_MS } =
   });
 }
 
+function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function requestAI(endpoint, options = {}) {
+  let lastError;
+  for (let attempt = 0; attempt <= AI_RETRY_DELAYS_MS.length; attempt += 1) {
+    try {
+      return await requestAIOnce(endpoint, options);
+    } catch (error) {
+      lastError = error;
+      const retryDelay = AI_RETRY_DELAYS_MS[attempt];
+      if (retryDelay === undefined || !isRetryableAIError(error)) throw error;
+      console.warn(
+        `AI request ${endpoint} chua san sang; thu lai sau ${retryDelay}ms `
+        + `(${attempt + 1}/${AI_RETRY_DELAYS_MS.length}).`
+      );
+      await wait(retryDelay);
+    }
+  }
+  throw lastError;
+}
+
 function callAI(endpoint, body) {
   return requestAI(endpoint, { method: 'POST', body });
 }
@@ -88,4 +127,4 @@ function getAIHealth() {
   return requestAI('/health', { method: 'GET' });
 }
 
-module.exports = { AI_SERVICE_URL, callAI, getAIHealth };
+module.exports = { AI_SERVICE_URL, AI_RETRY_DELAYS_MS, callAI, getAIHealth };

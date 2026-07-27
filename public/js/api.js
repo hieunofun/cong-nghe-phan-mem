@@ -47,22 +47,40 @@ async function apiFetch(path, { method = 'GET', body, auth = true } = {}) {
   const headers = { 'Content-Type': 'application/json' };
   if (auth && getToken()) headers['Authorization'] = `Bearer ${getToken()}`;
 
-  const res = await fetch(apiEndpoint(path), {
-    method,
-    headers,
-    body: body !== undefined ? JSON.stringify(body) : undefined
-  });
+  const normalizedMethod = method.toUpperCase();
+  const maxAttempts = normalizedMethod === 'GET' && !path.startsWith('/ai/') ? 2 : 1;
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    let res;
+    try {
+      res = await fetch(apiEndpoint(path), {
+        method: normalizedMethod,
+        headers,
+        body: body !== undefined ? JSON.stringify(body) : undefined
+      });
+    } catch (networkError) {
+      if (attempt < maxAttempts) {
+        await new Promise((resolve) => setTimeout(resolve, 800));
+        continue;
+      }
+      const error = new Error('Không kết nối được máy chủ. Vui lòng thử lại.');
+      error.cause = networkError;
+      throw error;
+    }
 
-  let data = null;
-  try { data = await res.json(); } catch (e) { /* response khong co body JSON */ }
+    let data = null;
+    try { data = await res.json(); } catch (e) { /* response khong co body JSON */ }
 
-  if (!res.ok) {
+    if (res.ok) return data;
+    if (attempt < maxAttempts && res.status >= 500) {
+      await new Promise((resolve) => setTimeout(resolve, 800));
+      continue;
+    }
+
     const message = (data && data.message) || `Loi ${res.status}`;
     const error = new Error(message);
     error.status = res.status;
     throw error;
   }
-  return data;
 }
 
 // Goi API voi FormData (dung khi upload file)
