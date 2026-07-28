@@ -8,7 +8,7 @@ Run:
 npm test
 ```
 
-Current automated tests are basic release-evidence tests. They verify the presence of important routes, docs, configuration hygiene, and release sections.
+The final automated suite contains 22 release, validation, security and production-regression tests. It verifies important routes, docs, configuration hygiene, PostgreSQL TLS behavior, payment status mapping, Render configuration and AI cold-start retries.
 
 ## Unit Test Scope
 
@@ -43,7 +43,24 @@ These checks are intended for manual or future automated DB-backed integration t
 | Recommendation | Candidate with profile calls `/api/ai/recommend` | Returns ranked job suggestions |
 | Resume ranking | Candidate calls `/api/ai/match/:jobId` | Returns match/ranking result or AI offline message |
 
-## Manual Beta Smoke Test
+## Verified Production Smoke Test
+
+Verification performed on 2026-07-28:
+
+| Endpoint | Result | Observation |
+|---|---|---|
+| `https://joblink-web.onrender.com/health` | HTTP 200 | `joblink-web` healthy; first response about 22 seconds |
+| `https://joblink-web.onrender.com/api/categories` | HTTP 200 | Returned category data |
+| `https://joblink-web.onrender.com/api/jobs/featured` | HTTP 200 | Returned featured-job data |
+| `https://joblink-ai.onrender.com/health` | HTTP 200 | Lightweight mode; analyzer loaded; first response about 51 seconds |
+
+Additional release checks:
+
+- `npm run test:checkout-render`: passed.
+- `npm audit`: 0 vulnerabilities.
+- Main CI before the final release PR: https://github.com/hieunofun/cong-nghe-phan-mem/actions/runs/30258010023
+
+## Manual Final Smoke Test
 
 - Open home page.
 - Register/login as candidate.

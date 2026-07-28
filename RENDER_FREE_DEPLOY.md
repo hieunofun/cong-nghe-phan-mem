@@ -1,5 +1,11 @@
 # Trien khai JobLink that tren ha tang mien phi
 
+Production dang hoat dong:
+
+- Web: https://joblink-web.onrender.com
+- Web health: https://joblink-web.onrender.com/health
+- AI health: https://joblink-ai.onrender.com/health
+
 Kien truc production-free cua du an:
 
 - `joblink-web`: Node/Express tren Render Free.

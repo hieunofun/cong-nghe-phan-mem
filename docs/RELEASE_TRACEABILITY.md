@@ -1,4 +1,4 @@
-# v0.2 Release Traceability
+# v1.0.0 Final Release Traceability
 
 This document links release requirements to repository evidence so reviewers can verify the release without relying on external reports.
 
@@ -6,13 +6,14 @@ This document links release requirements to repository evidence so reviewers can
 
 | Field | Value |
 |---|---|
-| Release | v0.2 Beta |
-| Tag | `v0.2` |
-| Target commit | `71e3bed382710122ae2c098e2f81ec946f1550bd` |
-| Release date | 2026-07-15 |
-| Status | Beta / prerelease candidate |
+| Release | v1.0.0 Final |
+| Tag | `v1.0.0` |
+| Target commit | Tested `main` merge commit referenced by the `v1.0.0` tag |
+| Release date | 2026-07-28 |
+| Status | Final / stable |
 | Test command | `npm test` |
 | CI workflow | `.github/workflows/ci.yml` |
+| Readiness tracking | GitHub Issue #21 |
 
 ## Requirement to Evidence Matrix
 
@@ -31,7 +32,13 @@ This document links release requirements to repository evidence so reviewers can
 | Security Improvement | `.gitignore`, `.env.example`, `middleware/auth.js`, `middleware/upload.js` | `npm test` checks config hygiene; code verifies JWT/roles/uploads. |
 | Integration Testing | `docs/TEST_PLAN.md` | Manual integration checklist plus CI unit/release tests. |
 | API Documentation | `docs/API.md` | Reviewer can map endpoints to routes. |
-| Release Notes | `docs/RELEASE_v0.2.md`, `CHANGELOG.md` | Release body should copy `docs/RELEASE_v0.2.md`. |
+| Production deployment | `render.yaml`, `RENDER_FREE_DEPLOY.md`, PR #16 | Verify the Render web and AI health endpoints. |
+| Supabase TLS | `config/db.js`, PR #17 | Regression tests verify URL SSL parameters cannot override the explicit TLS object. |
+| OAuth configuration | `render.yaml`, PR #18 | Regression tests verify provider secret placeholders survive Blueprint sync. |
+| Payment and AI production fixes | `models/paymentModel.js`, `services/aiClient.js`, PR #19 | Automated tests verify enum mapping and URL normalization. |
+| Render cold-start reliability | `services/aiClient.js`, `public/js/api-client.js`, PR #20 | Automated tests simulate transient failures before a healthy response. |
+| Contributors | `CONTRIBUTORS.md` | GitHub handles link to Issue, commit and contributor evidence. |
+| Release Notes | `docs/RELEASE_v1.0.0.md`, `CHANGELOG.md` | GitHub Release body is sourced from `docs/RELEASE_v1.0.0.md`. |
 
 ## Reviewer Checklist
 
@@ -39,7 +46,7 @@ This document links release requirements to repository evidence so reviewers can
 
   ```bash
   git fetch --tags
-  git checkout v0.2
+  git checkout v1.0.0
   ```
 
 - Install dependencies:
@@ -58,5 +65,5 @@ This document links release requirements to repository evidence so reviewers can
 
 ## Release Process Notes
 
-The release hardening work is documented in this file to make the path from requirement to release evidence visible. For future releases, each row should also be backed by a GitHub Issue and Pull Request before the release is published.
+Final release work is tracked by Issue #21. The production changes are linked to PR #16–#20, and the release-documentation PR closes the readiness Issue after CI and publication evidence are recorded.
 
