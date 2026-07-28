@@ -1,6 +1,10 @@
 # JobLink — Nền tảng tuyển dụng nhân sự
 
 > Triển khai production trên Render Free + Supabase: xem [RENDER_FREE_DEPLOY.md](./RENDER_FREE_DEPLOY.md).
+>
+> Production web: https://joblink-web.onrender.com · AI health: https://joblink-ai.onrender.com/health
+>
+> Bản phát hành chính thức: [v1.0.0 Final](./docs/RELEASE_v1.0.0.md)
 
 Một nền tảng tuyển dụng kiểu TopCV, xây dựng bằng **Node.js / Express / MySQL hoặc Supabase PostgreSQL** cho backend và **HTML / CSS / JavaScript thuần** cho frontend. Hỗ trợ 3 vai trò: **Ứng viên**, **Doanh nghiệp**, **Quản trị viên (Admin)**.
 
@@ -21,7 +25,7 @@ Một nền tảng tuyển dụng kiểu TopCV, xây dựng bằng **Node.js / E
 
 ## Yêu cầu hệ thống
 
-- Node.js >= 18
+- Node.js >= 20
 - MySQL >= 8.0 (hoặc MariaDB tương thích)
 - npm
 
@@ -149,7 +153,16 @@ Tất cả endpoint có tiền tố `/api`. Các route cần đăng nhập sẽ 
 
 ## Ghi chú quan trọng
 
-- File CV/logo/avatar được lưu trực tiếp trên ổ đĩa server tại thư mục `uploads/` (không dùng cloud storage) — phù hợp cho mục đích học tập/demo.
+- Trên production, CV/logo/avatar được lưu bằng Supabase Storage; thư mục `uploads/` chỉ dùng cho môi trường local.
 - Mật khẩu được mã hoá bằng bcrypt trước khi lưu vào database.
 - Doanh nghiệp đăng ký mới sẽ ở trạng thái `pending` và **không thể đăng tin** cho đến khi Admin duyệt.
+- Render Free có thể sleep khi không có traffic; request đầu tiên sau thời gian nghỉ có thể mất khoảng 20–60 giây.
 - Dự án này được xây dựng cho mục đích học tập (đồ án môn học), thương hiệu "JobLink" không liên quan đến TopCV hay bất kỳ sản phẩm thương mại nào.
+
+## Thành viên
+
+- Hiếu — [@hieunofun](https://github.com/hieunofun)
+- Nguyên — [@Nguyen16112006](https://github.com/Nguyen16112006)
+- Phương Anh — [@Phuonganh149](https://github.com/Phuonganh149)
+
+Chi tiết đóng góp và bằng chứng GitHub xem tại [CONTRIBUTORS.md](./CONTRIBUTORS.md).

@@ -10,7 +10,7 @@ JobLink helps candidates find suitable jobs and helps employers manage hiring in
 - Employer: wants to create a company profile, post jobs, review applicants, rank resumes, and manage hiring pipeline.
 - Admin: wants to approve companies, manage users/jobs/categories, and monitor system status.
 
-## MVP Scope for v0.2 Beta
+## Final Scope for v1.0.0
 
 In scope:
 
@@ -20,14 +20,16 @@ In scope:
 - Job search, filters, and pagination.
 - AI chatbot, recommendation, and resume ranking endpoints.
 - Admin approval and management screens.
-- Basic tests, API docs, deployment notes, release notes, and self-assessment.
+- Password recovery, legal-document acceptance, and configurable OAuth.
+- Render/Supabase production deployment with persistent object storage.
+- Automated regression tests, API docs, deployment notes, release notes, and self-assessment.
 
-Out of scope for v0.2:
+Out of scope for v1.0.0:
 
-- Full production CI/CD deployment.
 - Fully automated database integration tests.
-- Cloud object storage for uploaded files.
-- Payment gateway production integration.
+- Full browser end-to-end automation.
+- A dedicated online payment gateway beyond the configurable bank-transfer checkout.
+- Paid always-on hosting and the optional 1 GB Sentence Transformer model.
 
 ## Stories
 

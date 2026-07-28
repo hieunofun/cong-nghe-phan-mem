@@ -2,6 +2,14 @@
 
 Hướng dẫn production miễn phí hiện tại nằm tại [`RENDER_FREE_DEPLOY.md`](../RENDER_FREE_DEPLOY.md). Cấu hình chuẩn gồm hai Render Web Services và một dự án Supabase.
 
+## Current Production
+
+- Web application: https://joblink-web.onrender.com
+- Web health: https://joblink-web.onrender.com/health
+- AI health: https://joblink-ai.onrender.com/health
+
+Smoke testing on 2026-07-28 returned HTTP 200 for web health, categories, featured jobs and AI health. Because Render Free sleeps after inactivity, the observed first responses took about 22 seconds for the web service and 51 seconds for the AI service.
+
 ## Required Services
 
 - Render Free cho Node.js web service
@@ -69,6 +77,7 @@ http://localhost:3000
 - Store production uploads in Supabase Storage.
 - Keep `AI_LIGHTWEIGHT_MODE=true`; the optional large Transformer model is not shipped to Render Free.
 - Run `npm test` during CI before deployment.
+- Expect cold-start latency after inactivity; the Node AI bridge retries transient 502/503 and connection failures.
 
 ## Rollback
 

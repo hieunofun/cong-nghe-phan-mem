@@ -2,7 +2,7 @@
 
 ## Overview
 
-JobLink v0.2 uses a simple layered web architecture suitable for a course project and beta deployment:
+JobLink v1.0.0 uses a layered web architecture deployed across Render Free and Supabase:
 
 ```text
 Browser UI

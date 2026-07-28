@@ -13,8 +13,8 @@ function exists(relativePath) {
   return fs.existsSync(path.join(root, relativePath));
 }
 
-test('v0.2 release notes include all required rubric sections', () => {
-  const notes = read('docs/RELEASE_v0.2.md');
+test('v1.0.0 release notes include all required rubric sections', () => {
+  const notes = read('docs/RELEASE_v1.0.0.md');
   [
     'Release Title',
     'Release Notes',
@@ -26,10 +26,14 @@ test('v0.2 release notes include all required rubric sections', () => {
     'Deployment Notes',
     'Testing Summary'
   ].forEach((section) => assert.match(notes, new RegExp(section)));
+  assert.match(notes, /https:\/\/joblink-web\.onrender\.com/);
+  assert.match(notes, /hieunofun/);
+  assert.match(notes, /Nguyen16112006/);
+  assert.match(notes, /Phuonganh149/);
 });
 
-test('release includes required beta features', () => {
-  const notes = read('docs/RELEASE_v0.2.md');
+test('release includes required final features', () => {
+  const notes = read('docs/RELEASE_v1.0.0.md');
   [
     'AI Chatbot',
     'Resume Ranking',
@@ -74,16 +78,18 @@ test('documentation evidence exists for grading', () => {
     'CHANGELOG.md',
     'docs/API.md',
     'docs/ARCHITECTURE.md',
+    'docs/RELEASE_v1.0.0.md',
     'docs/DEPLOYMENT.md',
     'docs/RELEASE_TRACEABILITY.md',
     'docs/TEST_PLAN.md',
-    'docs/USER_STORIES.md'
+    'docs/USER_STORIES.md',
+    'CONTRIBUTORS.md'
   ].forEach((file) => assert.equal(exists(file), true, `${file} should exist`));
 });
 
-test('package version matches the v0.2 release line', () => {
+test('package version matches the v1.0.0 final release line', () => {
   const pkg = JSON.parse(read('package.json'));
-  assert.equal(pkg.version, '0.2.0');
+  assert.equal(pkg.version, '1.0.0');
 });
 
 test('configuration hygiene keeps secrets and the optional large model out of Git', () => {
