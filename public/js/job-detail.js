@@ -9,6 +9,45 @@ let candidateProfile = null;
 let isSaved = false;
 let hasApplied = false;
 
+function resolveCandidateContext(results, jobId) {
+  const [profileResult, savedJobsResult, applicationsResult] = results;
+  const profile = profileResult?.status === 'fulfilled' ? profileResult.value : null;
+  const savedJobs = savedJobsResult?.status === 'fulfilled' && Array.isArray(savedJobsResult.value)
+    ? savedJobsResult.value
+    : [];
+  const applications = applicationsResult?.status === 'fulfilled' && Array.isArray(applicationsResult.value)
+    ? applicationsResult.value
+    : [];
+  const applied = applications.some((application) => Number(application.job_id) === Number(jobId));
+
+  return {
+    profile,
+    hasApplied: applied,
+    isSaved: !applied && savedJobs.some((job) => Number(job.id) === Number(jobId))
+  };
+}
+
+function getCvSelectionStatus(hasProfileCv, selectedFileName = '') {
+  if (selectedFileName) {
+    return {
+      type: 'success',
+      message: `Đã chọn “${selectedFileName}”. CV này sẽ được gửi cùng hồ sơ ứng tuyển.`
+    };
+  }
+
+  if (hasProfileCv) {
+    return {
+      type: 'info',
+      message: 'Sẽ dùng CV hiện có trong hồ sơ của bạn. Bạn có thể chọn file khác bên dưới nếu muốn dùng CV mới.'
+    };
+  }
+
+  return {
+    type: 'error',
+    message: 'Bạn chưa có CV trong hồ sơ — vui lòng chọn file CV để ứng tuyển.'
+  };
+}
+
 function renderActionButtons() {
   const user = getUser();
 
@@ -184,8 +223,30 @@ async function toggleSaveJob() {
   }
 }
 
-function openApplyModal() {
-  const hasCv = candidateProfile && candidateProfile.cv_url;
+async function openApplyModal() {
+  const triggerButton = document.getElementById('apply-btn');
+  if (triggerButton?.disabled) return;
+  const triggerButtonText = triggerButton?.textContent || '';
+
+  if (triggerButton) {
+    triggerButton.disabled = true;
+    triggerButton.innerHTML = '<span class="loading-spinner"></span> Đang tải CV...';
+  }
+
+  try {
+    const latestProfile = await apiFetch('/candidates/me');
+    if (latestProfile) candidateProfile = latestProfile;
+  } catch (_err) {
+    // Neu lan lam moi loi, van dung ho so da tai luc khoi tao trang.
+  } finally {
+    if (triggerButton && document.body.contains(triggerButton)) {
+      triggerButton.disabled = false;
+      triggerButton.textContent = triggerButtonText;
+    }
+  }
+
+  const hasCv = Boolean(candidateProfile?.cv_url);
+  const initialCvStatus = getCvSelectionStatus(hasCv);
 
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
@@ -203,7 +264,7 @@ function openApplyModal() {
         </div>
         <div class="form-group">
           <label>CV ứng tuyển</label>
-          ${hasCv ? `<div class="alert alert-info">Sẽ dùng CV hiện có trong hồ sơ của bạn. Bạn có thể chọn file khác bên dưới nếu muốn dùng CV mới.</div>` : `<div class="alert alert-error">Bạn chưa có CV trong hồ sơ — vui lòng tải lên CV để ứng tuyển.</div>`}
+          <div class="alert alert-${initialCvStatus.type}" id="cv-selection-status">${escapeHtml(initialCvStatus.message)}</div>
           <input type="file" id="cv-file" class="input" accept=".pdf,.docx">
           <p class="form-hint">Chấp nhận file .pdf, .docx — tối đa 5MB.</p>
         </div>
@@ -216,13 +277,25 @@ function openApplyModal() {
   document.getElementById('modal-close-btn').addEventListener('click', () => overlay.remove());
   overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
 
+  const fileInput = document.getElementById('cv-file');
+  const cvSelectionStatus = document.getElementById('cv-selection-status');
+  fileInput.addEventListener('change', () => {
+    const selectedFile = fileInput.files[0];
+    const status = getCvSelectionStatus(hasCv, selectedFile?.name || '');
+    cvSelectionStatus.className = `alert alert-${status.type}`;
+    cvSelectionStatus.textContent = status.message;
+
+    if (selectedFile) {
+      document.getElementById('modal-alert-slot').innerHTML = '';
+    }
+  });
+
   document.getElementById('apply-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const submitBtn = document.getElementById('apply-submit-btn');
     const alertSlot = document.getElementById('modal-alert-slot');
     alertSlot.innerHTML = '';
 
-    const fileInput = document.getElementById('cv-file');
     if (!hasCv && fileInput.files.length === 0) {
       alertSlot.innerHTML = `<div class="alert alert-error">Vui lòng chọn file CV trước khi gửi.</div>`;
       return;
@@ -271,14 +344,15 @@ async function init() {
     const user = getUser();
     if (user && user.role === 'candidate') {
       try {
-        const [profile, savedJobs, applications] = await Promise.all([
+        const contextResults = await Promise.allSettled([
           apiFetch('/candidates/me'),
           apiFetch('/candidates/me/saved-jobs'),
           apiFetch('/candidates/me/applications')
         ]);
-        candidateProfile = profile;
-        hasApplied = applications.some((application) => Number(application.job_id) === Number(currentJob.id));
-        isSaved = !hasApplied && savedJobs.some((job) => Number(job.id) === Number(currentJob.id));
+        const context = resolveCandidateContext(contextResults, currentJob.id);
+        candidateProfile = context.profile;
+        hasApplied = context.hasApplied;
+        isSaved = context.isSaved;
       } catch (e) { /* khong chan render chinh neu loi phu */ }
     }
 
@@ -290,4 +364,10 @@ async function init() {
   }
 }
 
-init();
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { getCvSelectionStatus, resolveCandidateContext };
+}
+
+if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+  init();
+}
