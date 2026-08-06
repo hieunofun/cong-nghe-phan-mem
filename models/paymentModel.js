@@ -1,5 +1,6 @@
 // models/paymentModel.js
 const pool = require('../config/db');
+const { safeDbNumber } = require('../utils/dbNumbers');
 const crypto = require('crypto');
 const { withEffectivePaymentStatus } = require('../utils/paymentStatus');
 
@@ -129,20 +130,20 @@ async function getAll({ status } = {}) {
 
 async function getRevenueStats() {
   // Tong doanh thu
-  const [[{ totalRevenue }]] = await pool.query(
-    "SELECT COALESCE(SUM(amount), 0) AS totalRevenue FROM payments WHERE status = 'completed'"
+  const [[totalRevenueRow]] = await pool.query(
+    "SELECT COALESCE(SUM(amount), 0) AS total_revenue FROM payments WHERE status = 'completed'"
   );
   // Doanh thu thang nay
-  const [[{ monthRevenue }]] = await pool.query(
-    "SELECT COALESCE(SUM(amount), 0) AS monthRevenue FROM payments WHERE status = 'completed' AND MONTH(paid_at) = MONTH(NOW()) AND YEAR(paid_at) = YEAR(NOW())"
+  const [[monthRevenueRow]] = await pool.query(
+    "SELECT COALESCE(SUM(amount), 0) AS month_revenue FROM payments WHERE status = 'completed' AND MONTH(paid_at) = MONTH(NOW()) AND YEAR(paid_at) = YEAR(NOW())"
   );
   // So goi dang ky dang hoat dong
-  const [[{ activeSubscriptions }]] = await pool.query(
-    "SELECT COUNT(*) AS activeSubscriptions FROM company_subscriptions WHERE status = 'active' AND expires_at > NOW()"
+  const [[activeSubscriptionsRow]] = await pool.query(
+    "SELECT COUNT(*) AS active_subscriptions FROM company_subscriptions WHERE status = 'active' AND expires_at > NOW()"
   );
   // So giao dich cho duyet
-  const [[{ pendingPayments }]] = await pool.query(
-    "SELECT COUNT(*) AS pendingPayments FROM payments WHERE status = 'pending'"
+  const [[pendingPaymentsRow]] = await pool.query(
+    "SELECT COUNT(*) AS pending_payments FROM payments WHERE status = 'pending'"
   );
   // Doanh thu 6 thang gan nhat
   const [monthlyRevenue] = await pool.query(
@@ -163,7 +164,14 @@ async function getRevenueStats() {
      ORDER BY revenue DESC`
   );
 
-  return { totalRevenue, monthRevenue, activeSubscriptions, pendingPayments, monthlyRevenue, byPackage };
+  return {
+    totalRevenue: safeDbNumber(totalRevenueRow, 'total_revenue'),
+    monthRevenue: safeDbNumber(monthRevenueRow, 'month_revenue'),
+    activeSubscriptions: safeDbNumber(activeSubscriptionsRow, 'active_subscriptions'),
+    pendingPayments: safeDbNumber(pendingPaymentsRow, 'pending_payments'),
+    monthlyRevenue,
+    byPackage
+  };
 }
 
 module.exports = {

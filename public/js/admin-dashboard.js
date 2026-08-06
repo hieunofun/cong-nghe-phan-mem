@@ -32,11 +32,11 @@ async function loadStats() {
   try {
     const s = await apiFetch('/admin/stats');
     document.getElementById('stat-row').innerHTML = `
-      <div class="stat-card"><div class="stat-value">${s.totalUsers}</div><div class="stat-label">Tổng tài khoản</div></div>
-      <div class="stat-card"><div class="stat-value">${s.totalCompanies}</div><div class="stat-label">Doanh nghiệp (${s.pendingCompanies} chờ duyệt)</div></div>
-      <div class="stat-card"><div class="stat-value">${s.totalCandidates}</div><div class="stat-label">Ứng viên</div></div>
-      <div class="stat-card"><div class="stat-value">${s.activeJobs}</div><div class="stat-label">Tin đang tuyển / ${s.totalJobs} tổng</div></div>
-      <div class="stat-card"><div class="stat-value">${s.totalApplications}</div><div class="stat-label">Tổng lượt ứng tuyển</div></div>
+      <div class="stat-card"><div class="stat-icon" aria-hidden="true">👥</div><div class="stat-value">${s.totalUsers ?? 0}</div><div class="stat-label">Tổng tài khoản</div></div>
+      <div class="stat-card"><div class="stat-icon" aria-hidden="true">🏢</div><div class="stat-value">${s.totalCompanies ?? 0}</div><div class="stat-label">Doanh nghiệp (${s.pendingCompanies ?? 0} chờ duyệt)</div></div>
+      <div class="stat-card"><div class="stat-icon" aria-hidden="true">🧑‍💼</div><div class="stat-value">${s.totalCandidates ?? 0}</div><div class="stat-label">Ứng viên</div></div>
+      <div class="stat-card"><div class="stat-icon" aria-hidden="true">💼</div><div class="stat-value">${s.activeJobs ?? 0}</div><div class="stat-label">Tin đang tuyển / ${s.totalJobs ?? 0} tổng</div></div>
+      <div class="stat-card"><div class="stat-icon" aria-hidden="true">📨</div><div class="stat-value">${s.totalApplications ?? 0}</div><div class="stat-label">Tổng lượt ứng tuyển</div></div>
     `;
   } catch (err) {
     showToast('Không tải được thống kê: ' + err.message, 'error');
@@ -268,10 +268,10 @@ async function loadRevenue() {
     const stats = await apiFetch('/admin/revenue');
 
     document.getElementById('revenue-stat-row').innerHTML = `
-      <div class="stat-card"><div class="stat-value" style="color:var(--success);">${fmtMoney(stats.totalRevenue)}</div><div class="stat-label">Tổng doanh thu</div></div>
-      <div class="stat-card"><div class="stat-value" style="color:var(--primary-dark);">${fmtMoney(stats.monthRevenue)}</div><div class="stat-label">Doanh thu tháng này</div></div>
-      <div class="stat-card"><div class="stat-value">${stats.activeSubscriptions}</div><div class="stat-label">Gói đang hoạt động</div></div>
-      <div class="stat-card"><div class="stat-value" style="color:var(--warning);">${stats.pendingPayments}</div><div class="stat-label">Giao dịch chờ duyệt</div></div>
+      <div class="stat-card"><div class="stat-icon" aria-hidden="true">💰</div><div class="stat-value" style="color:var(--success);">${fmtMoney(stats.totalRevenue)}</div><div class="stat-label">Tổng doanh thu</div></div>
+      <div class="stat-card"><div class="stat-icon" aria-hidden="true">📅</div><div class="stat-value" style="color:var(--primary-dark);">${fmtMoney(stats.monthRevenue)}</div><div class="stat-label">Doanh thu tháng này</div></div>
+      <div class="stat-card"><div class="stat-icon" aria-hidden="true">📦</div><div class="stat-value">${stats.activeSubscriptions ?? 0}</div><div class="stat-label">Gói đang hoạt động</div></div>
+      <div class="stat-card"><div class="stat-icon" aria-hidden="true">⏳</div><div class="stat-value" style="color:var(--warning);">${stats.pendingPayments ?? 0}</div><div class="stat-label">Giao dịch chờ duyệt</div></div>
     `;
 
     // Doanh thu theo goi

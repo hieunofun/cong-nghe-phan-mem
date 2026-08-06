@@ -5,23 +5,30 @@ const companyModel = require('../models/companyModel');
 const candidateModel = require('../models/candidateModel');
 const jobModel = require('../models/jobModel');
 const categoryModel = require('../models/categoryModel');
+const { safeDbNumber } = require('../utils/dbNumbers');
 
 // GET /api/admin/stats - so lieu tong quan cho dashboard admin
 async function getStats(req, res) {
   try {
-    const [[{ totalUsers }]] = await pool.query('SELECT COUNT(*) AS totalUsers FROM users');
-    const [[{ totalCompanies }]] = await pool.query('SELECT COUNT(*) AS totalCompanies FROM companies');
-    const [[{ pendingCompanies }]] = await pool.query(
-      "SELECT COUNT(*) AS pendingCompanies FROM companies WHERE status = 'pending'"
-    );
-    const [[{ totalCandidates }]] = await pool.query('SELECT COUNT(*) AS totalCandidates FROM candidates');
-    const [[{ totalJobs }]] = await pool.query('SELECT COUNT(*) AS totalJobs FROM jobs');
-    const [[{ activeJobs }]] = await pool.query("SELECT COUNT(*) AS activeJobs FROM jobs WHERE status = 'active'");
-    const [[{ totalApplications }]] = await pool.query('SELECT COUNT(*) AS totalApplications FROM applications');
+    const [[stats]] = await pool.query(`
+      SELECT
+        (SELECT COUNT(*) FROM users) AS total_users,
+        (SELECT COUNT(*) FROM companies) AS total_companies,
+        (SELECT COUNT(*) FROM companies WHERE status = 'pending') AS pending_companies,
+        (SELECT COUNT(*) FROM candidates) AS total_candidates,
+        (SELECT COUNT(*) FROM jobs) AS total_jobs,
+        (SELECT COUNT(*) FROM jobs WHERE status = 'active') AS active_jobs,
+        (SELECT COUNT(*) FROM applications) AS total_applications
+    `);
 
     res.json({
-      totalUsers, totalCompanies, pendingCompanies,
-      totalCandidates, totalJobs, activeJobs, totalApplications
+      totalUsers: safeDbNumber(stats, 'total_users'),
+      totalCompanies: safeDbNumber(stats, 'total_companies'),
+      pendingCompanies: safeDbNumber(stats, 'pending_companies'),
+      totalCandidates: safeDbNumber(stats, 'total_candidates'),
+      totalJobs: safeDbNumber(stats, 'total_jobs'),
+      activeJobs: safeDbNumber(stats, 'active_jobs'),
+      totalApplications: safeDbNumber(stats, 'total_applications')
     });
   } catch (err) {
     console.error('getStats error:', err);

@@ -1,5 +1,6 @@
 // models/jobModel.js
 const pool = require('../config/db');
+const { VIP_FIRST_JOB_ORDER_SQL } = require('../utils/jobOrdering');
 
 // Tao tin tuyen dung moi
 async function createJob(companyId, data) {
@@ -107,7 +108,7 @@ async function search(filters = {}) {
      JOIN companies c ON c.id = j.company_id
      LEFT JOIN categories cat ON cat.id = j.category_id
      ${whereClause}
-     ORDER BY j.is_vip DESC, j.created_at DESC
+     ORDER BY ${VIP_FIRST_JOB_ORDER_SQL}
      LIMIT ? OFFSET ?`,
     [...params, Number(limit), offset]
   );
@@ -130,7 +131,7 @@ async function getFeatured(limit = 6) {
      JOIN companies c ON c.id = j.company_id
      LEFT JOIN categories cat ON cat.id = j.category_id
      WHERE j.status = 'active' AND c.status = 'approved'
-     ORDER BY j.created_at DESC
+     ORDER BY ${VIP_FIRST_JOB_ORDER_SQL}
      LIMIT ?`,
     [Number(limit)]
   );
@@ -145,7 +146,7 @@ async function findByCompany(companyId) {
      FROM jobs j
      LEFT JOIN categories cat ON cat.id = j.category_id
      WHERE j.company_id = ?
-     ORDER BY j.created_at DESC`,
+     ORDER BY ${VIP_FIRST_JOB_ORDER_SQL}`,
     [companyId]
   );
   return rows;
@@ -156,7 +157,7 @@ async function getAllForAdmin() {
     `SELECT j.*, c.company_name, c.status AS company_status
      FROM jobs j
      JOIN companies c ON c.id = j.company_id
-     ORDER BY j.created_at DESC`
+     ORDER BY ${VIP_FIRST_JOB_ORDER_SQL}`
   );
   return rows;
 }
