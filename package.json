@@ -4,6 +4,7 @@
   "description": "Nền tảng tuyển dụng kết nối Doanh nghiệp và Ứng viên (kiểu TopCV)",
   "main": "server.js",
   "scripts": {
+    "prestart": "node scripts/apply-supabase-migration.js --if-configured --best-effort",
     "start": "node server.js",
     "ai": "python ai_service/app.py",
     "dev": "nodemon server.js",

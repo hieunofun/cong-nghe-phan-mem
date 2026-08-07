@@ -243,13 +243,25 @@ function storedFileExtension(storedValue) {
   return path.extname(target).toLowerCase();
 }
 
-async function withAccessibleCVUrl(record) {
+async function withAccessibleCVUrl(record, resolveFileUrl = getAccessibleFileUrl) {
   if (!record) return record;
-  return { ...record, cv_url: await getAccessibleFileUrl(record.cv_url) };
+  return { ...record, cv_url: await resolveFileUrl(record.cv_url) };
 }
 
-async function withAccessibleCVUrls(records) {
-  return Promise.all((records || []).map(withAccessibleCVUrl));
+async function withAccessibleCVUrls(records, resolveFileUrl = getAccessibleFileUrl) {
+  return Promise.all((records || []).map(async (record) => {
+    try {
+      return await withAccessibleCVUrl(record, resolveFileUrl);
+    } catch (error) {
+      // CV cu co the da bi thay the/xoa khoi Storage. Khong de mot file hong
+      // lam sap toan bo danh sach don ung tuyen cua ung vien/doanh nghiep.
+      console.warn(
+        `Khong tao duoc link CV cho ho so ${record?.id || 'khong-ro'}:`,
+        error.message
+      );
+      return { ...record, cv_url: null };
+    }
+  }));
 }
 
 module.exports = {

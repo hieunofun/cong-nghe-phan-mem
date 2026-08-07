@@ -43,6 +43,23 @@ test('Render passes the complete external AI URL to the web service', () => {
   );
 });
 
+test('production start repairs the Supabase schema before serving requests', () => {
+  const packageJson = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
+  const migration = fs.readFileSync(
+    path.join(root, 'supabase/migrations/20260807160000_repair_candidate_lists.sql'),
+    'utf8'
+  );
+  assert.match(packageJson.scripts.prestart, /apply-supabase-migration\.js --if-configured/);
+  assert.match(migration, /CREATE TABLE IF NOT EXISTS applications/);
+  assert.match(migration, /CREATE TABLE IF NOT EXISTS saved_jobs/);
+});
+
+test('saved-job view does not fail just because application history is unavailable', () => {
+  const dashboard = fs.readFileSync(path.join(root, 'public/js/candidate-dashboard.js'), 'utf8');
+  assert.match(dashboard, /Promise\.allSettled/);
+  assert.match(dashboard, /if \(jobsResult\.status === 'rejected'\) throw jobsResult\.reason/);
+});
+
 test('AI bridge retries transient Render cold-start responses', () => {
   assert.deepEqual(parseAIRetryDelays('100, 250, invalid, -1'), [100, 250]);
   assert.deepEqual(parseAIRetryDelays(''), DEFAULT_AI_RETRY_DELAYS_MS);

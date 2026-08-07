@@ -418,14 +418,22 @@ async function loadSavedJobs() {
   const emptyEl = document.getElementById('saved-empty');
   const countEl = document.getElementById('saved-count');
   try {
-    const [jobs, applications, discoveryData] = await Promise.all([
+    const [jobsResult, applicationsResult, discoveryResult] = await Promise.allSettled([
       apiFetch('/candidates/me/saved-jobs'),
       apiFetch('/candidates/me/applications'),
       apiFetch('/jobs?limit=8', { auth: false })
     ]);
 
+    if (jobsResult.status === 'rejected') throw jobsResult.reason;
+    const jobs = jobsResult.value;
+    if (applicationsResult.status === 'fulfilled') {
+      candidateApplicationsCache = applicationsResult.value;
+    }
+    const discoveryData = discoveryResult.status === 'fulfilled'
+      ? discoveryResult.value
+      : { jobs: [] };
+
     savedJobsCache = jobs;
-    candidateApplicationsCache = applications;
     countEl.textContent = `${jobs.length} tin`;
     if (!jobs.length) {
       grid.style.display = 'none';
