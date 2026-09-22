@@ -35,7 +35,7 @@ Render Static Site chạy `npm ci && npm run build:frontend`. Script build chỉ
 
 ## 3. Tạo backend trên Vercel
 
-Import cùng repository vào Vercel. Vercel tự nhận diện Express từ `server.js`; `vercel.json` đặt Function tại Mumbai (`bom1`) gần Supabase `ap-south-1` và chạy migration khi build.
+Import cùng repository vào Vercel. Vercel tự nhận diện Express từ `server.js`; không đặt Build Command hoặc Output Directory. `vercel.json` đặt Function tại Mumbai (`bom1`) gần Supabase `ap-south-1`. Chạy migration trước khi triển khai bằng `npm run supabase:migrate`.
 
 Đặt các Environment Variables cho cả Production và Preview nếu cần:
 

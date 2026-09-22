@@ -12,7 +12,6 @@
     "ai": "python ai_service/app.py",
     "dev": "nodemon server.js",
     "build:frontend": "node scripts/write-frontend-env.js",
-    "vercel-build": "node scripts/apply-supabase-migration.js --if-configured",
     "test": "node --test tests/*.test.js",
     "test:ai": "python -m unittest ai_service.test_multilingual_matching",
     "test:checkout-render": "node scripts/test-checkout-render.js",
@@ -37,7 +36,7 @@
     "passport-facebook": "^3.0.0",
     "passport-github2": "^0.1.12",
     "passport-google-oauth20": "^2.0.0",
-    "pdf-parse": "^2.4.5",
+    "pdf-parse": "^1.1.1",
     "pg": "^8.22.0"
   },
   "devDependencies": {

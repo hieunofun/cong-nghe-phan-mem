@@ -1,6 +1,6 @@
 const fs = require('fs/promises');
 const path = require('path');
-const { PDFParse } = require('pdf-parse');
+const pdfParse = require('pdf-parse');
 const mammoth = require('mammoth');
 const { downloadStoredFile, storedFileExtension } = require('../services/storageService');
 
@@ -175,13 +175,8 @@ async function extractCVText(cvUrl) {
   let text = '';
 
   if (extension === '.pdf') {
-    const parser = new PDFParse({ data: buffer });
-    try {
-      const result = await parser.getText();
-      text = result.text;
-    } finally {
-      await parser.destroy();
-    }
+    const result = await pdfParse(buffer);
+    text = result.text;
   } else if (extension === '.docx') {
     const result = await mammoth.extractRawText({ buffer });
     text = result.value;

@@ -1,4 +1,5 @@
 node_modules/
+.npm-cache/
 .env
 .env.*
 !.env.example
@@ -12,3 +13,4 @@ uploads/avatars/*
 ai_service/.cache/
 ai_service/**/__pycache__/
 ai_service/models/cv_job_matching/
+.vercel

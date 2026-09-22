@@ -43,14 +43,15 @@ test('Render builds a static frontend that receives the public Vercel API URL', 
   assert.match(renderConfig, /key: FRONTEND_API_BASE_URL\s+sync: false/);
 });
 
-test('production start repairs the Supabase schema before serving requests', () => {
+test('production startup and the explicit migration command repair the Supabase schema', () => {
   const packageJson = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
   const migration = fs.readFileSync(
     path.join(root, 'supabase/migrations/20260807160000_repair_candidate_lists.sql'),
     'utf8'
   );
   assert.match(packageJson.scripts.prestart, /apply-supabase-migration\.js --if-configured/);
-  assert.match(packageJson.scripts['vercel-build'], /apply-supabase-migration\.js --if-configured/);
+  assert.match(packageJson.scripts['supabase:migrate'], /apply-supabase-migration\.js/);
+  assert.equal(packageJson.scripts['vercel-build'], undefined);
   assert.match(migration, /CREATE TABLE IF NOT EXISTS applications/);
   assert.match(migration, /CREATE TABLE IF NOT EXISTS saved_jobs/);
 });

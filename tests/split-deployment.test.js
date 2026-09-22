@@ -14,7 +14,8 @@ test('Express backend is exportable as a Vercel Function in the Supabase region'
   assert.match(server, /if \(require\.main === module\)/);
   assert.match(server, /module\.exports = app/);
   assert.deepEqual(vercel.regions, ['bom1']);
-  assert.equal(vercel.buildCommand, 'npm run vercel-build');
+  assert.equal(vercel.framework, 'express');
+  assert.equal(vercel.buildCommand, undefined);
   assert.equal(packageJson.engines.node, '>=20');
 });
 
