@@ -53,7 +53,7 @@ Authorization: Bearer <token>
 | Method | Endpoint | Role | Purpose |
 |---|---|---|---|
 | GET | `/candidates/me` | Candidate | View profile |
-| PUT | `/candidates/me` | Candidate | Update profile |
+| PUT | `/candidates/me` | Candidate | Update profile and opt-in `auto_apply_enabled` / `auto_apply_min_score` preferences |
 | POST | `/candidates/me/cv` | Candidate | Upload CV |
 | POST | `/candidates/me/avatar` | Candidate | Upload avatar |
 | GET | `/candidates/me/applications` | Candidate | View own applications |
@@ -77,6 +77,9 @@ Authorization: Bearer <token>
 | POST | `/applications/:jobId` | Candidate | Apply to job |
 | GET | `/applications/job/:jobId` | Employer | View applicants |
 | PUT | `/applications/:id/status` | Employer | Update applicant status |
+| GET | `/applications/:id/history` | Candidate/Employer | View the complete status timeline when authorized for the application |
+
+`POST /jobs` and reopening a job can return an `auto_apply` summary. Only candidates who explicitly enabled automatic application, uploaded a CV, and met their own score threshold are evaluated into new applications.
 
 ## AI
 
@@ -97,6 +100,24 @@ Example chatbot body:
   "history": []
 }
 ```
+
+When the question requests job suggestions, the response includes safe internal links:
+
+```json
+{
+  "reply": "Mình tìm thấy các công việc đang tuyển...",
+  "jobs": [
+    {
+      "id": 1,
+      "title": "Lập trình viên Backend Node.js",
+      "company_name": "VietSoft Solutions",
+      "url": "/job-detail.html?id=1"
+    }
+  ]
+}
+```
+
+CV ranking accepts Unicode text extracted from Vietnamese or English PDF/DOCX files. The matching layer folds Vietnamese accents and maps common Vietnamese-English role, technical, and soft-skill synonyms before scoring.
 
 ## Admin
 

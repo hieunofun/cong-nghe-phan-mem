@@ -1,6 +1,6 @@
 # Deployment Notes
 
-Hướng dẫn production miễn phí hiện tại nằm tại [`RENDER_FREE_DEPLOY.md`](../RENDER_FREE_DEPLOY.md). Cấu hình chuẩn gồm hai Render Web Services và một dự án Supabase.
+Hướng dẫn production hiện tại nằm tại [`VERCEL_RENDER_DEPLOY.md`](../VERCEL_RENDER_DEPLOY.md). Cấu hình chuẩn gồm backend Express trên Vercel, frontend tĩnh và Flask AI trên Render, cùng một dự án Supabase.
 
 ## Current Production
 
@@ -10,9 +10,10 @@ Hướng dẫn production miễn phí hiện tại nằm tại [`RENDER_FREE_DEP
 
 Smoke testing on 2026-07-28 returned HTTP 200 for web health, categories, featured jobs and AI health. Because Render Free sleeps after inactivity, the observed first responses took about 22 seconds for the web service and 51 seconds for the AI service.
 
-## Required Services
+## Target Services
 
-- Render Free cho Node.js web service
+- Vercel Function cho Node.js/Express API
+- Render Static Site cho frontend HTML/CSS/JavaScript
 - Render Free cho Python AI service ở lightweight mode
 - Supabase Free cho PostgreSQL và Storage
 - Groq API key nếu muốn chatbot dùng mô hình Groq
@@ -28,11 +29,14 @@ Important variables:
 - `DB_CLIENT=postgres`
 - `JWT_SECRET`
 - `SESSION_SECRET`
+- `BASE_URL` (backend Vercel)
+- `FRONTEND_URL` (frontend Render)
 - `AI_SERVICE_URL`
 - `AI_SERVICE_TOKEN`
 - `SUPABASE_URL`
 - `SUPABASE_SECRET_KEY`
 - `GROQ_API_KEY`
+- `FRONTEND_API_BASE_URL` chỉ dùng lúc build frontend Render
 - OAuth provider IDs/secrets when social login is enabled
 
 Chạy migrations bằng tài khoản database backend:
@@ -71,7 +75,8 @@ http://localhost:3000
 ## Production Notes
 
 - Configure environment variables in the hosting platform instead of committing `.env`.
-- Use Supabase PostgreSQL through its session pooler.
+- Backend Vercel dùng Supabase transaction pooler port `6543`.
+- Frontend Render chỉ nhận URL API công khai, tuyệt đối không nhận secret.
 - Deploy the Flask AI service separately and use the generated shared token.
 - Use HTTPS.
 - Store production uploads in Supabase Storage.

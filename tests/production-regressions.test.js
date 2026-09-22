@@ -35,12 +35,12 @@ test('AI service URL keeps local development on HTTP', () => {
   assert.equal(normalizeAIServiceUrl(), 'http://127.0.0.1:5000');
 });
 
-test('Render passes the complete external AI URL to the web service', () => {
+test('Render builds a static frontend that receives the public Vercel API URL', () => {
   const renderConfig = fs.readFileSync(path.join(root, 'render.yaml'), 'utf8');
-  assert.match(
-    renderConfig,
-    /key: AI_SERVICE_URL\s+fromService:\s+type: web\s+name: joblink-ai\s+envVarKey: RENDER_EXTERNAL_URL/
-  );
+  assert.match(renderConfig, /name: joblink-frontend\s+runtime: static/);
+  assert.match(renderConfig, /buildCommand: npm ci && npm run build:frontend/);
+  assert.match(renderConfig, /staticPublishPath: \.\/public/);
+  assert.match(renderConfig, /key: FRONTEND_API_BASE_URL\s+sync: false/);
 });
 
 test('production start repairs the Supabase schema before serving requests', () => {
@@ -50,6 +50,7 @@ test('production start repairs the Supabase schema before serving requests', () 
     'utf8'
   );
   assert.match(packageJson.scripts.prestart, /apply-supabase-migration\.js --if-configured/);
+  assert.match(packageJson.scripts['vercel-build'], /apply-supabase-migration\.js --if-configured/);
   assert.match(migration, /CREATE TABLE IF NOT EXISTS applications/);
   assert.match(migration, /CREATE TABLE IF NOT EXISTS saved_jobs/);
 });

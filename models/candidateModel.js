@@ -27,7 +27,8 @@ async function findById(id) {
 async function updateProfile(id, fields) {
   const allowed = [
     'full_name', 'phone', 'address', 'birth_date', 'gender',
-    'skills', 'experience', 'education', 'cv_url', 'avatar_url'
+    'skills', 'experience', 'education', 'cv_url', 'cv_filename', 'avatar_url',
+    'auto_apply_enabled', 'auto_apply_min_score'
   ];
   const sets = [];
   const values = [];
@@ -51,4 +52,23 @@ async function getAll() {
   return rows;
 }
 
-module.exports = { createCandidate, findByUserId, findById, updateProfile, getAll };
+async function findAutoApplyCandidates(limit = 100) {
+  const safeLimit = Math.min(500, Math.max(1, Number.parseInt(limit, 10) || 100));
+  const [rows] = await pool.query(
+    `SELECT cd.*, u.email
+     FROM candidates cd
+     JOIN users u ON u.id = cd.user_id
+     WHERE cd.auto_apply_enabled = TRUE
+       AND cd.cv_url IS NOT NULL
+       AND u.status = 'active'
+     ORDER BY cd.id ASC
+     LIMIT ?`,
+    [safeLimit]
+  );
+  return rows;
+}
+
+module.exports = {
+  createCandidate, findByUserId, findById, updateProfile, getAll,
+  findAutoApplyCandidates
+};

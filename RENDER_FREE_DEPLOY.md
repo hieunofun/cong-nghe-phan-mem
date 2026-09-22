@@ -1,5 +1,7 @@
 # Trien khai JobLink that tren ha tang mien phi
 
+> Tai lieu nay mo ta kien truc Render cu. Cau hinh moi tach backend Vercel va frontend Render nam tai [`VERCEL_RENDER_DEPLOY.md`](./VERCEL_RENDER_DEPLOY.md).
+
 Production dang hoat dong:
 
 - Web: https://joblink-web.onrender.com

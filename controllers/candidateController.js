@@ -11,6 +11,13 @@ const {
   withAccessibleCVUrls
 } = require('../services/storageService');
 const { extractCVText, extractProfileFields, isLikelyBlankCVTemplate } = require('../utils/cvTextExtractor');
+const {
+  AUTO_APPLY_MAX_SCORE,
+  AUTO_APPLY_MIN_SCORE,
+  isValidAutoApplyScore,
+  normalizeAutoApplyScore,
+  parseBoolean
+} = require('../utils/autoApply');
 
 const CV_PROFILE_FIELDS = [
   'full_name', 'phone', 'address', 'birth_date', 'gender',
@@ -43,7 +50,8 @@ async function updateMyProfile(req, res) {
     if (!profile) return res.status(404).json({ message: 'Không tìm thấy hồ sơ ứng viên.' });
 
     const {
-      full_name, phone, address, birth_date, gender, skills, experience, education
+      full_name, phone, address, birth_date, gender, skills, experience, education,
+      auto_apply_enabled, auto_apply_min_score
     } = req.body;
 
     const normalizedFullName = full_name === undefined ? undefined : String(full_name).trim();
@@ -54,10 +62,32 @@ async function updateMyProfile(req, res) {
       return res.status(400).json({ message: 'Họ và tên không được vượt quá 150 ký tự.' });
     }
 
+    const autoApplyEnabled = auto_apply_enabled === undefined
+      ? undefined
+      : parseBoolean(auto_apply_enabled);
+    if (auto_apply_enabled !== undefined && autoApplyEnabled === null) {
+      return res.status(400).json({ message: 'Tùy chọn tự động ứng tuyển không hợp lệ.' });
+    }
+    const autoApplyMinScore = auto_apply_min_score === undefined
+      ? undefined
+      : normalizeAutoApplyScore(auto_apply_min_score);
+    if (autoApplyMinScore !== undefined && !isValidAutoApplyScore(autoApplyMinScore)) {
+      return res.status(400).json({
+        message: `Ngưỡng tự động ứng tuyển phải từ ${AUTO_APPLY_MIN_SCORE}% đến ${AUTO_APPLY_MAX_SCORE}%.`
+      });
+    }
+    if (autoApplyEnabled === true && !profile.cv_url) {
+      return res.status(400).json({
+        message: 'Bạn cần tải CV lên hồ sơ trước khi bật tự động ứng tuyển.'
+      });
+    }
+
     await candidateModel.updateProfile(profile.id, {
       full_name: normalizedFullName,
       phone: phone === undefined ? undefined : String(phone).trim(),
-      address, birth_date, gender, skills, experience, education
+      address, birth_date, gender, skills, experience, education,
+      auto_apply_enabled: autoApplyEnabled,
+      auto_apply_min_score: autoApplyMinScore
     });
 
     const updated = await candidateModel.findByUserId(req.user.id);
@@ -79,6 +109,7 @@ async function uploadCV(req, res) {
 
     storedCVUrl = await storeUploadedFile(req.file, 'cv', profile.id);
     const cvUrl = storedCVUrl;
+    const cvFilename = String(req.file.originalname || 'CV đã tải lên').slice(0, 255);
     const warnings = [];
     let analysis = {};
     let syncedFields = {};
@@ -108,8 +139,8 @@ async function uploadCV(req, res) {
     }
 
     const profileUpdate = cvTextRead
-      ? { ...EMPTY_CV_PROFILE, ...syncedFields, cv_url: cvUrl }
-      : { cv_url: cvUrl };
+      ? { ...EMPTY_CV_PROFILE, ...syncedFields, cv_url: cvUrl, cv_filename: cvFilename }
+      : { cv_url: cvUrl, cv_filename: cvFilename };
     const clearedFieldNames = cvTextRead
       ? CV_PROFILE_FIELDS.filter((field) => (
           Object.prototype.hasOwnProperty.call(EMPTY_CV_PROFILE, field)
@@ -122,9 +153,14 @@ async function uploadCV(req, res) {
     await candidateModel.updateProfile(profile.id, profileUpdate);
     profileUpdateCommitted = true;
     if (profile.cv_url && profile.cv_url !== cvUrl) {
-      deleteStoredFile(profile.cv_url).catch((err) => {
+      try {
+        // Don ung tuyen phai giu nguyen CV tai thoi diem nop. Chi xoa CV cu
+        // khi khong co don nao dang tham chieu den tep do.
+        const usedByApplication = await applicationModel.isCVReferenced(profile.cv_url);
+        if (!usedByApplication) await deleteStoredFile(profile.cv_url);
+      } catch (err) {
         console.error('uploadCV old-file cleanup warning:', err.message);
-      });
+      }
     }
     const updated = await candidateModel.findByUserId(req.user.id);
     const accessibleProfile = await withAccessibleCVUrl(updated);

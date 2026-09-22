@@ -2,17 +2,17 @@
 
 ## Overview
 
-JobLink v1.0.0 uses a layered web architecture deployed across Render Free and Supabase:
+JobLink uses a layered web architecture split across Vercel, Render, and Supabase:
 
 ```text
-Browser UI
-  -> Express routes
+Browser UI (Render Static Site)
+  -> Express routes (Vercel Function)
   -> Controllers
   -> Models
   -> PostgreSQL (Supabase production) / MySQL (local)
 
-Express backend
-  -> Flask AI service
+Express backend (Vercel, Mumbai)
+  -> Flask AI service (Render)
   -> Lightweight TF-IDF + skill matching / Groq API
 ```
 
@@ -21,7 +21,7 @@ Express backend
 | Component | Location | Responsibility |
 |---|---|---|
 | Static frontend | `public/` | HTML/CSS/JS screens for candidates, employers, admin, and public pages |
-| Express entrypoint | `server.js` | Middleware, static assets, API route mounting |
+| Express entrypoint | `server.js` | CORS, middleware, API route mounting, local listener, and Vercel export |
 | Routes | `routes/` | HTTP endpoint definitions and role guards |
 | Controllers | `controllers/` | Business workflow and response handling |
 | Models | `models/` | Database queries through the MySQL/PostgreSQL adapter |
@@ -40,6 +40,16 @@ Reason: AI dependencies and model loading are Python-friendly, while the web app
 
 Limitation: deployment needs two processes and `AI_SERVICE_URL` must be configured.
 
+### Split Frontend and Backend Hosting
+
+Decision: publish `public/` as a Render Static Site and run Express as one Vercel Function in Mumbai, close to the Supabase `ap-south-1` database.
+
+Reason: the frontend benefits from Render's global static CDN, while the API can scale independently on Vercel. `public/js/env.js` is generated at build time with only the public API origin. Express enforces an explicit frontend-origin allowlist and redirects OAuth/reset-password flows back to Render.
+
+Constraint: Vercel Functions limit request and response payloads to 4.5 MB, so CV uploads are limited to 4 MB and persisted directly in Supabase Storage.
+
+Evidence: `vercel.json`, `render.yaml`, `server.js`, `scripts/write-frontend-env.js`, and `VERCEL_RENDER_DEPLOY.md`.
+
 ### Role-Based Routes
 
 Decision: protect candidate, company, and admin workflows with JWT middleware and role guards.
@@ -55,6 +65,22 @@ Decision: store CVs, logos, and avatars in Supabase Storage in production. Local
 Reason: Render Free uses an ephemeral filesystem, so production uploads must be stored outside the web service.
 
 Evidence: `services/storageService.js` and `scripts/setup-supabase-storage.js`.
+
+### Application CV Snapshot and Lifecycle
+
+Decision: each application stores the selected profile/application CV reference and filename, and every lifecycle change is appended to `application_status_history` beginning with the submission event.
+
+Reason: replacing a profile CV must not remove the document already delivered to an employer, and both participants need an auditable view of the current stage and prior transitions.
+
+Evidence: `models/applicationModel.js`, `controllers/applicationController.js`, `controllers/candidateController.js`, and `supabase/migrations/20260921180000_candidate_lifecycle_cv_tracking.sql`.
+
+### Opt-in Automatic Application
+
+Decision: automatic application is disabled by default. A candidate with a stored CV may explicitly enable it and choose a minimum AI match score. Newly published or reopened jobs evaluate only opted-in candidates, and qualifying applications are stored with source `auto_match`, the AI score, and a system-authored lifecycle event.
+
+Reason: the feature can reduce missed opportunities without silently sharing a candidate's CV. Candidate consent, a configurable threshold, duplicate prevention, and an audit trail are mandatory parts of the workflow.
+
+Evidence: `services/autoApplyService.js`, `utils/autoApply.js`, `controllers/jobController.js`, and `supabase/migrations/20260922100000_auto_apply_opt_in.sql`.
 
 ### Lightweight AI Matching on Free Hosting
 

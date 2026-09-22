@@ -44,6 +44,7 @@
       min-height: 260px; max-height: 320px;
     }
     .jl-msg { max-width: 85%; }
+    .jl-msg.has-jobs { max-width: 100%; width: 100%; }
     .jl-msg.bot { align-self: flex-start; }
     .jl-msg.user { align-self: flex-end; }
     .jl-bubble {
@@ -90,6 +91,20 @@
       cursor: pointer; color: var(--primary-dark); font-weight: 500;
     }
     .jl-quick-btn:hover { background: var(--primary-light); }
+    .jl-job-suggestions { display: grid; gap: 8px; margin-top: 8px; }
+    .jl-job-card {
+      display: block; padding: 10px 12px; border: 1px solid var(--border);
+      border-radius: 12px; background: var(--surface); color: var(--ink);
+      text-decoration: none; transition: border-color .16s, transform .16s, box-shadow .16s;
+    }
+    .jl-job-card:hover {
+      border-color: var(--primary); transform: translateY(-1px);
+      box-shadow: 0 5px 14px rgba(11,93,77,.12);
+    }
+    .jl-job-card-title { display: block; color: var(--primary-dark); font-size: .84rem; font-weight: 700; }
+    .jl-job-card-company { display: block; margin-top: 2px; font-size: .76rem; color: var(--ink-muted); }
+    .jl-job-card-meta { display: block; margin-top: 5px; font-size: .72rem; color: var(--ink-faint); }
+    .jl-job-card-action { display: block; margin-top: 6px; color: var(--primary); font-size: .74rem; font-weight: 700; }
     @media(max-width:480px){
       #jl-chat-box { width: calc(100vw - 32px); right: 16px; }
     }
@@ -158,10 +173,26 @@
       .replace(/'/g, '&#039;');
   }
 
-  function addBotMessage(text, quickReplies = [], saveToHistory = true) {
+  function addBotMessage(text, quickReplies = [], saveToHistory = true, jobSuggestions = []) {
+    const safeJobs = Array.isArray(jobSuggestions)
+      ? jobSuggestions.map(job => ({ ...job, id: Number(job?.id) }))
+        .filter(job => Number.isSafeInteger(job.id) && job.id > 0)
+        .slice(0, 5)
+      : [];
     const div = document.createElement('div');
-    div.className = 'jl-msg bot';
+    div.className = `jl-msg bot${safeJobs.length ? ' has-jobs' : ''}`;
     let html = `<div class="jl-bubble">${escapeHtml(text).replace(/\n/g, '<br>')}</div>`;
+    if (safeJobs.length) {
+      html += `<div class="jl-job-suggestions">${safeJobs.map(job => {
+        const meta = [job.location, job.salary_label].filter(Boolean).map(escapeHtml).join(' · ');
+        return `<a class="jl-job-card" href="/job-detail.html?id=${job.id}" target="_blank" rel="noopener noreferrer">
+          <span class="jl-job-card-title">${job.is_vip ? '⭐ ' : ''}${escapeHtml(job.title || 'Công việc đang tuyển')}</span>
+          <span class="jl-job-card-company">${escapeHtml(job.company_name || 'Nhà tuyển dụng')}</span>
+          ${meta ? `<span class="jl-job-card-meta">${meta}</span>` : ''}
+          <span class="jl-job-card-action">Xem chi tiết công việc →</span>
+        </a>`;
+      }).join('')}</div>`;
+    }
     if (quickReplies.length) {
       html += `<div class="jl-quick-btns">${quickReplies.map(q =>
         `<button class="jl-quick-btn">${escapeHtml(q)}</button>`
@@ -216,7 +247,8 @@
     showTyping();
 
     try {
-      const res = await fetch('/api/ai/chat', {
+      const apiBase = window.JOBLINK_API_BASE || '/api';
+      const res = await fetch(`${apiBase}/ai/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -229,7 +261,12 @@
       if (data.ai_offline) {
         addBotMessage('AI Service đang offline. Vui lòng chạy: python ai_service/app.py');
       } else {
-        addBotMessage(data.reply || 'Xin lỗi, tôi chưa có câu trả lời cho câu hỏi này.');
+        addBotMessage(
+          data.reply || 'Xin lỗi, tôi chưa có câu trả lời cho câu hỏi này.',
+          [],
+          true,
+          data.jobs || []
+        );
       }
     } catch (err) {
       hideTyping();

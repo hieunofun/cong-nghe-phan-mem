@@ -19,7 +19,8 @@ function fileFilterFor(allowedExts) {
 const uploadCV = multer({
   storage: memoryStorage,
   fileFilter: fileFilterFor(['.pdf', '.docx']),
-  limits: { fileSize: 5 * 1024 * 1024 } // 5MB
+  // Vercel Functions gioi han request/response 4.5 MB; chua khoang trong cho multipart.
+  limits: { fileSize: 4 * 1024 * 1024 } // 4MB
 });
 
 const uploadLogo = multer({

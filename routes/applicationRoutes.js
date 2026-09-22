@@ -21,6 +21,10 @@ router.get('/job/:jobId', verifyToken, requireRole('company'), applicationContro
 
 // Doanh nghiep cap nhat trang thai pipeline cua 1 ho so ung tuyen
 router.put('/:id/status', verifyToken, requireRole('company'), applicationController.updateApplicationStatus);
-router.get('/:id/history', verifyToken, requireRole('company'), applicationController.getApplicationStatusHistory);
+router.get(
+  '/:id/history',
+  verifyToken, requireRole('company', 'candidate'),
+  applicationController.getApplicationStatusHistory
+);
 
 module.exports = router;

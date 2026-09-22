@@ -1,5 +1,23 @@
 # Changelog
 
+## Unreleased - 2026-09-22
+
+### Added
+
+- Candidate-facing application lifecycle timeline with the initial submission and every employer status transition.
+- Submitted CV filename/source tracking for candidate and employer dashboards.
+- Candidate-controlled automatic application for newly published/reopened jobs, including configurable AI threshold, duplicate prevention, and source/audit metadata.
+- Clickable job cards in chatbot recommendations, linked directly to each JobLink job detail page.
+- Vietnamese-English normalization and synonym matching for CV analysis, ranking, and recommendations.
+- Split deployment configuration for an Express backend on Vercel and a static frontend plus Flask AI service on Render.
+
+### Fixed
+
+- Profile CVs are selected automatically during application submission without requiring the browser file input to be populated.
+- Replacing a profile CV no longer deletes a file referenced by an existing application.
+- Chatbot job recommendations now remain available through the realtime database fallback when Groq is not configured.
+- Cross-origin API, OAuth callback, and password-reset URLs now work when frontend and backend use different domains.
+
 ## v1.0.0 Final - 2026-07-28
 
 ### Summary

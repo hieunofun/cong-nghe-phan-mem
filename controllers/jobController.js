@@ -2,6 +2,19 @@
 const jobModel = require('../models/jobModel');
 const companyModel = require('../models/companyModel');
 const subscriptionModel = require('../models/subscriptionModel');
+const { evaluateNewJobForAutoApply } = require('../services/autoApplyService');
+
+async function runAutoApply(job) {
+  try {
+    return await evaluateNewJobForAutoApply(job);
+  } catch (error) {
+    console.error('runAutoApply error:', error.message);
+    return {
+      eligible: 0, evaluated: 0, applied: 0,
+      below_threshold: 0, skipped: 0, failed: 1
+    };
+  }
+}
 
 // GET /api/jobs - tim kiem / loc tin tuyen dung (public)
 async function getJobs(req, res) {
@@ -125,7 +138,14 @@ async function createJob(req, res) {
 
     const jobId = await jobModel.createJob(company.id, { ...req.body, is_vip: sub ? isVip : false });
     const job = await jobModel.findById(jobId);
-    res.status(201).json({ message: 'Đăng tin tuyển dụng thành công!', job });
+    const autoApply = await runAutoApply(job);
+    res.status(201).json({
+      message: autoApply.applied > 0
+        ? `Đăng tin thành công và tự động nhận ${autoApply.applied} hồ sơ phù hợp!`
+        : 'Đăng tin tuyển dụng thành công!',
+      job,
+      auto_apply: autoApply
+    });
   } catch (err) {
     console.error('createJob error:', err);
     res.status(500).json({ message: 'Lỗi máy chủ, vui lòng thử lại sau.' });
@@ -146,7 +166,15 @@ async function updateJob(req, res) {
 
     await jobModel.updateJob(req.params.id, req.body);
     const updated = await jobModel.findById(req.params.id);
-    res.json({ message: 'Cập nhật tin tuyển dụng thành công!', job: updated });
+    const becameActive = job.status !== 'active' && updated.status === 'active';
+    const autoApply = becameActive ? await runAutoApply(updated) : null;
+    res.json({
+      message: autoApply?.applied > 0
+        ? `Đã mở tin và tự động nhận ${autoApply.applied} hồ sơ phù hợp!`
+        : 'Cập nhật tin tuyển dụng thành công!',
+      job: updated,
+      auto_apply: autoApply
+    });
   } catch (err) {
     console.error('updateJob error:', err);
     res.status(500).json({ message: 'Lỗi máy chủ, vui lòng thử lại sau.' });

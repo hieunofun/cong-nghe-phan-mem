@@ -42,13 +42,21 @@ async function applyToJob(req, res) {
     if (!cvUrl) {
       return res.status(400).json({ message: 'Vui lòng tải CV lên trước khi ứng tuyển.' });
     }
+    const cvSource = uploadedCVUrl ? 'application_upload' : 'profile';
+    const cvFilename = String(
+      req.file?.originalname || candidate.cv_filename || 'CV hồ sơ'
+    ).slice(0, 255);
 
     const { cover_letter } = req.body;
     const applicationId = await applicationModel.create({
       jobId: req.params.jobId,
       candidateId: candidate.id,
       cvUrl,
-      coverLetter: cover_letter
+      cvFilename,
+      cvSource,
+      applicationSource: 'manual',
+      coverLetter: cover_letter,
+      changedByUserId: req.user.id
     });
     applicationCreated = true;
 
@@ -59,7 +67,14 @@ async function applyToJob(req, res) {
       console.error('applyToJob saved-job cleanup error:', cleanupError);
     }
 
-    res.status(201).json({ message: 'Ứng tuyển thành công!', applicationId });
+    res.status(201).json({
+      message: cvSource === 'profile'
+        ? 'Ứng tuyển thành công bằng CV đã lưu trong hồ sơ!'
+        : 'Ứng tuyển thành công bằng CV bạn vừa chọn!',
+      applicationId,
+      cv_source: cvSource,
+      cv_filename: cvFilename
+    });
   } catch (err) {
     if (uploadedCVUrl && !applicationCreated) {
       await deleteStoredFile(uploadedCVUrl).catch(() => {});
@@ -168,13 +183,20 @@ async function updateApplicationStatus(req, res) {
 
 async function getApplicationStatusHistory(req, res) {
   try {
-    const company = await companyModel.findByUserId(req.user.id);
-    if (!company) return res.status(404).json({ message: 'Không tìm thấy hồ sơ doanh nghiệp.' });
-
     const application = await applicationModel.findById(req.params.id);
     if (!application) return res.status(404).json({ message: 'Không tìm thấy hồ sơ ứng tuyển.' });
-    if (application.company_id !== company.id) {
-      return res.status(403).json({ message: 'Bạn không có quyền xem lịch sử hồ sơ này.' });
+
+    if (req.user.role === 'candidate') {
+      const candidate = await candidateModel.findByUserId(req.user.id);
+      if (!candidate || application.candidate_id !== candidate.id) {
+        return res.status(403).json({ message: 'Bạn không có quyền xem lịch sử hồ sơ này.' });
+      }
+    } else {
+      const company = await companyModel.findByUserId(req.user.id);
+      if (!company) return res.status(404).json({ message: 'Không tìm thấy hồ sơ doanh nghiệp.' });
+      if (application.company_id !== company.id) {
+        return res.status(403).json({ message: 'Bạn không có quyền xem lịch sử hồ sơ này.' });
+      }
     }
 
     const history = await applicationModel.findStatusHistory(req.params.id);

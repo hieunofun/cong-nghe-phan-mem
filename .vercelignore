@@ -1,0 +1,7 @@
+ai_service/
+docs/
+public/
+tests/
+uploads/
+*.md
+render.yaml

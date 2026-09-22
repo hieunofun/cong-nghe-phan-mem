@@ -9,8 +9,12 @@ function getConfiguredBaseUrl() {
   return normalizeBaseUrl(process.env.BASE_URL || process.env.RENDER_EXTERNAL_HOSTNAME);
 }
 
+function getFrontendBaseUrl(fallback = 'http://localhost:3000') {
+  return normalizeBaseUrl(process.env.FRONTEND_URL) || normalizeBaseUrl(fallback);
+}
+
 function getAppBaseUrl(fallback = 'http://localhost:3000') {
   return getConfiguredBaseUrl() || normalizeBaseUrl(fallback);
 }
 
-module.exports = { getAppBaseUrl, getConfiguredBaseUrl, normalizeBaseUrl };
+module.exports = { getAppBaseUrl, getConfiguredBaseUrl, getFrontendBaseUrl, normalizeBaseUrl };

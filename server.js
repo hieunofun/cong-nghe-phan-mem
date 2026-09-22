@@ -2,7 +2,14 @@
 require('dotenv').config();
 
 if (process.env.NODE_ENV === 'production') {
-  const required = ['DATABASE_URL', 'JWT_SECRET', 'SESSION_SECRET', 'SUPABASE_URL'];
+  const required = [
+    'DATABASE_URL',
+    'JWT_SECRET',
+    'SESSION_SECRET',
+    'SUPABASE_URL',
+    'BASE_URL',
+    'FRONTEND_URL'
+  ];
   const missing = required.filter((key) => !process.env[key]);
   if (!process.env.SUPABASE_SECRET_KEY && !process.env.SUPABASE_SERVICE_ROLE_KEY) {
     missing.push('SUPABASE_SECRET_KEY');
@@ -35,12 +42,46 @@ const aiRoutes = require('./routes/aiRoutes');
 
 const app = express();
 
+function normalizeOrigin(value) {
+  try {
+    return new URL(String(value || '').trim()).origin;
+  } catch (_error) {
+    return '';
+  }
+}
+
+const allowedOrigins = new Set([
+  process.env.FRONTEND_URL,
+  ...(process.env.CORS_ORIGINS || '').split(','),
+  ...(process.env.NODE_ENV === 'production'
+    ? []
+    : ['http://localhost:3000', 'http://127.0.0.1:3000'])
+].map(normalizeOrigin).filter(Boolean));
+
 if (process.env.NODE_ENV === 'production') {
   app.set('trust proxy', 1);
 }
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Frontend Render va API Vercel dung hai origin khac nhau.
+app.use((req, res, next) => {
+  const requestOrigin = normalizeOrigin(req.headers.origin);
+  if (requestOrigin && allowedOrigins.has(requestOrigin)) {
+    res.setHeader('Access-Control-Allow-Origin', requestOrigin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+    res.setHeader('Vary', 'Origin');
+  }
+  if (req.method === 'OPTIONS') {
+    return requestOrigin && allowedOrigins.has(requestOrigin)
+      ? res.sendStatus(204)
+      : res.status(403).json({ message: 'Origin không được phép.' });
+  }
+  next();
+});
 
 // Session chi dung cho OAuth redirect (khong luu phien dang nhap thuong)
 app.use(session({
@@ -97,8 +138,13 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: 'Đã xảy ra lỗi không mong muốn trên server.' });
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`JobLink server đang chạy tại http://localhost:${PORT}`);
-  console.log('OAuth providers:');
-});
+if (require.main === module) {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`JobLink server đang chạy tại http://localhost:${PORT}`);
+    console.log('OAuth providers:');
+  });
+}
+
+// Vercel tu dong dong goi Express app duoc export thanh mot Function.
+module.exports = app;

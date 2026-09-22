@@ -1,8 +1,8 @@
 # JobLink — Nền tảng tuyển dụng nhân sự
 
-> Triển khai production trên Render Free + Supabase: xem [RENDER_FREE_DEPLOY.md](./RENDER_FREE_DEPLOY.md).
+> Triển khai backend Vercel, frontend/AI Render và Supabase: xem [VERCEL_RENDER_DEPLOY.md](./VERCEL_RENDER_DEPLOY.md).
 >
-> Production web: https://joblink-web.onrender.com · AI health: https://joblink-ai.onrender.com/health
+> Bản triển khai Render cũ: https://joblink-web.onrender.com · AI health: https://joblink-ai.onrender.com/health
 >
 > Bản phát hành chính thức: [v1.0.0 Final](./docs/RELEASE_v1.0.0.md)
 
@@ -10,7 +10,7 @@ Một nền tảng tuyển dụng kiểu TopCV, xây dựng bằng **Node.js / E
 
 ## Tính năng chính
 
-**Ứng viên:** đăng ký/đăng nhập, cập nhật hồ sơ (kỹ năng, kinh nghiệm, học vấn), tải lên CV và ảnh đại diện, tìm kiếm/lọc việc làm, ứng tuyển, lưu tin yêu thích, theo dõi trạng thái ứng tuyển.
+**Ứng viên:** đăng ký/đăng nhập, cập nhật hồ sơ (kỹ năng, kinh nghiệm, học vấn), tải lên CV và ảnh đại diện, tự động dùng CV hồ sơ khi ứng tuyển, tùy chọn bật/tắt tự động ứng tuyển tin mới theo ngưỡng AI, tìm kiếm/lọc việc làm, lưu tin yêu thích, theo dõi trạng thái hiện tại và toàn bộ lịch sử xử lý hồ sơ.
 
 **Doanh nghiệp:** đăng ký hồ sơ công ty (cần Admin duyệt), đăng/sửa/xoá/đóng tin tuyển dụng, quản lý ứng viên theo dạng pipeline (Mới ứng tuyển → Đang xem xét → Phỏng vấn → Đã nhận/Đã từ chối), cập nhật hồ sơ công ty + logo.
 
@@ -21,7 +21,8 @@ Một nền tảng tuyển dụng kiểu TopCV, xây dựng bằng **Node.js / E
 - **Backend:** Node.js, Express, MySQL (mysql2) hoặc Supabase PostgreSQL (pg), JWT (jsonwebtoken), bcryptjs, multer (upload file)
 - **Frontend:** HTML/CSS/JavaScript thuần (không dùng framework), thiết kế responsive
 - **Database:** MySQL 8.0 hoặc Supabase PostgreSQL
-- **AI chatbot:** Flask AI service, Groq API, RAG từ FAQ nội bộ + dữ liệu JobLink realtime trong MySQL
+- **AI chatbot:** Flask AI service, Groq API, RAG từ FAQ nội bộ + dữ liệu JobLink realtime trong MySQL/Supabase; đề xuất việc làm bằng thẻ có liên kết trực tiếp.
+- **AI CV:** đọc nội dung Unicode từ PDF/DOCX và chấm điểm song ngữ Việt–Anh bằng chuẩn hóa kỹ năng, chức danh và từ đồng nghĩa.
 
 ## Yêu cầu hệ thống
 
@@ -77,7 +78,7 @@ JWT_SECRET=doi_thanh_mot_chuoi_bi_mat_rieng_cua_ban
 JWT_EXPIRES_IN=7d
 AI_SERVICE_URL=http://localhost:5000
 GROQ_API_KEY=your_groq_api_key
-GROQ_MODEL=llama-3.3-70b-versatile
+GROQ_MODEL=qwen/qwen3.8-27b
 ```
 
 **Lưu ý:** Hãy đổi `JWT_SECRET` thành một chuỗi ngẫu nhiên riêng nếu triển khai thực tế.
@@ -109,6 +110,15 @@ npm run dev
 ```
 
 Server sẽ chạy tại: **http://localhost:3000**
+
+Cài dependency và chạy dịch vụ AI trong một cửa sổ terminal khác:
+
+```bash
+python -m pip install -r ai_service/requirements.txt
+npm run ai
+```
+
+Dịch vụ AI sẽ chạy tại: **http://localhost:5000**
 
 ## Tài khoản demo
 
@@ -145,7 +155,7 @@ Tất cả endpoint có tiền tố `/api`. Các route cần đăng nhập sẽ 
 
 - `POST /auth/register/candidate`, `POST /auth/register/company`, `POST /auth/login`, `GET /auth/me`
 - `GET /jobs`, `GET /jobs/featured`, `GET /jobs/:id` (public) — `POST/PUT/DELETE /jobs` (doanh nghiệp)
-- `POST /applications/:jobId` (ứng viên ứng tuyển) — `GET /applications/job/:jobId`, `PUT /applications/:id/status` (doanh nghiệp)
+- `POST /applications/:jobId` (ứng viên ứng tuyển) — `GET /applications/job/:jobId`, `PUT /applications/:id/status` (doanh nghiệp) — `GET /applications/:id/history` (ứng viên sở hữu đơn hoặc doanh nghiệp nhận đơn)
 - `GET/PUT /candidates/me`, `POST /candidates/me/cv`, `POST /candidates/me/avatar`, `GET /candidates/me/applications`, `GET/POST/DELETE /candidates/me/saved-jobs`
 - `GET/PUT /companies/me/profile`, `POST /companies/me/logo`, `GET /companies/:id` (public)
 - `GET /admin/stats`, `GET/PUT /admin/companies`, `GET/PUT /admin/users`, `GET/DELETE /admin/jobs`, `GET/POST/DELETE /admin/categories`
@@ -154,6 +164,8 @@ Tất cả endpoint có tiền tố `/api`. Các route cần đăng nhập sẽ 
 ## Ghi chú quan trọng
 
 - Trên production, CV/logo/avatar được lưu bằng Supabase Storage; thư mục `uploads/` chỉ dùng cho môi trường local.
+- Mỗi đơn ứng tuyển giữ CV đã nộp tại thời điểm gửi; thay CV hồ sơ sau đó không làm mất CV mà doanh nghiệp đã nhận.
+- Tự động ứng tuyển mặc định tắt; ứng viên phải có CV, chủ động bật và chọn ngưỡng phù hợp. Đơn tự động được đánh dấu `auto_match` và lưu điểm AI trong lịch sử.
 - Mật khẩu được mã hoá bằng bcrypt trước khi lưu vào database.
 - Doanh nghiệp đăng ký mới sẽ ở trạng thái `pending` và **không thể đăng tin** cho đến khi Admin duyệt.
 - Render Free có thể sleep khi không có traffic; request đầu tiên sau thời gian nghỉ có thể mất khoảng 20–60 giây.

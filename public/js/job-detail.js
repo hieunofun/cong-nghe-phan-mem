@@ -27,7 +27,7 @@ function resolveCandidateContext(results, jobId) {
   };
 }
 
-function getCvSelectionStatus(hasProfileCv, selectedFileName = '') {
+function getCvSelectionStatus(hasProfileCv, selectedFileName = '', profileFileName = '') {
   if (selectedFileName) {
     return {
       type: 'success',
@@ -38,7 +38,7 @@ function getCvSelectionStatus(hasProfileCv, selectedFileName = '') {
   if (hasProfileCv) {
     return {
       type: 'info',
-      message: 'Sẽ dùng CV hiện có trong hồ sơ của bạn. Bạn có thể chọn file khác bên dưới nếu muốn dùng CV mới.'
+      message: `CV hiện có trong hồ sơ${profileFileName ? ` (“${profileFileName}”)` : ''} đã được tự động chọn. Bạn không cần tải lại file.`
     };
   }
 
@@ -246,7 +246,8 @@ async function openApplyModal() {
   }
 
   const hasCv = Boolean(candidateProfile?.cv_url);
-  const initialCvStatus = getCvSelectionStatus(hasCv);
+  const profileCvFilename = candidateProfile?.cv_filename || '';
+  const initialCvStatus = getCvSelectionStatus(hasCv, '', profileCvFilename);
 
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
@@ -265,8 +266,17 @@ async function openApplyModal() {
         <div class="form-group">
           <label>CV ứng tuyển</label>
           <div class="alert alert-${initialCvStatus.type}" id="cv-selection-status">${escapeHtml(initialCvStatus.message)}</div>
+          ${hasCv ? `
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 12px; margin:10px 0; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--surface-alt);">
+              <div style="min-width:0;">
+                <strong style="display:block; font-size:0.86rem;">CV từ hồ sơ · Tự động chọn</strong>
+                <span class="form-hint" style="display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(profileCvFilename || 'CV hiện tại')}</span>
+              </div>
+              <a href="${escapeHtml(candidateProfile.cv_url)}" target="_blank" rel="noopener" class="btn btn-ghost btn-sm">Xem CV</a>
+            </div>` : ''}
+          <label for="cv-file" style="font-size:0.82rem;">${hasCv ? 'Hoặc chọn CV khác chỉ dùng cho đơn này' : 'Chọn CV để ứng tuyển'}</label>
           <input type="file" id="cv-file" class="input" accept=".pdf,.docx">
-          <p class="form-hint">Chấp nhận file .pdf, .docx — tối đa 5MB.</p>
+          <p class="form-hint">Chấp nhận file .pdf, .docx — tối đa 4MB.</p>
         </div>
         <button type="submit" class="btn btn-accent btn-block" id="apply-submit-btn">Gửi hồ sơ ứng tuyển</button>
       </form>
@@ -281,7 +291,7 @@ async function openApplyModal() {
   const cvSelectionStatus = document.getElementById('cv-selection-status');
   fileInput.addEventListener('change', () => {
     const selectedFile = fileInput.files[0];
-    const status = getCvSelectionStatus(hasCv, selectedFile?.name || '');
+    const status = getCvSelectionStatus(hasCv, selectedFile?.name || '', profileCvFilename);
     cvSelectionStatus.className = `alert alert-${status.type}`;
     cvSelectionStatus.textContent = status.message;
 
@@ -307,14 +317,15 @@ async function openApplyModal() {
     try {
       const formData = new FormData();
       formData.append('cover_letter', document.getElementById('cover-letter').value.trim());
+      formData.append('use_profile_cv', fileInput.files.length === 0 ? 'true' : 'false');
       if (fileInput.files.length > 0) formData.append('cv', fileInput.files[0]);
 
-      await apiUpload(`/applications/${currentJob.id}`, formData);
+      const data = await apiUpload(`/applications/${currentJob.id}`, formData);
       overlay.remove();
       hasApplied = true;
       isSaved = false;
       renderJobActions();
-      showToast('Ứng tuyển thành công! Tin đã được chuyển sang mục Đơn đã ứng tuyển.', 'success');
+      showToast(`${data.message || 'Ứng tuyển thành công!'} Tin đã được chuyển sang mục Đơn đã ứng tuyển.`, 'success');
     } catch (err) {
       if (err.status === 409) {
         overlay.remove();

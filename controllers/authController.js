@@ -7,7 +7,7 @@ const passwordResetModel = require('../models/passwordResetModel');
 const companyModel = require('../models/companyModel');
 const candidateModel = require('../models/candidateModel');
 const { isMailConfigured, sendPasswordResetEmail } = require('../services/mailService');
-const { getConfiguredBaseUrl } = require('../utils/appUrl');
+const { getFrontendBaseUrl } = require('../utils/appUrl');
 
 const TERMS_VERSION = '2026-07-21';
 const PASSWORD_RESET_MINUTES = 30;
@@ -31,8 +31,7 @@ function passwordValidationMessage(password) {
 }
 
 function resetBaseUrl(req) {
-  const configuredBaseUrl = getConfiguredBaseUrl();
-  if (process.env.NODE_ENV === 'production' && configuredBaseUrl) return configuredBaseUrl;
+  if (process.env.NODE_ENV === 'production') return getFrontendBaseUrl();
   return `${req.protocol}://${req.get('host')}`;
 }
 

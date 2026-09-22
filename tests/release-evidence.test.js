@@ -95,6 +95,7 @@ test('package version matches the v1.0.0 final release line', () => {
 test('configuration hygiene keeps secrets and the optional large model out of Git', () => {
   const gitignore = read('.gitignore');
   const renderConfig = read('render.yaml');
+  const envExample = read('.env.example');
   assert.match(gitignore, /^\.env$/m);
   assert.match(gitignore, /^ai_service\/models\/cv_job_matching\/$/m);
   assert.equal(exists('.env.example'), true);
@@ -106,6 +107,6 @@ test('configuration hygiene keeps secrets and the optional large model out of Gi
     'GITHUB_CLIENT_ID',
     'GITHUB_CLIENT_SECRET'
   ].forEach((key) => {
-    assert.match(renderConfig, new RegExp(`key: ${key}\\s+sync: false`));
+    assert.match(envExample, new RegExp(`^${key}=`, 'm'));
   });
 });

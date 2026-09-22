@@ -40,7 +40,9 @@ test('selecting a CV replaces the missing-CV error with a success state', () => 
 });
 
 test('an existing profile CV is announced when no replacement file is selected', () => {
-  const status = getCvSelectionStatus(true);
+  const status = getCvSelectionStatus(true, '', 'Nguyen-Van-A-CV.pdf');
   assert.equal(status.type, 'info');
   assert.match(status.message, /CV hiện có/);
+  assert.match(status.message, /Nguyen-Van-A-CV\.pdf/);
+  assert.match(status.message, /tự động chọn/);
 });

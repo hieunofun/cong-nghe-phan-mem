@@ -88,7 +88,7 @@ def get_db():
     )
 
 # ── GROQ API ─────────────────────────────────────────────────
-GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+GROQ_MODEL = os.getenv("GROQ_MODEL", "qwen/qwen3.8-27b")
 groq_client = None
 groq_verified = False
 groq_key = os.getenv("GROQ_API_KEY", "")
@@ -105,11 +105,11 @@ print("Dang tai models...")
 
 MATCHING_PATH = os.path.join(MODELS_DIR, "cv_job_matching")
 matching_model = None
-matching_backend = "tfidf_fallback"
+matching_backend = "multilingual_tfidf_skill_fallback"
 if SENTENCE_TRANSFORMERS_AVAILABLE and os.path.exists(MATCHING_PATH):
     try:
         matching_model = SentenceTransformer(MATCHING_PATH)
-        matching_backend = "sentence_transformer"
+        matching_backend = "sentence_transformer+multilingual_lexical"
         print("  ✅ CV-Job Matching model da tai")
     except Exception as exc:
         print(f"  ⚠️  Khong the tai CV-Job Matching model: {exc}")
@@ -176,7 +176,8 @@ print("✅ AI Service san sang!\n")
 # ── INTENT DETECTION ─────────────────────────────────────────
 KEYWORDS = {
     "job": ["việc", "tuyển", "job", "vị trí", "tin tuyển", "đang tuyển",
-            "có việc", "tìm việc", "ứng tuyển", "công việc"],
+            "có việc", "tìm việc", "ứng tuyển", "công việc", "work", "opening",
+            "vacancy", "position", "hiring", "find a job", "recommend jobs"],
     "salary": ["lương", "thu nhập", "salary", "tiền", "mức lương"],
     "company": ["công ty", "doanh nghiệp", "company", "nhà tuyển dụng"],
     "category": ["ngành", "lĩnh vực", "category", "chuyên ngành"],
@@ -217,7 +218,7 @@ def fetch_db_context(question):
 
         if intents & {'job', 'salary', 'stats'}:
             cur.execute("""
-                SELECT j.title, j.location, j.job_type,
+                SELECT j.id, j.title, j.location, j.job_type,
                        j.salary_min, j.salary_max, j.salary_negotiable,
                        j.experience_level, j.is_vip,
                        c.company_name, cat.name AS category_name
@@ -296,8 +297,107 @@ def score_to_label(score):
     if score >= 0.35: return "Có thể xem xét"
     return "Ít phù hợp"
 
+
+# Cac cum tu Viet/Anh duoc quy ve cung mot token de CV va tin tuyen dung
+# van so khop khi hai ben su dung hai ngon ngu khac nhau.
+MULTILINGUAL_CONCEPTS = {
+    "software_development": ["phat trien phan mem", "lap trinh phan mem", "software development", "software engineering"],
+    "software_developer": ["lap trinh vien", "ky su phan mem", "software developer", "software engineer", "programmer"],
+    "data_analysis": ["phan tich du lieu", "data analysis", "data analyst", "business intelligence"],
+    "machine_learning": ["hoc may", "machine learning"],
+    "artificial_intelligence": ["tri tue nhan tao", "artificial intelligence", "ai engineer"],
+    "database": ["co so du lieu", "database"],
+    "cloud": ["dien toan dam may", "cloud computing", "cloud infrastructure"],
+    "project_management": ["quan ly du an", "project management"],
+    "recruitment": ["tuyen dung", "recruitment", "talent acquisition", "recruiting"],
+    "human_resources": ["nhan su", "human resources", "hr executive", "hr manager"],
+    "accounting": ["ke toan", "accounting", "accountant"],
+    "auditing": ["kiem toan", "auditing", "auditor"],
+    "financial_analysis": ["phan tich tai chinh", "financial analysis", "financial analyst"],
+    "sales": ["ban hang", "kinh doanh", "sales", "business development"],
+    "customer_service": ["cham soc khach hang", "customer service", "customer support"],
+    "marketing": ["tiep thi", "marketing"],
+    "communication": ["giao tiep", "communication", "communication skills"],
+    "teamwork": ["lam viec nhom", "teamwork", "team player", "collaboration"],
+    "problem_solving": ["giai quyet van de", "phan tich van de", "problem solving"],
+    "time_management": ["quan ly thoi gian", "time management"],
+    "leadership": ["lanh dao", "leadership"],
+    "detail_oriented": ["can than", "chi tiet", "attention to detail", "detail oriented"],
+    "fast_learning": ["hoc hoi nhanh", "fast learner", "quick learner"],
+    "experience": ["kinh nghiem", "work experience", "professional experience"],
+    "education": ["hoc van", "education", "academic background"],
+}
+
+SKILL_ALIASES = {
+    "rest api": ["rest apis", "restful api", "restful apis"],
+    "machine learning": ["hoc may"],
+    "deep learning": ["hoc sau"],
+    "computer vision": ["thi giac may tinh"],
+    "monitoring": ["giam sat he thong"],
+    "load balancing": ["can bang tai"],
+    "responsive design": ["thiet ke dap ung"],
+    "market research": ["nghien cuu thi truong"],
+    "excel nang cao": ["advanced excel"],
+    "ke toan thue": ["tax accounting"],
+    "bao cao tai chinh": ["financial reporting", "financial statements"],
+    "kiem toan": ["auditing", "audit"],
+    "ke toan tong hop": ["general accounting", "general accountant"],
+    "phan tich tai chinh": ["financial analysis"],
+    "quyet toan": ["finalization accounting", "tax finalization"],
+    "ky nang ban hang": ["sales skills", "selling skills"],
+    "cham soc khach hang": ["customer service", "customer care"],
+    "dam phan": ["negotiation", "negotiating"],
+    "tim kiem khach hang": ["lead generation", "prospecting"],
+    "kpi doanh so": ["sales kpi", "sales target"],
+    "thuyet trinh": ["presentation skills", "public speaking"],
+    "tuyen dung": ["recruitment", "recruiting", "talent acquisition"],
+    "dao tao": ["training", "learning and development"],
+    "hop dong lao dong": ["labor contract", "employment contract"],
+    "danh gia hieu suat kpi": ["performance appraisal", "performance review"],
+    "van hoa doanh nghiep": ["corporate culture", "company culture"],
+}
+
+SOFT_SKILL_ALIASES = {
+    "giao tiep tot": ["good communication", "communication skills", "communicator"],
+    "lam viec nhom": ["teamwork", "team player", "collaboration"],
+    "tu duy logic": ["logical thinking", "analytical thinking"],
+    "chiu ap luc cao": ["work under pressure", "works well under pressure"],
+    "quan ly thoi gian": ["time management"],
+    "sang tao": ["creative", "creativity"],
+    "can than": ["careful", "detail oriented", "attention to detail"],
+    "chi tiet": ["detail oriented", "attention to detail"],
+    "chu dong": ["proactive", "self starter"],
+    "hoc hoi nhanh": ["fast learner", "quick learner"],
+    "tieng anh tot": ["good english", "english proficiency", "fluent english"],
+    "lanh dao": ["leadership"],
+    "phan tich van de": ["problem solving", "analytical skills"],
+}
+
+
+def contains_normalized_term(text, term):
+    normalized_text = normalize_search_text(text)
+    normalized_term = normalize_search_text(term)
+    if not normalized_term:
+        return False
+    return re.search(r'(?<![\w+#])' + re.escape(normalized_term) + r'(?![\w+#])', normalized_text) is not None
+
+
+def multilingual_concepts(text):
+    normalized = normalize_search_text(text)
+    return {
+        concept for concept, aliases in MULTILINGUAL_CONCEPTS.items()
+        if any(contains_normalized_term(normalized, alias) for alias in aliases)
+    }
+
+
+def prepare_multilingual_text(text):
+    value = unicodedata.normalize("NFKC", str(text or "")).lower()
+    folded = normalize_search_text(value)
+    concept_tokens = " ".join(f"concept_{item}" for item in sorted(multilingual_concepts(folded)))
+    return f"{value} {folded} {concept_tokens}".strip()
+
 def lexical_match_scores(source_text, target_texts):
-    documents = [str(source_text)] + [str(text) for text in target_texts]
+    documents = [prepare_multilingual_text(source_text)] + [prepare_multilingual_text(text) for text in target_texts]
     try:
         vectorizer = TfidfVectorizer(
             ngram_range=(1, 2),
@@ -312,29 +412,40 @@ def lexical_match_scores(source_text, target_texts):
 
     all_skills = analyzer_data.get("all_tech_skills", {})
     source_skills = set(extract_skills_simple(source_text, all_skills))
+    source_concepts = multilingual_concepts(source_text)
     scores = []
     for index, target_text in enumerate(target_texts):
         target_skills = set(extract_skills_simple(target_text, all_skills))
+        target_concepts = multilingual_concepts(target_text)
+        concept_coverage = (
+            len(source_concepts & target_concepts) / len(target_concepts)
+            if target_concepts else 0.0
+        )
         if target_skills:
             skill_coverage = len(source_skills & target_skills) / len(target_skills)
-            score = 0.7 * float(lexical_scores[index]) + 0.3 * skill_coverage
+            score = (0.30 * float(lexical_scores[index])
+                     + 0.55 * skill_coverage
+                     + 0.15 * concept_coverage)
         else:
-            score = min(1.0, float(lexical_scores[index]) * 1.25)
+            score = 0.70 * min(1.0, float(lexical_scores[index]) * 1.25) + 0.30 * concept_coverage
         scores.append(max(0.0, min(1.0, score)))
     return np.asarray(scores)
 
 def calculate_match_scores(source_text, target_texts):
+    lexical_scores = lexical_match_scores(source_text, target_texts)
     if matching_model is not None and util is not None:
         try:
-            source_emb = matching_model.encode(str(source_text)[:6000], convert_to_tensor=True)
+            source_emb = matching_model.encode(prepare_multilingual_text(source_text)[:6000], convert_to_tensor=True)
             target_embs = matching_model.encode(
-                [str(text)[:6000] for text in target_texts],
+                [prepare_multilingual_text(text)[:6000] for text in target_texts],
                 convert_to_tensor=True
             )
-            return util.cos_sim(source_emb, target_embs)[0].cpu().numpy(), "sentence_transformer"
+            semantic_scores = np.clip(util.cos_sim(source_emb, target_embs)[0].cpu().numpy(), 0.0, 1.0)
+            combined_scores = np.clip(0.65 * semantic_scores + 0.35 * lexical_scores, 0.0, 1.0)
+            return combined_scores, "sentence_transformer+multilingual_lexical"
         except Exception as exc:
             print(f"Matching inference error; dung TF-IDF fallback: {exc}")
-    return lexical_match_scores(source_text, target_texts), "tfidf_skill_fallback"
+    return lexical_scores, "multilingual_tfidf_skill_fallback"
 
 def retrieve_faq_context(question, top_k=4, min_score=0.08):
     if rag_vectorizer is None or rag_matrix is None or not rag_documents:
@@ -388,6 +499,39 @@ def build_rag_context(question):
 
     return "\n\n---\n\n".join(context_parts), sources, raw_data, faq_matches
 
+
+def build_job_suggestions(raw_data, limit=5):
+    suggestions = []
+    for job in (raw_data or {}).get("jobs", [])[:limit]:
+        try:
+            job_id = int(job.get("id"))
+        except (TypeError, ValueError):
+            continue
+        if job_id <= 0:
+            continue
+
+        salary_min = int(job["salary_min"]) if job.get("salary_min") is not None else None
+        salary_max = int(job["salary_max"]) if job.get("salary_max") is not None else None
+        if salary_min is not None and salary_max is not None:
+            salary_label = f"{salary_min // 1000000}–{salary_max // 1000000} triệu"
+        elif job.get("salary_negotiable"):
+            salary_label = "Thỏa thuận"
+        else:
+            salary_label = "Chưa cập nhật"
+
+        suggestions.append({
+            "id": job_id,
+            "title": str(job.get("title") or "Công việc đang tuyển")[:180],
+            "company_name": str(job.get("company_name") or "Nhà tuyển dụng")[:180],
+            "location": str(job.get("location") or "Chưa cập nhật")[:180],
+            "job_type": str(job.get("job_type") or "")[:40],
+            "salary_label": salary_label,
+            "category_name": str(job.get("category_name") or "")[:120],
+            "is_vip": bool(job.get("is_vip")),
+            "url": f"/job-detail.html?id={job_id}",
+        })
+    return suggestions
+
 def normalize_chat_history(history):
     messages = []
     if not isinstance(history, list):
@@ -431,17 +575,28 @@ Nhiệm vụ:
         max_tokens=800
     )
     reply = response.choices[0].message.content
-    return reply, sources, faq_matches
+    return reply, sources, faq_matches, build_job_suggestions(raw_data)
 
 def fallback_rag_answer(question, unavailable_reason=None):
     _, sources, raw_data, faq_matches = build_rag_context(question)
+    job_suggestions = build_job_suggestions(raw_data)
+    if "job" in detect_intent(question) and job_suggestions:
+        return {
+            "reply": f"Mình tìm thấy {len(job_suggestions)} công việc đang tuyển trên JobLink. Bạn có thể mở từng công việc bên dưới để xem chi tiết và ứng tuyển.",
+            "found": True,
+            "confidence": 1.0,
+            "source": "joblink_db_fallback",
+            "sources": sources,
+            "jobs": job_suggestions,
+        }
     if faq_matches and faq_matches[0]["score"] >= 0.12:
         return {
             "reply": faq_matches[0]["answer"],
             "found": True,
             "confidence": faq_matches[0]["score"],
             "source": "rag_faq_fallback",
-            "sources": sources
+            "sources": sources,
+            "jobs": [],
         }
 
     unavailable_hint = unavailable_reason or (
@@ -454,7 +609,8 @@ def fallback_rag_answer(question, unavailable_reason=None):
         "found": False,
         "confidence": 0,
         "source": "rag_fallback_none",
-        "sources": sources
+        "sources": sources,
+        "jobs": [],
     }
 
 # ── ENDPOINTS ────────────────────────────────────────────────
@@ -493,7 +649,7 @@ def chat():
 
     if groq_client:
         try:
-            reply, sources, faq_matches = ask_groq_rag(message, history)
+            reply, sources, faq_matches, job_suggestions = ask_groq_rag(message, history)
             groq_verified = True
 
             return jsonify({
@@ -502,6 +658,7 @@ def chat():
                 "confidence": 1.0,
                 "source": "groq+rag",
                 "sources": sources,
+                "jobs": job_suggestions,
                 "retrieved": [
                     {"id": m["id"], "score": m["score"], "question": m["question"]}
                     for m in faq_matches
@@ -550,9 +707,11 @@ def recommend():
     return jsonify({"recommendations": results, "backend": backend})
 
 def extract_skills_simple(cv_text, all_skills):
-    found, cv_lower = [], cv_text.lower()
+    found = []
     for skill_lower, info in all_skills.items():
-        if re.search(r'\b' + re.escape(skill_lower) + r'\b', cv_lower):
+        normalized_skill = normalize_search_text(skill_lower)
+        aliases = [normalized_skill, *SKILL_ALIASES.get(normalized_skill, [])]
+        if any(contains_normalized_term(cv_text, alias) for alias in aliases):
             found.append(info["skill"])
     return found
 
@@ -662,7 +821,13 @@ def analyze_cv_endpoint():
     soft_skills_list = analyzer_data.get("soft_skills", [])
     title_mapping = analyzer_data.get("title_mapping", {})
     tech_skills = extract_skills_simple(cv_text, all_skills)
-    found_soft = [s for s in soft_skills_list if s.lower() in cv_text.lower()]
+    found_soft = [
+        skill for skill in soft_skills_list
+        if any(
+            contains_normalized_term(cv_text, alias)
+            for alias in [normalize_search_text(skill), *SOFT_SKILL_ALIASES.get(normalize_search_text(skill), [])]
+        )
+    ]
     explicit_exp_level = predict_exp_simple(cv_text)
     if explicit_exp_level:
         exp_level = explicit_exp_level
@@ -713,7 +878,9 @@ def analyze_cv_endpoint():
 
 if __name__ == "__main__":
     print("=" * 50)
-    port = int(os.getenv("PORT", "5000"))
+    # Local development loads the root .env, where PORT belongs to the web app.
+    # Render still injects PORT for the standalone AI service.
+    port = int(os.getenv("AI_SERVICE_PORT", os.getenv("PORT", "5000")))
     print(f"JobLink AI Service — Port {port}")
     print(f"Groq API: {'✅ Kich hoat' if groq_client else '❌ Chua co — them GROQ_API_KEY vao .env'}")
     print(f"Chatbot RAG docs: {len(rag_documents)}")

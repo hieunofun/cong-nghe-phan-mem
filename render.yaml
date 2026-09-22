@@ -26,50 +26,13 @@ services:
       - key: GROQ_API_KEY
         sync: false
       - key: GROQ_MODEL
-        value: llama-3.3-70b-versatile
+        value: qwen/qwen3.8-27b
 
   - type: web
-    name: joblink-web
-    runtime: node
-    plan: free
-    buildCommand: npm ci
-    startCommand: npm start
-    healthCheckPath: /health
+    name: joblink-frontend
+    runtime: static
+    buildCommand: npm ci && npm run build:frontend
+    staticPublishPath: ./public
     envVars:
-      - fromGroup: joblink-ai-shared
-      - key: NODE_ENV
-        value: production
-      - key: DB_CLIENT
-        value: postgres
-      - key: DATABASE_URL
-        fromService:
-          type: web
-          name: joblink-ai
-          envVarKey: DATABASE_URL
-      - key: AI_SERVICE_URL
-        fromService:
-          type: web
-          name: joblink-ai
-          envVarKey: RENDER_EXTERNAL_URL
-      - key: AI_TIMEOUT_MS
-        value: '120000'
-      - key: AI_RETRY_DELAYS_MS
-        value: '2000,5000,10000,15000,30000'
-      - key: JWT_SECRET
-        generateValue: true
-      - key: SESSION_SECRET
-        generateValue: true
-      - key: JWT_EXPIRES_IN
-        value: 7d
-      - key: SUPABASE_URL
-        sync: false
-      - key: SUPABASE_SECRET_KEY
-        sync: false
-      - key: GOOGLE_CLIENT_ID
-        sync: false
-      - key: GOOGLE_CLIENT_SECRET
-        sync: false
-      - key: GITHUB_CLIENT_ID
-        sync: false
-      - key: GITHUB_CLIENT_SECRET
+      - key: FRONTEND_API_BASE_URL
         sync: false

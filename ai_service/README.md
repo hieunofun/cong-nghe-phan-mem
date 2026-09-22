@@ -70,7 +70,7 @@ Thêm vào file `.env` ở thư mục gốc dự án:
 
 ```env
 GROQ_API_KEY=your_groq_api_key
-GROQ_MODEL=llama-3.3-70b-versatile
+GROQ_MODEL=qwen/qwen3.8-27b
 ```
 
 Nếu chưa có `GROQ_API_KEY`, chatbot vẫn chạy fallback bằng FAQ RAG nhưng chỉ trả lời được các câu gần với dữ liệu trong `faq_data.json`.

@@ -213,8 +213,8 @@ async function loadJobs() {
 window.toggleJobStatus = async function (jobId, currentStatus) {
   const newStatus = currentStatus === 'active' ? 'closed' : 'active';
   try {
-    await apiFetch(`/jobs/${jobId}`, { method: 'PUT', body: { status: newStatus } });
-    showToast(newStatus === 'closed' ? 'Đã đóng tin tuyển dụng.' : 'Đã mở lại tin tuyển dụng.', 'success');
+    const data = await apiFetch(`/jobs/${jobId}`, { method: 'PUT', body: { status: newStatus } });
+    showToast(data.message || (newStatus === 'closed' ? 'Đã đóng tin tuyển dụng.' : 'Đã mở lại tin tuyển dụng.'), 'success');
     loadJobs();
   } catch (err) {
     showToast(err.message, 'error');
@@ -418,8 +418,8 @@ async function openJobModal(job) {
         await apiFetch(`/jobs/${job.id}`, { method: 'PUT', body });
         showToast('Đã cập nhật tin tuyển dụng!', 'success');
       } else {
-        await apiFetch('/jobs', { method: 'POST', body });
-        showToast('Đã đăng tin tuyển dụng mới!', 'success');
+        const data = await apiFetch('/jobs', { method: 'POST', body });
+        showToast(data.message || 'Đã đăng tin tuyển dụng mới!', 'success');
       }
       overlay.remove();
       loadJobs();
@@ -509,9 +509,14 @@ function applicantCardHtml(app) {
           <div class="ac-detail-value">${escapeHtml(app.skills ? `${app.skills.slice(0, 140)}${app.skills.length > 140 ? '...' : ''}` : 'Chưa cập nhật')}</div>
         </div>
       </div>
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:12px;">
+        <div class="form-hint">Trạng thái hiện tại</div>
+        <span class="badge badge-${app.status}">${STATUS_LABELS[app.status] || app.status}</span>
+      </div>
       ${app.status_note ? `<div class="ac-note"><strong>Ghi chú:</strong> ${escapeHtml(app.status_note)}</div>` : ''}
       <div class="ac-actions">
-        ${app.cv_url ? `<a href="${app.cv_url}" target="_blank" rel="noopener" class="btn btn-ghost btn-sm">Xem CV</a>` : ''}
+        ${app.application_source === 'auto_match' ? '<span class="badge badge-reviewing">JobLink tự động đề xuất</span>' : ''}
+        ${app.cv_url ? `<a href="${app.cv_url}" target="_blank" rel="noopener" class="btn btn-ghost btn-sm" title="${escapeHtml(app.cv_filename || 'CV đã nộp')}">Xem CV đã nộp</a>` : '<span class="form-hint">CV không còn khả dụng</span>'}
         <button type="button" class="btn btn-outline btn-sm" onclick="analyzeCandidate(${app.id})">AI phân tích</button>
         <button type="button" class="btn btn-ghost btn-sm" data-status-history="${app.id}">Lịch sử</button>
         <select class="input ac-status" aria-label="Trạng thái hồ sơ" data-application-status="${app.id}" data-current-status="${app.status}">
@@ -600,12 +605,17 @@ async function showApplicationHistory(applicationId) {
   try {
     const history = await apiFetch(`/applications/${applicationId}/history`);
     document.getElementById('status-history-content').innerHTML = history.length
-      ? history.map((item) => `
+      ? history.map((item) => {
+          const historyTitle = item.from_status
+            ? `${STATUS_LABELS[item.from_status] || item.from_status} → ${STATUS_LABELS[item.to_status] || item.to_status}`
+            : 'Ứng viên đã nộp hồ sơ';
+          return `
           <div style="padding:12px 0; border-bottom:1px solid var(--border);">
-            <div style="font-weight:600; font-size:0.88rem;">${STATUS_LABELS[item.from_status] || item.from_status} → ${STATUS_LABELS[item.to_status] || item.to_status}</div>
+            <div style="font-weight:600; font-size:0.88rem;">${escapeHtml(historyTitle)}</div>
             <div class="form-hint">${new Date(item.changed_at).toLocaleString('vi-VN')} · ${escapeHtml(item.changed_by_email || 'Tài khoản đã xóa')}</div>
             ${item.note ? `<p style="font-size:0.82rem; margin:6px 0 0;">${escapeHtml(item.note)}</p>` : ''}
-          </div>`).join('')
+          </div>`;
+        }).join('')
       : '<div class="empty-state" style="padding:28px 0;">Chưa có thay đổi trạng thái nào.</div>';
   } catch (err) {
     document.getElementById('status-history-content').innerHTML = `<div class="alert alert-error">${escapeHtml(err.message)}</div>`;

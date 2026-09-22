@@ -1,13 +1,56 @@
 // models/applicationModel.js
 const pool = require('../config/db');
 
-async function create({ jobId, candidateId, cvUrl, coverLetter }) {
-  const [result] = await pool.query(
-    `INSERT INTO applications (job_id, candidate_id, cv_url, cover_letter, status)
-     VALUES (?, ?, ?, ?, 'pending')`,
-    [jobId, candidateId, cvUrl || null, coverLetter || null]
-  );
-  return result.insertId;
+async function create({
+  jobId,
+  candidateId,
+  cvUrl,
+  cvFilename,
+  cvSource = 'profile',
+  applicationSource = 'manual',
+  coverLetter,
+  changedByUserId,
+  initialNote,
+  aiScore = null,
+  aiLabel = null
+}) {
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+    const insertResult = await connection.query(
+      `INSERT INTO applications
+        (job_id, candidate_id, cv_url, cv_filename, cv_source, application_source,
+         cover_letter, status, ai_score, ai_label, ai_analyzed_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?,
+         CASE WHEN ? THEN CURRENT_TIMESTAMP ELSE NULL END)`,
+      [
+        jobId, candidateId, cvUrl || null, cvFilename || null, cvSource,
+        applicationSource, coverLetter || null, aiScore, aiLabel || null,
+        aiScore !== null && aiScore !== undefined
+      ]
+    );
+    const applicationId = insertResult?.rows?.[0]?.id || insertResult?.[0]?.insertId;
+    if (!applicationId) throw new Error('Không lấy được mã hồ sơ ứng tuyển vừa tạo.');
+
+    await connection.query(
+      `INSERT INTO application_status_history
+        (application_id, from_status, to_status, note, changed_by_user_id)
+       VALUES (?, ?, 'pending', ?, ?)`,
+      [
+        applicationId,
+        null,
+        initialNote || 'Ứng viên gửi hồ sơ ứng tuyển',
+        changedByUserId || null
+      ]
+    );
+    await connection.commit();
+    return applicationId;
+  } catch (err) {
+    await connection.rollback();
+    throw err;
+  } finally {
+    connection.release();
+  }
 }
 
 async function hasApplied(jobId, candidateId) {
@@ -16,6 +59,23 @@ async function hasApplied(jobId, candidateId) {
     [jobId, candidateId]
   );
   return rows.length > 0;
+}
+
+async function isCVReferenced(cvUrl) {
+  if (!cvUrl) return false;
+  const [rows] = await pool.query(
+    'SELECT id FROM applications WHERE cv_url = ? LIMIT 1',
+    [cvUrl]
+  );
+  return rows.length > 0;
+}
+
+async function findCandidateIdsByJob(jobId) {
+  const [rows] = await pool.query(
+    'SELECT candidate_id FROM applications WHERE job_id = ?',
+    [jobId]
+  );
+  return rows.map((row) => Number(row.candidate_id));
 }
 
 const APPLICANT_SORTS = {
@@ -140,7 +200,7 @@ async function updateStatus(id, status, { previousStatus, note, changedByUserId 
   try {
     await connection.beginTransaction();
     await connection.query(
-      'UPDATE applications SET status = ?, status_note = ? WHERE id = ?',
+      'UPDATE applications SET status = ?, status_note = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
       [status, note || null, id]
     );
     await connection.query(
@@ -164,7 +224,7 @@ async function findStatusHistory(applicationId) {
      FROM application_status_history h
      LEFT JOIN users u ON u.id = h.changed_by_user_id
      WHERE h.application_id = ?
-     ORDER BY h.changed_at DESC, h.id DESC`,
+     ORDER BY h.changed_at ASC, h.id ASC`,
     [applicationId]
   );
   return rows;
@@ -184,6 +244,7 @@ async function countByCompanyAndStatus(companyId) {
 }
 
 module.exports = {
-  create, hasApplied, searchByJob, findByCandidate, findById,
+  create, hasApplied, isCVReferenced, findCandidateIdsByJob,
+  searchByJob, findByCandidate, findById,
   updateAIScore, updateStatus, findStatusHistory, countByCompanyAndStatus
 };

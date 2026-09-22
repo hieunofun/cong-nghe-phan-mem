@@ -41,15 +41,47 @@ function fillProfileForm(profile) {
     ? `<img src="${profile.avatar_url}" alt="avatar">` : 'Ảnh';
 
   const cvLink = document.getElementById('cv-view-link');
+  const cvFileName = document.getElementById('cv-file-name');
   if (profile.cv_url) {
     document.getElementById('cv-preview').textContent = '✓ CV';
     cvLink.href = profile.cv_url;
     cvLink.style.display = 'inline-flex';
+    cvFileName.textContent = profile.cv_filename
+      ? `Đã lưu: ${profile.cv_filename}`
+      : 'CV hồ sơ đã sẵn sàng để tự động dùng khi ứng tuyển';
   } else {
     document.getElementById('cv-preview').textContent = 'CV';
     cvLink.style.display = 'none';
+    cvFileName.textContent = 'Chưa có CV trong hồ sơ';
+  }
+
+  const autoApplyToggle = document.getElementById('auto_apply_enabled');
+  const autoApplyScore = document.getElementById('auto_apply_min_score');
+  autoApplyToggle.checked = [true, 1, '1', 'true'].includes(profile.auto_apply_enabled);
+  autoApplyToggle.disabled = !profile.cv_url && !autoApplyToggle.checked;
+  const storedScore = Math.round(Number(profile.auto_apply_min_score || 70));
+  autoApplyScore.value = ['50', '60', '70', '80', '90'].includes(String(storedScore))
+    ? String(storedScore)
+    : '70';
+  syncAutoApplyControls(Boolean(profile.cv_url));
+}
+
+function syncAutoApplyControls(hasCv = document.getElementById('cv-view-link').style.display !== 'none') {
+  const toggle = document.getElementById('auto_apply_enabled');
+  const score = document.getElementById('auto_apply_min_score');
+  const status = document.getElementById('auto-apply-status');
+  score.disabled = !toggle.checked;
+  if (!hasCv) {
+    status.textContent = 'Hãy tải CV lên trước để bật tính năng này.';
+  } else if (toggle.checked) {
+    status.textContent = `Đang bật: chỉ tự động nộp đơn khi điểm phù hợp đạt từ ${score.value}% trở lên.`;
+  } else {
+    status.textContent = 'Đang tắt: JobLink sẽ không tự nộp bất kỳ đơn nào.';
   }
 }
+
+document.getElementById('auto_apply_enabled').addEventListener('change', () => syncAutoApplyControls());
+document.getElementById('auto_apply_min_score').addEventListener('change', () => syncAutoApplyControls());
 
 async function loadProfile() {
   try {
@@ -81,7 +113,9 @@ document.getElementById('profile-form').addEventListener('submit', async (e) => 
       address: document.getElementById('address').value.trim(),
       skills: document.getElementById('skills').value.trim(),
       experience: document.getElementById('experience').value.trim(),
-      education: document.getElementById('education').value.trim()
+      education: document.getElementById('education').value.trim(),
+      auto_apply_enabled: document.getElementById('auto_apply_enabled').checked,
+      auto_apply_min_score: Number(document.getElementById('auto_apply_min_score').value)
     };
     const data = await apiFetch('/candidates/me', { method: 'PUT', body });
     fillProfileForm(data.profile);
@@ -170,6 +204,79 @@ const APPLICATION_STATUS_META = {
   rejected: 'Hồ sơ chưa phù hợp với vị trí này. Bạn có thể tiếp tục khám phá cơ hội khác.'
 };
 
+const APPLICATION_LIFECYCLE_STAGES = [
+  { key: 'pending', label: 'Đã nộp' },
+  { key: 'reviewing', label: 'Xem xét' },
+  { key: 'interview', label: 'Phỏng vấn' },
+  { key: 'accepted', label: 'Đã nhận' }
+];
+
+function applicationLifecycleHtml(application) {
+  const currentIndex = APPLICATION_LIFECYCLE_STAGES.findIndex((stage) => stage.key === application.status);
+  const rejected = application.status === 'rejected';
+  return `
+    <div class="candidate-lifecycle" aria-label="Vòng đời hồ sơ: ${escapeHtml(STATUS_LABELS[application.status] || application.status)}">
+      ${APPLICATION_LIFECYCLE_STAGES.map((stage, index) => {
+        const state = rejected ? '' : index < currentIndex ? 'complete' : index === currentIndex ? 'current' : '';
+        return `
+          <div class="candidate-lifecycle-stage ${state}">
+            <span class="candidate-lifecycle-dot">${index < currentIndex && !rejected ? '✓' : index + 1}</span>
+            <span>${stage.label}</span>
+          </div>`;
+      }).join('')}
+    </div>
+    ${rejected ? '<div class="candidate-lifecycle-rejected">Quy trình đã kết thúc ở trạng thái Từ chối</div>' : ''}
+  `;
+}
+
+async function showCandidateApplicationHistory(application) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal-box" style="max-width:560px;" role="dialog" aria-modal="true">
+      <div class="modal-head">
+        <div>
+          <h3 class="mb-0">Vòng đời hồ sơ</h3>
+          <div class="form-hint">${escapeHtml(application.job_title)} · ${escapeHtml(application.company_name)}</div>
+        </div>
+        <button type="button" class="modal-close" aria-label="Đóng">&times;</button>
+      </div>
+      <div class="application-history-current">
+        <span>Trạng thái hiện tại</span>
+        ${statusBadge(application.status)}
+      </div>
+      <div id="candidate-status-history"><div class="loading-spinner"></div></div>
+    </div>`;
+  document.body.appendChild(overlay);
+  const close = () => overlay.remove();
+  overlay.querySelector('.modal-close').addEventListener('click', close);
+  overlay.addEventListener('click', (event) => { if (event.target === overlay) close(); });
+
+  const content = overlay.querySelector('#candidate-status-history');
+  try {
+    const history = await apiFetch(`/applications/${application.id}/history`);
+    content.innerHTML = history.length
+      ? `<div class="application-history-timeline">${history.map((item) => {
+          const title = item.from_status
+            ? `${STATUS_LABELS[item.from_status] || item.from_status} → ${STATUS_LABELS[item.to_status] || item.to_status}`
+            : 'Đã nộp hồ sơ ứng tuyển';
+          const actor = item.changed_by_email === user.email ? 'Bạn' : (item.changed_by_email || 'Hệ thống');
+          return `
+            <div class="application-history-item">
+              <span class="application-history-marker"></span>
+              <div>
+                <strong>${escapeHtml(title)}</strong>
+                <div class="form-hint">${new Date(item.changed_at).toLocaleString('vi-VN')} · ${escapeHtml(actor)}</div>
+                ${item.note ? `<p>${escapeHtml(item.note)}</p>` : ''}
+              </div>
+            </div>`;
+        }).join('')}</div>`
+      : '<div class="empty-state" style="padding:28px 0;">Chưa có lịch sử xử lý.</div>';
+  } catch (err) {
+    content.innerHTML = `<div class="alert alert-error">${escapeHtml(err.message)}</div>`;
+  }
+}
+
 function applicationCardHtml(application) {
   const initials = application.company_name.slice(0, 2).toUpperCase();
   return `
@@ -188,14 +295,23 @@ function applicationCardHtml(application) {
           </div>
         </div>
         <div class="application-status">
+          ${application.application_source === 'auto_match'
+            ? `<span class="badge badge-reviewing" title="JobLink đã tự động nộp theo lựa chọn của bạn">Tự động ứng tuyển${application.ai_score !== null && application.ai_score !== undefined ? ` · ${Number(application.ai_score).toLocaleString('vi-VN')}%` : ''}</span>`
+            : ''}
           ${statusBadge(application.status)}
           <p>${APPLICATION_STATUS_META[application.status] || 'Trạng thái hồ sơ đang được cập nhật.'}</p>
           ${application.status_note ? `<p><strong>Phản hồi:</strong> ${escapeHtml(application.status_note)}</p>` : ''}
         </div>
       </div>
+      ${applicationLifecycleHtml(application)}
       <div class="application-card-footer">
-        <span class="application-date">Ứng tuyển ngày ${new Date(application.applied_at).toLocaleDateString('vi-VN')}</span>
+        <div>
+          <span class="application-date">${application.application_source === 'auto_match' ? 'Hệ thống ứng tuyển' : 'Ứng tuyển'} ngày ${new Date(application.applied_at).toLocaleDateString('vi-VN')}</span>
+          ${application.cv_filename ? `<span class="application-cv-name">CV đã nộp: ${escapeHtml(application.cv_filename)}</span>` : ''}
+        </div>
         <div class="flex gap-8">
+          ${application.cv_url ? `<a href="${escapeHtml(application.cv_url)}" target="_blank" rel="noopener" class="btn btn-ghost btn-sm">Xem CV đã nộp</a>` : ''}
+          <button type="button" class="btn btn-ghost btn-sm" data-application-history="${application.id}">Lịch sử xử lý</button>
           <button type="button" class="btn btn-ghost btn-sm" data-similar-job="${application.job_id}">Việc tương tự</button>
           <button type="button" class="btn btn-outline btn-sm" data-view-job="${application.job_id}">Xem tin</button>
         </div>
@@ -233,6 +349,12 @@ async function loadApplications() {
     });
     listEl.querySelectorAll('[data-similar-job]').forEach((button) => {
       button.addEventListener('click', () => findSimilarJobs(Number(button.dataset.similarJob), button));
+    });
+    listEl.querySelectorAll('[data-application-history]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const application = apps.find((item) => Number(item.id) === Number(button.dataset.applicationHistory));
+        if (application) showCandidateApplicationHistory(application);
+      });
     });
   } catch (err) {
     showToast('Không tải được danh sách ứng tuyển: ' + err.message, 'error');

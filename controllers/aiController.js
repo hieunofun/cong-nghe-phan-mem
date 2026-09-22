@@ -39,6 +39,30 @@ function handleAIControllerError(res, err, label) {
   return res.status(500).json({ message: 'Lỗi máy chủ.' });
 }
 
+function safeChatText(value, maxLength) {
+  return String(value || '').trim().slice(0, maxLength);
+}
+
+function sanitizeChatJobs(jobs) {
+  if (!Array.isArray(jobs)) return [];
+  return jobs.slice(0, 5).map((job) => {
+    const id = Number(job?.id);
+    if (!Number.isSafeInteger(id) || id <= 0) return null;
+    return {
+      id,
+      title: safeChatText(job.title, 180) || 'Công việc đang tuyển',
+      company_name: safeChatText(job.company_name, 180) || 'Nhà tuyển dụng',
+      location: safeChatText(job.location, 180) || 'Chưa cập nhật',
+      job_type: safeChatText(job.job_type, 40),
+      salary_label: safeChatText(job.salary_label, 80) || 'Chưa cập nhật',
+      category_name: safeChatText(job.category_name, 120),
+      is_vip: job.is_vip === true,
+      // Luon tao URL tu ID da kiem tra, khong tin URL do AI tra ve.
+      url: `/job-detail.html?id=${id}`
+    };
+  }).filter(Boolean);
+}
+
 // ── 1. KIEM TRA TRANG THAI AI SERVICE ─────────────────────────
 async function getAIHealth(req, res) {
   try {
@@ -235,7 +259,10 @@ async function chat(req, res) {
       message: message.trim(),
       history: safeHistory
     });
-    res.json(result);
+    res.json({
+      ...result,
+      jobs: sanitizeChatJobs(result?.jobs)
+    });
   } catch (err) {
     return handleAIControllerError(res, err, 'chat');
   }
@@ -248,5 +275,6 @@ module.exports = {
   analyzeMyCV,
   analyzeCandidateCV,
   analyzeApplicationCV,
-  chat
+  chat,
+  sanitizeChatJobs
 };

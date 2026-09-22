@@ -40,6 +40,30 @@
   .application-status p { color:var(--ink-soft); font-size:0.8rem; line-height:1.5; margin:8px 0 0; }
   .application-card-footer { display:flex; justify-content:space-between; align-items:center; gap:14px; border-top:1px solid var(--border); margin-top:15px; padding-top:12px; }
   .application-date { color:var(--ink-faint); font-size:0.8rem; }
+  .application-cv-name { display:block; color:var(--ink-soft); font-size:0.76rem; margin-top:4px; }
+  .candidate-lifecycle { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); margin-top:18px; }
+  .candidate-lifecycle-stage { position:relative; display:flex; flex-direction:column; align-items:center; gap:6px; color:var(--ink-faint); font-size:0.72rem; text-align:center; }
+  .candidate-lifecycle-stage::before { content:""; position:absolute; top:11px; right:50%; width:100%; height:2px; background:var(--border); z-index:0; }
+  .candidate-lifecycle-stage:first-child::before { display:none; }
+  .candidate-lifecycle-dot { position:relative; z-index:1; width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:2px solid var(--border); background:var(--surface); font-size:0.68rem; font-weight:800; }
+  .candidate-lifecycle-stage.complete, .candidate-lifecycle-stage.current { color:var(--primary-dark); font-weight:700; }
+  .candidate-lifecycle-stage.complete::before, .candidate-lifecycle-stage.current::before { background:var(--primary); }
+  .candidate-lifecycle-stage.complete .candidate-lifecycle-dot { color:white; background:var(--primary); border-color:var(--primary); }
+  .candidate-lifecycle-stage.current .candidate-lifecycle-dot { color:var(--primary-dark); background:var(--primary-light); border-color:var(--primary); box-shadow:0 0 0 4px rgba(19,112,100,0.1); }
+  .candidate-lifecycle-rejected { margin-top:10px; padding:8px 10px; color:var(--danger); background:rgba(192,62,62,0.08); border-radius:var(--radius-sm); font-size:0.76rem; text-align:center; }
+  .application-history-current { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 14px; margin-bottom:16px; border-radius:var(--radius-sm); background:var(--surface-alt); font-size:0.82rem; }
+  .application-history-timeline { padding-left:8px; }
+  .application-history-item { position:relative; display:grid; grid-template-columns:18px minmax(0,1fr); gap:10px; padding-bottom:18px; }
+  .application-history-item:not(:last-child)::before { content:""; position:absolute; left:6px; top:13px; bottom:0; width:2px; background:var(--border); }
+  .application-history-marker { position:relative; z-index:1; width:14px; height:14px; margin-top:3px; border:3px solid var(--primary-light); border-radius:50%; background:var(--primary); }
+  .application-history-item strong { display:block; font-size:0.86rem; }
+  .application-history-item p { margin:6px 0 0; color:var(--ink-soft); font-size:0.8rem; }
+  .auto-apply-settings { margin-bottom:22px; padding:16px; border:1px solid var(--border); border-radius:var(--radius-sm); background:linear-gradient(135deg,var(--primary-light),var(--surface)); }
+  .auto-apply-toggle { display:flex; align-items:flex-start; gap:10px; cursor:pointer; }
+  .auto-apply-toggle input { width:18px; height:18px; margin-top:2px; accent-color:var(--primary); }
+  .auto-apply-toggle strong { display:block; font-size:0.92rem; }
+  .auto-apply-controls { display:grid; grid-template-columns:minmax(180px,260px) minmax(0,1fr); gap:14px; align-items:end; margin:14px 0 0 28px; }
+  .auto-apply-controls .form-group { margin:0; }
   @media (max-width:900px){
     .discovery-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
     .application-summary { grid-template-columns:repeat(2,minmax(0,1fr)); }
@@ -50,6 +74,8 @@
     .application-card-main { grid-template-columns:1fr; }
     .application-status { border-left:0; border-top:1px solid var(--border); padding:14px 0 0; }
     .application-card-footer { align-items:flex-start; flex-direction:column; }
+    .application-card-footer .flex { flex-wrap:wrap; }
+    .auto-apply-controls { grid-template-columns:1fr; margin-left:0; }
   }
 </style>
 </head>
@@ -110,6 +136,7 @@
             <input type="file" id="cv-input" accept=".pdf,.docx" style="display:none;">
             <button class="btn btn-outline btn-sm" id="cv-upload-btn">Tải lên / Thay CV</button>
             <a href="#" id="cv-view-link" target="_blank" style="display:none; margin-left:10px;" class="btn btn-ghost btn-sm">Xem CV hiện tại</a>
+            <div id="cv-file-name" class="form-hint" style="margin-top:7px;">Chưa có CV trong hồ sơ</div>
           </div>
         </div>
       </div>
@@ -117,6 +144,28 @@
       <div class="card">
         <div id="profile-alert-slot"></div>
         <form id="profile-form">
+          <div class="auto-apply-settings">
+            <label class="auto-apply-toggle" for="auto_apply_enabled">
+              <input type="checkbox" id="auto_apply_enabled">
+              <span>
+                <strong>Tự động ứng tuyển việc làm phù hợp</strong>
+                <span class="form-hint">Khi doanh nghiệp đăng tin mới, JobLink sẽ chấm hồ sơ và chỉ gửi CV nếu điểm đạt ngưỡng bạn chọn. Mặc định luôn tắt; tắt lại không rút các đơn đã gửi.</span>
+              </span>
+            </label>
+            <div class="auto-apply-controls">
+              <div class="form-group">
+                <label for="auto_apply_min_score">Ngưỡng phù hợp tối thiểu</label>
+                <select id="auto_apply_min_score" class="input">
+                  <option value="50">50% — Mở rộng cơ hội</option>
+                  <option value="60">60% — Khá phù hợp</option>
+                  <option value="70">70% — Khuyến nghị</option>
+                  <option value="80">80% — Phù hợp cao</option>
+                  <option value="90">90% — Rất chọn lọc</option>
+                </select>
+              </div>
+              <div id="auto-apply-status" class="form-hint"></div>
+            </div>
+          </div>
           <div class="form-row">
             <div class="form-group">
               <label for="full_name">Họ và tên</label>
@@ -211,9 +260,10 @@
   </main>
 </div>
 
+<script src="/js/env.js"></script>
 <script src="/js/api.js?v=20260727-1"></script>
 <script src="/js/header.js?v=20260721-6"></script>
-<script src="/js/candidate-dashboard.js?v=20260721-6"></script>
+<script src="/js/candidate-dashboard.js?v=20260922-1"></script>
 <script src="/js/chatbot-widget.js"></script>
 </body>
 </html>
