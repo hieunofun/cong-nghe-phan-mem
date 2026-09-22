@@ -53,6 +53,9 @@ test('chatbot and OAuth redirects respect the split frontend/backend origins', (
 test('CV upload stays below the Vercel Function payload ceiling', () => {
   const upload = read('middleware/upload.js');
   const jobDetail = read('public/js/job-detail.js');
+  const extractor = read('utils/cvTextExtractor.js');
   assert.match(upload, /fileSize: 4 \* 1024 \* 1024/);
   assert.match(jobDetail, /tối đa 4MB/);
+  assert.match(extractor, /require\('pdf-parse\/worker'\)/);
+  assert.match(extractor, /new PDFParse\(\{ data: buffer, CanvasFactory \}\)/);
 });

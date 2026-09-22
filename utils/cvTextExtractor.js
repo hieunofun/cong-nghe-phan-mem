@@ -1,6 +1,9 @@
 const fs = require('fs/promises');
 const path = require('path');
-const pdfParse = require('pdf-parse');
+// Load the server worker first so pdf-parse can initialise its Node canvas
+// implementation correctly in serverless runtimes such as Vercel.
+const { CanvasFactory } = require('pdf-parse/worker');
+const { PDFParse } = require('pdf-parse');
 const mammoth = require('mammoth');
 const { downloadStoredFile, storedFileExtension } = require('../services/storageService');
 
@@ -175,8 +178,13 @@ async function extractCVText(cvUrl) {
   let text = '';
 
   if (extension === '.pdf') {
-    const result = await pdfParse(buffer);
-    text = result.text;
+    const parser = new PDFParse({ data: buffer, CanvasFactory });
+    try {
+      const result = await parser.getText();
+      text = result.text;
+    } finally {
+      await parser.destroy();
+    }
   } else if (extension === '.docx') {
     const result = await mammoth.extractRawText({ buffer });
     text = result.value;
