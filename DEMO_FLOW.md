@@ -31,6 +31,10 @@ Mở sẵn PowerPoint và các tab:
 | Alerts | http://localhost:9090/alerts |
 
 Đăng nhập Jenkins/Grafana trước. Chuẩn bị một cửa sổ PowerShell để thực hiện lệnh.
+Tab GitHub Settings/Webhooks cần tài khoản có quyền quản trị repo. Nếu tài khoản
+đang mở trên trình duyệt không có quyền đó, xem delivery thật bằng lệnh
+`node scripts/webhook-demo.js deliveries`; script dùng quyền GitHub đã lưu sẵn,
+không cần đổi tài khoản trình duyệt và không in token.
 Giữ receiver/tunnel hoạt động, tắt sleep của máy trong lúc trình bày. Không mở
 file credentials.env, .env hoặc secret webhook trên màn chiếu.
 
@@ -70,6 +74,12 @@ Chuyển sang GitHub Recent Deliveries, mở sự kiện `push` mới:
 - Request có `ref: refs/heads/main`, trường `after` là SHA vừa push.
 - Response HTTP 202: receiver đã kiểm tra chữ ký và đưa build vào hàng đợi Jenkins.
 - Chuyển sang `joblink-scm`: build mới tự chạy. Không bấm thêm Build trong lượt này.
+
+Có thể trình bày cùng thông tin HTTP status, delivery ID, commit và queue bằng:
+
+```powershell
+node scripts/webhook-demo.js deliveries
+```
 
 Trong Jenkins, chỉ sáu stages: Source → Node tests → Build images → AI tests →
 Deploy → Smoke checks. Dùng thời gian chờ để trình bày phần Docker bên dưới.

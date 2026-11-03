@@ -138,8 +138,16 @@ async function main() {
     const up = cfg && state.url && await healthy(state.url, cfg.instanceId);
     console.log(up ? `Webhook ready: ${state.url}/github-webhook/` : 'Webhook is not ready. Run node scripts/webhook-demo.js start.');
     if (state.hookId) console.log(`GitHub hook ID: ${state.hookId}; Jenkins job: joblink-scm`);
+  } else if (action === 'deliveries') {
+    if (!state.hookId) throw new Error('Run node scripts/webhook-demo.js start first.');
+    const ledger = read(path.join(runtime, 'webhook-deliveries.json'), []);
+    const recent = github(`repos/${repository}/hooks/${state.hookId}/deliveries`).slice(0, 5);
+    for (const delivery of recent) {
+      const local = ledger.find(item => item.id === delivery.guid);
+      console.log(`${delivery.event} HTTP ${delivery.status_code} | ${delivery.guid} | ${local?.sha || '-'} | ${local?.queuePath || '-'}`);
+    }
   } else {
-    console.log('Usage: node scripts/webhook-demo.js start|status|stop');
+    console.log('Usage: node scripts/webhook-demo.js start|status|deliveries|stop');
   }
 }
 

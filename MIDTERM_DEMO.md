@@ -100,6 +100,8 @@ quản trị Jenkins hoặc các cổng ứng dụng qua tunnel.
 
 Xem GitHub **Settings → Webhooks → webhook đang active → Recent Deliveries**:
 event `push` phải trả HTTP **202**; event `ping` trả **200**.
+Cũng có thể xem các delivery thật bằng `node scripts/webhook-demo.js deliveries`
+khi tài khoản GitHub trên trình duyệt không có quyền mở trang Webhooks.
 Xem Jenkins **joblink-scm → build mới → Build Artifacts** để đối chiếu
 `source-commit.txt` và `webhook-delivery.txt` với commit và delivery GitHub.
 
