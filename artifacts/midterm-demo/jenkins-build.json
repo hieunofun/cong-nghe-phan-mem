@@ -1,7 +1,8 @@
 {
+  "job": "joblink-scm",
   "number": 1,
   "result": "SUCCESS",
-  "duration": 190749,
-  "timestamp": 1793728283442,
-  "url": "http://localhost:8080/job/joblink-local/1/"
+  "duration": 220658,
+  "timestamp": 1793730392199,
+  "url": "http://localhost:8080/job/joblink-scm/1/"
 }

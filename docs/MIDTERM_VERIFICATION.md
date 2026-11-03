@@ -3,6 +3,36 @@
 Phạm vi đã thực hiện: Jenkins/CI/CD, triển khai Docker, giám sát và PowerPoint.
 Đây là biên bản kỹ thuật; báo cáo Word theo mẫu giảng viên làm riêng sau.
 
+## Cập nhật GitHub SCM và webhook
+
+Đã push cấu hình Docker/DevOps lên nhánh `main` của repo:
+https://github.com/hieunofun/cong-nghe-phan-mem
+
+Lượt kiểm tra tự động đầu tiên dùng commit
+`459b449bc2f954e67d7eed605bf10a22ee449163`:
+
+| Hạng mục | Kết quả |
+|---|---|
+| GitHub webhook | Active, push trả HTTP 202; ping trả 200 |
+| Jenkins job | `joblink-scm` #1 SUCCESS; Jenkinsfile lấy từ remote |
+| SHA source | Trùng SHA push; đối chiếu cả artifact và webhook delivery ID |
+| Node tests | 57/57 PASS, gồm 8 tests receiver webhook |
+| AI tests | 3/3 PASS |
+| Smoke checks | 12/12 PASS |
+| Dấu phiên bản | `/demo-release.json` được phục vụ từ image mới, revision 1 |
+| GitHub Actions | CI SUCCESS cho cùng commit |
+
+Bằng chứng máy đọc được: `artifacts/midterm-demo/webhook-verification.json`.
+[GitHub Actions đã kiểm tra](https://github.com/hieunofun/cong-nghe-phan-mem/actions/runs/41693817702).
+Mật khẩu và HMAC secret được giữ ở `.devops/`, không nằm trong commit.
+
+`scripts/webhook-demo.js start` tạo/cập nhật URL tạm cho mỗi lần demo; receiver
+chỉ chấp nhận chữ ký hợp lệ, đúng repo và nhánh `main`, chống delivery trùng.
+Jenkins/Web/MySQL không được đưa trực tiếp qua tunnel. Hướng dẫn thuyết trình và
+thao tác 25–30 phút nằm trong `DEMO_FLOW.md`.
+
+Các kết quả Docker/LOCAL bên dưới là mốc kiểm tra ban đầu, trước khi bật SCM/webhook.
+
 ## Kết quả thực tế
 
 | Hạng mục | Kết quả |
@@ -80,8 +110,8 @@ node scripts/devops-demo.js check
 
 ## Phần chưa xác minh hoặc chưa cấu hình
 
-- Chưa commit/push thay đổi. Jenkins LOCAL đã chạy thật; checkout/polling từ remote
-  cần nhóm đưa các file mới lên Git và chạy SCM lần đầu để xác minh.
+- GitHub push → webhook → SCM → triển khai đã được xác minh ở mục cập nhật đầu file.
+  URL Quick Tunnel cần được giữ hoạt động trong lúc demo và cập nhật sau khi đổi URL.
 - AI vẫn là lightweight TF-IDF/FAQ RAG; không có Groq API key.
 - OAuth, SMTP, thanh toán thật và gửi cảnh báo ra ngoài chưa cấu hình.
 - Không thay dependencies ứng dụng để xử lý các cảnh báo audit đã biết từ đợt trước.

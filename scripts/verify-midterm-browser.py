@@ -58,10 +58,11 @@ def devops_screens(browser):
     page.locator('input[name="j_password"]').fill(SECRETS['JENKINS_ADMIN_PASSWORD'])
     page.locator('button[name="Submit"], button[type="submit"]').first.click()
     page.wait_for_url(lambda url: '/login' not in url)
-    page.goto('http://localhost:8080/job/joblink-local/', wait_until='networkidle')
+    page.goto('http://localhost:8080/job/joblink-scm/', wait_until='networkidle')
     page.get_by_text('Stage View', exact=False).first.wait_for(timeout=30000)
+    stage_box = page.get_by_text('Stage View', exact=True).first.bounding_box()
     page.screenshot(path=str(OUTPUT / 'jenkins-pipeline.png'),
-                    clip={'x': 355, 'y': 405, 'width': 1070, 'height': 360})
+                    clip={'x': 355, 'y': max(0, stage_box['y'] - 10), 'width': 1070, 'height': 360})
     print('PASS browser: Jenkins job and stages visible')
     context.close()
 

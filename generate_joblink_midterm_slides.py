@@ -115,12 +115,12 @@ def create(date, group=None, lecturer=None):
         card(s, x, y, 3.65, 1.75, title, detail, size=19)
     d.takeaway(s, 'Máy demo: Windows + PowerShell + Docker Desktop / WSL 2.')
 
-    # 7 — Describe actual local-vs-SCM behavior, not an unverified GitHub webhook.
+    # 7 — GitHub push triggers the signed webhook and the real SCM job.
     s = d.body(prs, 'Quản lý mã nguồn bằng Git', '03 / SCM')
     d.command(s, 'git status\ngit diff\ngit log --oneline -5', .8, 2.0, 5.6, 2.2, size=25)
-    card(s, 6.9, 2.0, 5.6, 3.55, 'Hai cách lấy source', 'LOCAL: bản đang làm trên máy.\nSCM: checkout từ Git URL / branch.\nSCM polling: khoảng mỗi 5 phút.', size=23)
+    card(s, 6.9, 2.0, 5.6, 3.55, 'SCM từ GitHub', 'Push lên nhánh main.\nWebhook HTTPS → Jenkins.\nCheckout đúng SHA của commit.', size=23)
     d.text(s, 'Nhánh hiện tại: main', .9, 4.65, 5.3, .65, size=25, bold=True, color=d.NAVY)
-    d.takeaway(s, 'Chế độ SCM cần commit / push các file mới trước khi dùng.')
+    d.takeaway(s, 'Git push → GitHub webhook → joblink-scm → Docker')
 
     # 8 — Six pipeline stages, in two spacious rows.
     s = d.body(prs, 'Jenkins tự động hóa sáu bước', '03 / PIPELINE CI/CD')
@@ -136,7 +136,7 @@ def create(date, group=None, lecturer=None):
     # 9 — Real Jenkins screenshot, not a fabricated success state.
     s = d.body(prs, f'Jenkins build #{build["number"]}: {build["result"]}', '03 / KẾT QUẢ PIPELINE THỰC TẾ')
     picture(s, 'jenkins-pipeline.png', .8, 1.65, 11.7, 4.35)
-    d.takeaway(s, 'http://localhost:8080  →  joblink-local  →  Build with Parameters')
+    d.takeaway(s, 'http://localhost:8080/job/joblink-scm/ · Tự chạy sau khi push main')
 
     # 10 — Install and pull.
     s = d.body(prs, 'Chuẩn bị Docker và images nền tảng', '04 / CÀI ĐẶT VÀ PULL')
@@ -171,8 +171,8 @@ def create(date, group=None, lecturer=None):
     # 14 — Actual, runnable commands.
     s = d.body(prs, 'Chạy toàn bộ hệ thống demo', '04 / TRIỂN KHAI TRÊN MÁY')
     d.command(s, 'node scripts/devops-demo.js up', .8, 2.0, 11.7, 1.0, size=27)
-    d.command(s, 'node scripts/devops-demo.js build\nnode scripts/devops-demo.js check', .8, 3.55, 11.7, 1.5, size=26)
-    d.text(s, 'up: chạy dịch vụ    build: chạy pipeline    check: xác minh', .9, 5.5, 11.5, .6,
+    d.command(s, 'node scripts/webhook-demo.js start\nnode scripts/devops-demo.js check', .8, 3.55, 11.7, 1.5, size=26)
+    d.text(s, 'up: chạy dịch vụ    webhook: nhận push    check: xác minh', .9, 5.5, 11.5, .6,
            size=23, color=d.NAVY, bold=True)
     d.takeaway(s, 'Mật khẩu Jenkins / Grafana: node scripts/devops-demo.js credentials')
 
@@ -250,7 +250,7 @@ def create(date, group=None, lecturer=None):
     s = d.body(prs, 'Demo từ triển khai đến giám sát', 'DEMO / TRÌNH TỰ THAO TÁC')
     for i, value in enumerate([
         'Xem Git và các file Docker / Jenkinsfile',
-        'Chạy pipeline, xem sáu stages và kết quả kiểm thử',
+        'Push thay đổi, xem webhook và Jenkins tự chạy',
         'Mở JobLink, thử tìm việc và đăng nhập',
         'Xem Grafana và Prometheus Alerts',
         'Dừng / chạy lại AI để minh họa hồi phục'
@@ -258,12 +258,12 @@ def create(date, group=None, lecturer=None):
         y=1.7+i*.83
         d.text(s, f'{i+1:02}', .87, y, .72, .6, size=29, color=d.BLUE, bold=True)
         d.text(s, value, 1.9, y+.03, 10.5, .65, size=25)
-    d.takeaway(s, 'Các lệnh và bằng chứng: MIDTERM_DEMO.md')
+    d.takeaway(s, 'Luồng 25–30 phút và lệnh demo: DEMO_FLOW.md')
 
     # 22 — Honest scope and a concise close.
     s = d.body(prs, 'Hoàn thành triển khai đến Docker', 'TỔNG KẾT / PHẠM VI GIỮA KỲ')
     card(s, .8, 2.0, 5.6, 3.6, 'Đã triển khai', 'Web / AI / MySQL trên Docker\nJenkins: tests, build và deploy\nDashboard và cảnh báo\nPowerPoint không có notes', size=23)
-    card(s, 6.9, 2.0, 5.6, 3.6, 'Giới hạn demo', 'AI: TF-IDF và FAQ RAG\nOAuth / SMTP / thanh toán: chưa cấu hình\nSCM remote: chờ commit / push\nMôi trường demo: localhost', size=22)
+    card(s, 6.9, 2.0, 5.6, 3.6, 'Giới hạn demo', 'AI: TF-IDF và FAQ RAG\nOAuth / SMTP / thanh toán: chưa cấu hình\nWebhook cần Internet / tunnel\nỨng dụng chạy trên localhost', size=22)
     d.takeaway(s, 'Git → Jenkins → Docker → Giám sát')
 
     assert len(prs.slides) == TOTAL
