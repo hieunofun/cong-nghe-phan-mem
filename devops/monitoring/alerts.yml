@@ -1,0 +1,25 @@
+groups:
+  - name: joblink-availability
+    rules:
+      - alert: JobLinkServiceDown
+        expr: probe_success{job="joblink-probes"} == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: 'JobLink {{ $labels.service }} is unavailable'
+          description: '{{ $labels.instance }} has failed probes for at least 30 seconds.'
+      - alert: JobLinkProbeMissing
+        expr: up{job="joblink-probes"} == 0
+        for: 30s
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Cannot collect probe for {{ $labels.service }}'
+      - alert: JobLinkSlowResponse
+        expr: probe_duration_seconds{job="joblink-probes",service!="mysql"} > 2
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'JobLink {{ $labels.service }} response exceeds 2 seconds'

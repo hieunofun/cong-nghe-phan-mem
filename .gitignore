@@ -14,3 +14,19 @@ ai_service/.cache/
 ai_service/**/__pycache__/
 ai_service/models/cv_job_matching/
 .vercel
+.ci/
+.devops/
+__pycache__/
+# Keep local exports/logs out of Git; publish only the small evidence set used by slides.
+artifacts/*
+!artifacts/midterm-demo/
+artifacts/midterm-demo/*
+!artifacts/midterm-demo/jenkins-pipeline.png
+!artifacts/midterm-demo/grafana-dashboard.png
+!artifacts/midterm-demo/verification.json
+!artifacts/midterm-demo/jenkins-build.json
+!artifacts/midterm-demo/browser-checks.json
+!artifacts/midterm-demo/alert-recovery.json
+!artifacts/midterm-demo/persistence-result.json
+!artifacts/midterm-demo/rollback-check.json
+!artifacts/midterm-demo/webhook-verification.json

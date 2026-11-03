@@ -1,0 +1,7 @@
+{
+  "status": "PASS",
+  "mysqlContainerUnchanged": true,
+  "counts": "4\t4\t2",
+  "uploadMarkerPreserved": true,
+  "markerCleaned": true
+}

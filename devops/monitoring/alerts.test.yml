@@ -1,0 +1,27 @@
+rule_files:
+  - alerts.yml
+evaluation_interval: 10s
+tests:
+  - name: AI down waits 30 seconds and resolves after recovery
+    interval: 10s
+    input_series:
+      - series: 'probe_success{job="joblink-probes",service="ai",instance="http://ai:5000/health"}'
+        values: '1 0 0 0 0 1 1'
+    alert_rule_test:
+      - eval_time: 20s
+        alertname: JobLinkServiceDown
+        exp_alerts: []
+      - eval_time: 40s
+        alertname: JobLinkServiceDown
+        exp_alerts:
+          - exp_labels:
+              job: joblink-probes
+              service: ai
+              instance: http://ai:5000/health
+              severity: critical
+            exp_annotations:
+              summary: JobLink ai is unavailable
+              description: http://ai:5000/health has failed probes for at least 30 seconds.
+      - eval_time: 60s
+        alertname: JobLinkServiceDown
+        exp_alerts: []

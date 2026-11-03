@@ -1,0 +1,112 @@
+services:
+  # -------------------------------------------------------------
+  # 1. Cơ sở dữ liệu MySQL 8.0
+  # -------------------------------------------------------------
+  mysql:
+    image: mysql:8.0
+    container_name: joblink-mysql
+    restart: unless-stopped
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: joblink_root_pass
+      MYSQL_DATABASE: joblink_db
+      MYSQL_USER: joblink_user
+      MYSQL_PASSWORD: joblink_password
+    ports:
+      - "127.0.0.1:3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "MYSQL_PWD=$$MYSQL_PASSWORD mysql -h 127.0.0.1 -u $$MYSQL_USER -D $$MYSQL_DATABASE -e 'SELECT 1' >/dev/null"]
+      interval: 5s
+      timeout: 5s
+      retries: 24
+      start_period: 60s
+    networks:
+      - joblink-network
+
+  # -------------------------------------------------------------
+  # 2. Dịch vụ AI (Python Flask - RAG / CV Matching)
+  # -------------------------------------------------------------
+  ai:
+    build:
+      context: .
+      dockerfile: Dockerfile.ai
+    image: ${JOBLINK_AI_IMAGE:-joblink-ai:1.0}
+    container_name: joblink-ai
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:5000:5000"
+    environment:
+      PORT: 5000
+      AI_LIGHTWEIGHT_MODE: "true"
+      DB_CLIENT: mysql
+      DB_HOST: mysql
+      DB_USER: joblink_user
+      DB_PASSWORD: joblink_password
+      DB_NAME: joblink_db
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/health', timeout=4)"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+    networks:
+      - joblink-network
+
+  # -------------------------------------------------------------
+  # 3. Ứng dụng chính JobLink Web (Node.js Express + Frontend)
+  # -------------------------------------------------------------
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ${JOBLINK_WEB_IMAGE:-joblink-web:1.0}
+    container_name: joblink-web
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      ai:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DB_CLIENT: mysql
+      DB_HOST: mysql
+      DB_USER: joblink_user
+      DB_PASSWORD: joblink_password
+      DB_NAME: joblink_db
+      JWT_SECRET: joblink_docker_jwt_secret_2026_xyz
+      JWT_EXPIRES_IN: 7d
+      SESSION_SECRET: joblink_docker_session_secret_2026_abc
+      BASE_URL: http://localhost:3000
+      FRONTEND_URL: http://localhost:3000
+      AI_SERVICE_URL: http://ai:5000
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+    volumes:
+      - uploads_data:/app/uploads
+    networks:
+      - joblink-network
+
+volumes:
+  mysql_data:
+    name: joblink_mysql_data
+  uploads_data:
+    name: joblink_uploads_data
+
+networks:
+  joblink-network:
+    name: joblink-network
+    driver: bridge

@@ -1,0 +1,17 @@
+[
+  {
+    "role": "candidate",
+    "javascriptErrors": [],
+    "failedApi": []
+  },
+  {
+    "role": "company",
+    "javascriptErrors": [],
+    "failedApi": []
+  },
+  {
+    "role": "admin",
+    "javascriptErrors": [],
+    "failedApi": []
+  }
+]

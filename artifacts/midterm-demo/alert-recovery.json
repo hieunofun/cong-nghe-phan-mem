@@ -1,0 +1,8 @@
+{
+  "startedAt": "2026-11-03T18:01:24.032Z",
+  "probeDownAt": "2026-11-03T18:01:35.951Z",
+  "alertFiringAt": "2026-11-03T18:02:21.824Z",
+  "recoveredAt": "2026-11-03T18:02:33.617Z",
+  "alertResolvedAt": "2026-11-03T18:02:51.869Z",
+  "status": "PASS"
+}

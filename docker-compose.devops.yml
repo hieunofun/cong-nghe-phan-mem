@@ -1,0 +1,113 @@
+# Run through: node scripts/devops-demo.js up
+# Application containers and their existing volumes stay in docker-compose.yml.
+services:
+  jenkins:
+    build:
+      context: ./devops/jenkins
+    image: joblink-jenkins:1.0
+    container_name: joblink-jenkins
+    # The local lab uses the host Docker socket to deploy sibling containers.
+    user: root
+    restart: unless-stopped
+    environment:
+      JAVA_OPTS: -Xms128m -Xmx384m -Djenkins.install.runSetupWizard=false
+      JENKINS_ADMIN_ID: admin
+      JENKINS_ADMIN_PASSWORD: ${JENKINS_ADMIN_PASSWORD:?Run node scripts/devops-demo.js up first}
+      JOBLINK_COMPOSE_PROJECT: ${COMPOSE_PROJECT_NAME:-trienkhaiphanmemcki}
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - jenkins_data:/var/jenkins_home
+      - .:/opt/joblink:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/login"]
+      interval: 10s
+      timeout: 5s
+      retries: 36
+      start_period: 60s
+    mem_limit: 768m
+    networks:
+      - joblink-network
+
+  blackbox:
+    image: prom/blackbox-exporter:v0.29.1
+    container_name: joblink-blackbox
+    restart: unless-stopped
+    command: ["--config.file=/etc/blackbox_exporter/config.yml"]
+    volumes:
+      - ./devops/monitoring/blackbox.yml:/etc/blackbox_exporter/config.yml:ro
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:9115/-/healthy"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    mem_limit: 64m
+    networks:
+      - joblink-network
+
+  prometheus:
+    image: prom/prometheus:v3.15.1
+    container_name: joblink-prometheus
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=7d
+      - --storage.tsdb.retention.size=256MB
+    ports:
+      - "127.0.0.1:9090:9090"
+    volumes:
+      - ./devops/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./devops/monitoring/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus_data:/prometheus
+    depends_on:
+      - blackbox
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:9090/-/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+    mem_limit: 256m
+    networks:
+      - joblink-network
+
+  grafana:
+    image: grafana/grafana:13.3.0
+    container_name: joblink-grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?Run node scripts/devops-demo.js up first}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_NEWS_NEWS_FEED_ENABLED: "false"
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/joblink-overview.json
+    ports:
+      - "127.0.0.1:3001:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./devops/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./devops/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      prometheus:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 15s
+    mem_limit: 512m
+    networks:
+      - joblink-network
+
+volumes:
+  jenkins_data:
+    name: joblink_jenkins_data
+  prometheus_data:
+    name: joblink_prometheus_data
+  grafana_data:
+    name: joblink_grafana_data

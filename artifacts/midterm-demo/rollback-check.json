@@ -1,0 +1,19 @@
+{
+  "status": "PASS",
+  "testJobResult": "FAILURE",
+  "deploymentState": {
+    "startedAt": "2026-11-03T18:00:18.333Z",
+    "previous": {
+      "JOBLINK_WEB_IMAGE": "joblink-web:jenkins-joblink-local-1",
+      "JOBLINK_AI_IMAGE": "joblink-ai:jenkins-joblink-local-1"
+    },
+    "next": {
+      "JOBLINK_WEB_IMAGE": "joblink-web:jenkins-joblink-rollback-check-1",
+      "JOBLINK_AI_IMAGE": "joblink-ai:jenkins-joblink-rollback-check-1"
+    },
+    "status": "rolled-back",
+    "rolledBackAt": "2026-11-03T18:00:51.599Z"
+  },
+  "previousImagesRestored": true,
+  "note": "Smoke target intentionally invalid; main job remains successful."
+}
