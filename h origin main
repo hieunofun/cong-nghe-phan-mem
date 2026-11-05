@@ -1,0 +1,14 @@
+warning: in the working copy of 'public/demo-release.json', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/public/demo-release.json b/public/demo-release.json[m
+[1mindex 6ced643..d454590 100644[m
+[1m--- a/public/demo-release.json[m
+[1m+++ b/public/demo-release.json[m
+[36m@@ -1,5 +1,5 @@[m
+ {[m
+[31m-  "revision": 2,[m
+[31m-  "message": "JobLink - GitHub webhook deployment verified",[m
+[31m-  "updatedAt": "2026-11-03T18:32:58.168Z"[m
+[32m+[m[32m  "revision": 3,[m
+[32m+[m[32m  "message": "JobLink - demo giua ky",[m
+[32m+[m[32m  "updatedAt": "2026-11-05T06:48:47.288Z"[m
+ }[m
