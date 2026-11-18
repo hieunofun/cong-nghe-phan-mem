@@ -49,6 +49,7 @@ function createBackup() {
       '-e', `MYSQL_PWD=${dbPassword}`,
       container,
       'mysqldump',
+      '--no-tablespaces',
       '--single-transaction',
       '--routines',
       '--triggers',

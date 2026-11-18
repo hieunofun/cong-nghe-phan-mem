@@ -69,9 +69,9 @@ pipeline {
                 sh 'docker compose -f docker-compose.yml config -q'
                 sh '''
                     if docker image inspect prom/prometheus:v3.15.1 >/dev/null 2>&1; then
-                        docker run --rm --entrypoint promtool \
-                            -v "$PWD/devops/monitoring:/etc/prometheus:ro" \
-                            prom/prometheus:v3.15.1 test rules /etc/prometheus/alerts.test.yml > .ci/promtool-tests.log 2>&1
+                        tar -C devops/monitoring -cf - alerts.yml alerts.test.yml | \
+                            docker run --rm -i --entrypoint sh prom/prometheus:v3.15.1 \
+                            -c 'mkdir -p /tmp/prom && tar -C /tmp/prom -xf - && promtool test rules /tmp/prom/alerts.test.yml' > .ci/promtool-tests.log 2>&1
                         cat .ci/promtool-tests.log
                     fi
                 '''

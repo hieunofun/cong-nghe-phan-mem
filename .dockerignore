@@ -35,6 +35,7 @@ scripts/ci-source.sh
 scripts/monitoring-check.js
 generate_joblink_midterm_slides.py
 scripts/verify-midterm-browser.py
+scripts/verify-final-browser.py
 scripts/export-midterm-slides.ps1
 scripts/verify-alert-recovery.js
 scripts/github-webhook.js
