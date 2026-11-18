@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: joblink
+  labels:
+    app.kubernetes.io/name: joblink
+    app.kubernetes.io/part-of: joblink-recruitment-platform

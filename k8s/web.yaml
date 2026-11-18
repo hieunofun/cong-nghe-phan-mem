@@ -1,0 +1,114 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: joblink-uploads-pvc
+  namespace: joblink
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: joblink-web
+  namespace: joblink
+  labels:
+    app: joblink-web
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: joblink-web
+  template:
+    metadata:
+      labels:
+        app: joblink-web
+    spec:
+      containers:
+        - name: web-app
+          image: joblink-web:1.0
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: joblink-config
+          env:
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: joblink-secret
+                  key: DB_USER
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: joblink-secret
+                  key: DB_PASSWORD
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: joblink-secret
+                  key: JWT_SECRET
+            - name: SESSION_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: joblink-secret
+                  key: SESSION_SECRET
+            - name: AI_SECRET_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: joblink-secret
+                  key: AI_SECRET_TOKEN
+          ports:
+            - containerPort: 3000
+              name: http
+          resources:
+            requests:
+              cpu: 150m
+              memory: 192Mi
+            limits:
+              cpu: 600m
+              memory: 512Mi
+          volumeMounts:
+            - name: uploads-storage
+              mountPath: /app/uploads
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 25
+            periodSeconds: 15
+            timeoutSeconds: 5
+      volumes:
+        - name: uploads-storage
+          persistentVolumeClaim:
+            claimName: joblink-uploads-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: joblink-web
+  namespace: joblink
+  labels:
+    app: joblink-web
+spec:
+  type: ClusterIP
+  ports:
+    - port: 3000
+      targetPort: 3000
+      name: http
+  selector:
+    app: joblink-web
