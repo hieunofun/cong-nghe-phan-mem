@@ -146,11 +146,15 @@ joblink-platform/
 
 ---
 
-## 7. Thành viên Thực hiện
+## 7. Thông tin Nhóm Thực hiện (Nhóm 02 — Lớp 24IT3 — Trường Đại học CMC)
 
-- **Hiếu** — [@hieunofun](https://github.com/hieunofun)
-- **Nguyên** — [@Nguyen16112006](https://github.com/Nguyen16112006)
-- **Phương Anh** — [@Phuonganh149](https://github.com/Phuonganh149)
-- **Huy** — `Huyday` (Triển khai Docker, CI/CD Jenkins, Webhook & Hệ thống Giám sát)
+- **Giảng viên hướng dẫn:** Đặng Quốc Hữu
+- **Thành viên thực hiện:**
+  1. **Phan Văn Hiếu** (`BIT240094`) — [@hieunofun](https://github.com/hieunofun)
+  2. **Nguyễn Doãn Huy** (`BIT240115`) — `Huyday`
+  3. **Nguyễn Trần Tuấn Khôi** (`BIT240131`)
+  4. **Trần Đức Nguyên** (`BIT240173`) — [@Nguyen16112006](https://github.com/Nguyen16112006)
+  5. **Niê Phương Anh** (`BIT240014`) — [@Phuonganh149](https://github.com/Phuonganh149)
+  6. **Nguyễn Quang Trung** (`BIT240230`)
 
-Chi tiết phân công và cách đối chiếu lịch sử đóng góp trên Git xem tại [CONTRIBUTORS.md](./CONTRIBUTORS.md).
+Chi tiết phân công công việc và cách đối chiếu trên Git xem tại [CONTRIBUTORS.md](./CONTRIBUTORS.md).

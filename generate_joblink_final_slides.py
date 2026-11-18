@@ -51,7 +51,7 @@ def picture(slide, filename, x, y, w, h):
     )
 
 
-def create(date, group='Hiếu · Nguyên · Phương Anh · Huy', lecturer=None):
+def create(date, group='Nhóm 02 · Lớp 24IT3', lecturer='Đặng Quốc Hữu'):
     evidence = json.loads((FINAL_EVIDENCE / 'verification.json').read_text(encoding='utf-8'))
     prs = Presentation(ROOT / 'Slides Template.pptx')
     for _ in range(len(prs.slides)):
@@ -62,16 +62,19 @@ def create(date, group='Hiếu · Nguyên · Phương Anh · Huy', lecturer=None
     # 1 — Cover
     s = prs.slides.add_slide(prs.slide_masters[0].slide_layouts[0])
     d.remove_placeholders(s)
-    d.text(s, 'BÁO CÁO ĐỒ ÁN CUỐI KỲ · INFO3004', 5.72, 1.82, 6.75, .45,
+    d.text(s, 'BÁO CÁO ĐỒ ÁN CUỐI KỲ · INFO3004', 5.72, 1.72, 6.75, .45,
            size=18, color=d.WHITE, bold=True)
-    d.text(s, 'JobLink\nTriển khai phần mềm', 5.69, 2.48, 6.9, 1.65,
-           size=36, color=d.WHITE, bold=True, name='Slide title')
-    d.text(s, 'Git · Jenkins · Docker · Nginx · Observability', 5.72, 4.38, 6.75, .6,
-           size=21, color=d.WHITE)
-    info = [f'Thành viên: {group}', f'Ngày báo cáo: {date}', 'Kiến trúc DevSecOps & Full-Stack Monitoring']
-    if lecturer:
-        info.insert(1, f'Giảng viên hướng dẫn: {lecturer}')
-    d.text(s, '\n'.join(info), 5.72, 5.25, 6.75, 1.55, size=16, color=d.WHITE)
+    d.text(s, 'JobLink\nTriển khai phần mềm', 5.69, 2.32, 6.9, 1.62,
+           size=35, color=d.WHITE, bold=True, name='Slide title')
+    d.text(s, 'Git · Jenkins · Docker · Nginx · Observability', 5.72, 4.15, 6.75, .52,
+           size=20, color=d.WHITE)
+    info = [
+        f'Thực hiện: {group}',
+        'Hiếu · Huy · Khôi · Nguyên · Phương Anh · Trung',
+        f'Giảng viên hướng dẫn: {lecturer}' if lecturer else '',
+        f'Hà Nội, tháng 11/2026 ({date})'
+    ]
+    d.text(s, '\n'.join([line for line in info if line]), 5.72, 4.92, 6.85, 1.85, size=15.5, color=d.WHITE)
 
     # 2 — Six pillars
     s = d.body(prs, 'Cấu trúc đồ án cuối kỳ', 'LỘ TRÌNH / 6 TRỤ CỘT')
@@ -339,7 +342,7 @@ def create(date, group='Hiếu · Nguyên · Phương Anh · Huy', lecturer=None
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--date', default='18/11/2026')
-    parser.add_argument('--group', default='Hiếu · Nguyên · Phương Anh · Huy')
-    parser.add_argument('--lecturer')
+    parser.add_argument('--group', default='Nhóm 02 · Lớp 24IT3')
+    parser.add_argument('--lecturer', default='Đặng Quốc Hữu')
     args = parser.parse_args()
     create(args.date, args.group, args.lecturer)
