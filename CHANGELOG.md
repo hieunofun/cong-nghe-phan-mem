@@ -1,5 +1,24 @@
 # Changelog
 
+## Final Deployment Edition (INFO3004) - 2026-11-18
+
+### Added
+
+- **Nginx Reverse Proxy Gateway (`devops/nginx/`)**: Unified HTTP gateway (`joblink-gateway`), gzip compression, rate limiting on authentication routes (`10 req/s`), security headers, and strict external blocking of `/metrics` and `/internal/*`.
+- **Full-Stack White-Box Observability (`utils/metrics.js`, `ai_service/app.py`)**: Native Prometheus `/metrics` endpoints on both Web (RPS, 4xx/5xx error rate, p95 latency histogram, RSS/Heap memory, event loop lag) and AI services, plus `GET /ready` database readiness check.
+- **Alertmanager Notification Pipeline (`devops/monitoring/alertmanager.yml`)**: Automated routing of `[FIRING]` and `[RESOLVED]` alerts to the internal webhook ledger (`/internal/alert-webhook`) and optional Discord/Slack webhooks, paired with a 13-panel provisioned Grafana dashboard.
+- **Day-2 Operations (`scripts/apply-mysql-migration.js`, `scripts/db-backup.js`)**: Idempotent MySQL schema migration on container startup (including unified OAuth columns) and SHA-256 verified logical database backup/restore with retention pruning.
+- **8-Stage Jenkins CI/CD & Multi-Job GitHub Actions**: Added security audit (`npm audit`), `promtool` alert rule unit tests, non-root container UID checks, optional Container Registry publishing, and 16-check smoke verification with automatic image rollback.
+- **Final Defense Documentation & Slide Deck**: Added `FINAL_DEMO.md`, updated `README.md` / `DEMO_FLOW.md`, and generated the 24-slide `JobLink_Final_Presentation.pptx`.
+
+### Fixed & Hardened
+
+- Enabled true `NODE_ENV=production` inside Docker containers via `STORAGE_DRIVER=local` and `DB_CLIENT=mysql` support, preventing development password-reset links (`reset_url`) from ever leaking in API responses.
+- Switched Docker AI container from Flask's single-threaded development server to multi-threaded **Gunicorn WSGI** (`USER appuser`) with shared `AI_SERVICE_TOKEN` authentication.
+- Hardened Web and AI Dockerfiles to run as non-root users (`node` / `appuser`), added `SIGTERM`/`SIGINT` graceful shutdown, and configured `json-file` log rotation (`10MB x 3`) across all Compose services.
+- Resolved all 5 `npm audit` vulnerabilities (`nodemailer@10`, `multer`, `body-parser`, `proxy-addr`, `qs`, and replaced `nodemon` with native `node --watch`) achieving **0 vulnerabilities**.
+- Removed accidental stray file from repository root and synchronized `CONTRIBUTORS.md`.
+
 ## Unreleased - 2026-09-22
 
 ### Added

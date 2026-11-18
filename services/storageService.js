@@ -24,6 +24,10 @@ function isSupabaseStorageEnabled() {
   return Boolean(process.env.SUPABASE_URL && getSupabaseSecret());
 }
 
+function isLocalStorageExplicitlyEnabled() {
+  return String(process.env.STORAGE_DRIVER || '').trim().toLowerCase() === 'local';
+}
+
 function getSupabaseClient() {
   if (!isSupabaseStorageEnabled()) return null;
   if (!supabaseClient) {
@@ -161,7 +165,7 @@ function parsePublicStorageUrl(value) {
 
 async function storeUploadedFile(file, kind, ownerId) {
   if (!file?.buffer) throw new Error('Không nhận được nội dung tệp tải lên.');
-  if (process.env.NODE_ENV === 'production' && !isSupabaseStorageEnabled()) {
+  if (process.env.NODE_ENV === 'production' && !isSupabaseStorageEnabled() && !isLocalStorageExplicitlyEnabled()) {
     throw new Error('Supabase Storage chưa được cấu hình cho môi trường production.');
   }
   const config = storageConfig[kind];

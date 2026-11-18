@@ -2,6 +2,11 @@ global:
   scrape_interval: 10s
   evaluation_interval: 10s
 
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
+
 rule_files:
   - /etc/prometheus/alerts.yml
 
@@ -9,12 +14,35 @@ scrape_configs:
   - job_name: prometheus
     static_configs:
       - targets: ['prometheus:9090']
+
   - job_name: blackbox
     static_configs:
       - targets: ['blackbox:9115']
+
+  - job_name: alertmanager
+    static_configs:
+      - targets: ['alertmanager:9093']
+
+  # White-box metrics nội tại của ứng dụng Web (Node.js Express)
+  - job_name: joblink-web-metrics
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['web:3000']
+        labels: { service: web }
+
+  # White-box metrics nội tại của dịch vụ AI (Python Gunicorn/Flask)
+  - job_name: joblink-ai-metrics
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['ai:5000']
+        labels: { service: ai }
+
+  # Blackbox probes kiểm tra tính sẵn sàng từ góc nhìn bên ngoài
   - job_name: joblink-probes
     metrics_path: /probe
     static_configs:
+      - targets: ['http://gateway:80/gateway-health']
+        labels: { service: gateway, module: http_health }
       - targets: ['http://web:3000/health']
         labels: { service: web, module: http_health }
       - targets: ['http://ai:5000/health']

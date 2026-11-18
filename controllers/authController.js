@@ -204,7 +204,9 @@ async function forgotPassword(req, res) {
         console.error('sendPasswordResetEmail error:', mailError.message);
       }
 
-      if (process.env.NODE_ENV !== 'production' && (!isMailConfigured() || !emailSent)) {
+      const allowDevResetLink = process.env.NODE_ENV !== 'production'
+        && String(process.env.ALLOW_DEV_RESET_LINK || 'true').toLowerCase() !== 'false';
+      if (allowDevResetLink && (!isMailConfigured() || !emailSent)) {
         response.reset_url = resetUrl;
       }
     }

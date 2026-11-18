@@ -40,4 +40,7 @@ scripts/verify-alert-recovery.js
 scripts/github-webhook.js
 scripts/webhook-demo.js
 scripts/demo-release.js
+scripts/db-backup.js
+generate_joblink_final_slides.py
+scripts/export-final-slides.ps1
 scripts/lib

@@ -2,7 +2,23 @@
 
 ## Overview
 
-JobLink uses a layered web architecture split across Vercel, Render, and Supabase:
+JobLink supports two production deployment architectures sharing the same codebase:
+
+### 1. Containerized DevSecOps Architecture (INFO3004 Final Stack)
+
+```text
+Browser -> Nginx Reverse Proxy Gateway (:8088, Gzip, Auth Rate-Limit, Security Headers)
+  -> Express Web Backend (:3000, Node 22 Non-root, NODE_ENV=production, /health, /ready, /metrics)
+     ├──> Python AI Service (:5000, Gunicorn WSGI 4 threads, Non-root, X-JobLink-AI-Token, /metrics)
+     └──> MySQL 8.0 (:3306, utf8mb4, Named Volumes, Idempotent Migration & SHA-256 Backup)
+
+Observability & CI/CD Plane:
+  GitHub Push -> Signed HMAC Webhook -> Jenkins 8-Stage Pipeline (Audit + Build + Deploy + Auto-Rollback)
+  Blackbox + White-box /metrics -> Prometheus (:9090) -> Grafana 13-Panel Dashboard (:3001)
+                                                      -> Alertmanager (:9093) -> Webhook Sink / Discord
+```
+
+### 2. Cloud Split Architecture (Vercel + Render + Supabase)
 
 ```text
 Browser UI (Render Static Site)

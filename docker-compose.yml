@@ -1,4 +1,25 @@
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
+  # -------------------------------------------------------------
+  # 0. Khởi tạo quyền ghi an toàn cho non-root user trên named volume
+  # -------------------------------------------------------------
+  uploads-perms:
+    image: node:22-alpine
+    container_name: joblink-uploads-init
+    user: "0:0"
+    command: ["sh", "-c", "mkdir -p /uploads/cv /uploads/avatars /uploads/logos && chown -R 1000:1000 /uploads"]
+    volumes:
+      - uploads_data:/uploads
+    restart: "no"
+    logging: *default-logging
+    networks:
+      - joblink-network
+
   # -------------------------------------------------------------
   # 1. Cơ sở dữ liệu MySQL 8.0
   # -------------------------------------------------------------
@@ -8,10 +29,10 @@ services:
     restart: unless-stopped
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --default-authentication-plugin=mysql_native_password
     environment:
-      MYSQL_ROOT_PASSWORD: joblink_root_pass
-      MYSQL_DATABASE: joblink_db
-      MYSQL_USER: joblink_user
-      MYSQL_PASSWORD: joblink_password
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-joblink_root_pass}
+      MYSQL_DATABASE: ${DB_NAME:-joblink_db}
+      MYSQL_USER: ${DB_USER:-joblink_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-joblink_password}
     ports:
       - "127.0.0.1:3306:3306"
     volumes:
@@ -23,11 +44,12 @@ services:
       timeout: 5s
       retries: 24
       start_period: 60s
+    logging: *default-logging
     networks:
       - joblink-network
 
   # -------------------------------------------------------------
-  # 2. Dịch vụ AI (Python Flask - RAG / CV Matching)
+  # 2. Dịch vụ AI (Python Flask + Gunicorn WSGI, Non-root, Token Auth)
   # -------------------------------------------------------------
   ai:
     build:
@@ -35,6 +57,7 @@ services:
       dockerfile: Dockerfile.ai
     image: ${JOBLINK_AI_IMAGE:-joblink-ai:1.0}
     container_name: joblink-ai
+    init: true
     restart: unless-stopped
     depends_on:
       mysql:
@@ -44,22 +67,24 @@ services:
     environment:
       PORT: 5000
       AI_LIGHTWEIGHT_MODE: "true"
+      AI_SERVICE_TOKEN: ${AI_SERVICE_TOKEN:-joblink_internal_ai_token_2026}
       DB_CLIENT: mysql
       DB_HOST: mysql
-      DB_USER: joblink_user
-      DB_PASSWORD: joblink_password
-      DB_NAME: joblink_db
+      DB_USER: ${DB_USER:-joblink_user}
+      DB_PASSWORD: ${DB_PASSWORD:-joblink_password}
+      DB_NAME: ${DB_NAME:-joblink_db}
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/health', timeout=4)"]
       interval: 5s
       timeout: 5s
       retries: 20
       start_period: 30s
+    logging: *default-logging
     networks:
       - joblink-network
 
   # -------------------------------------------------------------
-  # 3. Ứng dụng chính JobLink Web (Node.js Express + Frontend)
+  # 3. Ứng dụng chính JobLink Web (Node.js Express Production, Non-root)
   # -------------------------------------------------------------
   web:
     build:
@@ -67,8 +92,11 @@ services:
       dockerfile: Dockerfile
     image: ${JOBLINK_WEB_IMAGE:-joblink-web:1.0}
     container_name: joblink-web
+    init: true
     restart: unless-stopped
     depends_on:
+      uploads-perms:
+        condition: service_completed_successfully
       mysql:
         condition: service_healthy
       ai:
@@ -76,19 +104,25 @@ services:
     ports:
       - "127.0.0.1:3000:3000"
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
       PORT: 3000
+      STORAGE_DRIVER: local
+      COOKIE_SECURE: "false"
       DB_CLIENT: mysql
       DB_HOST: mysql
-      DB_USER: joblink_user
-      DB_PASSWORD: joblink_password
-      DB_NAME: joblink_db
-      JWT_SECRET: joblink_docker_jwt_secret_2026_xyz
+      DB_USER: ${DB_USER:-joblink_user}
+      DB_PASSWORD: ${DB_PASSWORD:-joblink_password}
+      DB_NAME: ${DB_NAME:-joblink_db}
+      JWT_SECRET: ${JWT_SECRET:-joblink_docker_jwt_secret_2026_xyz}
       JWT_EXPIRES_IN: 7d
-      SESSION_SECRET: joblink_docker_session_secret_2026_abc
+      SESSION_SECRET: ${SESSION_SECRET:-joblink_docker_session_secret_2026_abc}
       BASE_URL: http://localhost:3000
       FRONTEND_URL: http://localhost:3000
+      CORS_ORIGINS: http://localhost:8088,http://127.0.0.1:8088,http://127.0.0.1:3000
       AI_SERVICE_URL: http://ai:5000
+      AI_SERVICE_TOKEN: ${AI_SERVICE_TOKEN:-joblink_internal_ai_token_2026}
+      DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL:-}
+      ALERT_EXTERNAL_WEBHOOK_URL: ${ALERT_EXTERNAL_WEBHOOK_URL:-}
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
       interval: 5s
@@ -97,6 +131,33 @@ services:
       start_period: 30s
     volumes:
       - uploads_data:/app/uploads
+    logging: *default-logging
+    networks:
+      - joblink-network
+
+  # -------------------------------------------------------------
+  # 4. Tầng Reverse Proxy Gateway (Nginx 1.27 Alpine — Immutable Image)
+  # -------------------------------------------------------------
+  gateway:
+    build:
+      context: ./devops/nginx
+      dockerfile: Dockerfile
+    image: ${JOBLINK_GATEWAY_IMAGE:-joblink-gateway:1.0}
+    container_name: joblink-gateway
+    restart: unless-stopped
+    depends_on:
+      web:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${GATEWAY_PORT:-8088}:80"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/gateway-health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    mem_limit: 64m
+    logging: *default-logging
     networks:
       - joblink-network
 

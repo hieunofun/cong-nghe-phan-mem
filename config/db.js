@@ -85,7 +85,8 @@ function createPostgresPool() {
         commit: () => client.query('COMMIT'),
         rollback: () => client.query('ROLLBACK')
       };
-    }
+    },
+    end: () => pgPool.end()
   };
 }
 

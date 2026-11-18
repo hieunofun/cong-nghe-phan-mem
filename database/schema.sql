@@ -14,13 +14,18 @@ USE joblink_db;
 CREATE TABLE IF NOT EXISTS users (
   id INT AUTO_INCREMENT PRIMARY KEY,
   email VARCHAR(150) NOT NULL UNIQUE,
-  password VARCHAR(255) NOT NULL,
+  password VARCHAR(255) NULL,
   role ENUM('admin', 'company', 'candidate') NOT NULL,
   status ENUM('active', 'pending', 'banned') NOT NULL DEFAULT 'active',
+  oauth_provider VARCHAR(20) NULL COMMENT 'google | github | facebook',
+  oauth_id VARCHAR(100) NULL,
+  display_name VARCHAR(150) NULL,
+  social_avatar VARCHAR(255) NULL,
   terms_accepted_at DATETIME,
   terms_version VARCHAR(20),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_oauth (oauth_provider, oauth_id)
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS password_reset_tokens (

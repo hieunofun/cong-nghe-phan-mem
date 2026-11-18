@@ -9,11 +9,12 @@ pipeline {
     }
     parameters {
         choice(name: 'SOURCE_MODE', choices: ['SCM', 'LOCAL'], description: 'SCM: checkout từ Git. LOCAL: bản làm việc hiện tại để dự phòng offline.')
-        string(name: 'GIT_URL', defaultValue: 'https://github.com/hieunofun/cong-nghe-phan-mem.git', description: 'Repository phải có Jenkinsfile và các file Docker/DevOps mới trước khi dùng SCM.')
+        string(name: 'GIT_URL', defaultValue: 'https://github.com/hieunofun/cong-nghe-phan-mem.git', description: 'Repository Git chính thức của nhóm.')
         string(name: 'GIT_BRANCH', defaultValue: 'main', description: 'Nhánh cần kiểm thử và triển khai.')
         string(name: 'GIT_COMMIT', defaultValue: '', description: 'SHA từ webhook; để trống để lấy commit mới nhất của nhánh.')
         string(name: 'WEBHOOK_DELIVERY', defaultValue: '', description: 'Mã delivery GitHub để đối chiếu lần chạy tự động.')
-        booleanParam(name: 'DEPLOY', defaultValue: true, description: 'Triển khai Web/AI trên máy demo sau khi kiểm thử đạt.')
+        booleanParam(name: 'DEPLOY', defaultValue: true, description: 'Triển khai Web/AI/Gateway sau khi qua toàn bộ cổng chất lượng.')
+        booleanParam(name: 'PUSH_REGISTRY', defaultValue: false, description: 'Tùy chọn đẩy Docker image lên Registry (cần cấu hình REGISTRY_IMAGE_PREFIX).')
     }
 
     triggers { pollSCM('H/5 * * * *') }
@@ -21,7 +22,9 @@ pipeline {
         COMPOSE_PROJECT_NAME = "${env.JOBLINK_COMPOSE_PROJECT ?: 'trienkhaiphanmemcki'}"
         JOBLINK_WEB_IMAGE = "joblink-web:${BUILD_TAG}"
         JOBLINK_AI_IMAGE = "joblink-ai:${BUILD_TAG}"
+        JOBLINK_GATEWAY_IMAGE = "joblink-gateway:${BUILD_TAG}"
         JOBLINK_BASE_URL = 'http://web:3000'
+        JOBLINK_GATEWAY_URL = 'http://gateway:80'
         AI_LIGHTWEIGHT_MODE = 'true'
         CI = 'true'
     }
@@ -50,7 +53,7 @@ pipeline {
                     node --version
                     docker version --format '{{.Server.Version}}'
                     docker compose version
-                    test -f Dockerfile && test -f Dockerfile.ai
+                    test -f Dockerfile && test -f Dockerfile.ai && test -f devops/nginx/default.conf
                 '''
             }
         }
@@ -60,17 +63,51 @@ pipeline {
                 sh 'node --test --test-reporter=junit --test-reporter-destination=.ci/node-tests.xml tests/*.test.js'
             }
         }
+        stage('Security & config audit') {
+            steps {
+                sh 'npm audit --omit=dev --audit-level=high > .ci/npm-audit.txt 2>&1'
+                sh 'docker compose -f docker-compose.yml config -q'
+                sh '''
+                    if docker image inspect prom/prometheus:v3.15.1 >/dev/null 2>&1; then
+                        docker run --rm --entrypoint promtool \
+                            -v "$PWD/devops/monitoring:/etc/prometheus:ro" \
+                            prom/prometheus:v3.15.1 test rules /etc/prometheus/alerts.test.yml > .ci/promtool-tests.log 2>&1
+                        cat .ci/promtool-tests.log
+                    fi
+                '''
+            }
+        }
         stage('Build images') {
             steps {
-                sh 'docker compose -f docker-compose.yml build web ai'
+                sh 'docker compose -f docker-compose.yml build web ai gateway'
             }
         }
-        stage('AI tests') {
+        stage('AI & container checks') {
             steps {
                 sh 'docker run --rm --network none "$JOBLINK_AI_IMAGE" python -m unittest ai_service.test_multilingual_matching'
+                sh '''
+                    WEB_UID=$(docker run --rm --network none --entrypoint id "$JOBLINK_WEB_IMAGE" -u)
+                    AI_UID=$(docker run --rm --network none --entrypoint id "$JOBLINK_AI_IMAGE" -u)
+                    echo "Verified non-root container UIDs: web=${WEB_UID}, ai=${AI_UID}"
+                    test "$WEB_UID" != "0" && test "$AI_UID" != "0"
+                '''
             }
         }
-        stage('Deploy') {
+        stage('Registry publish') {
+            when {
+                expression { return params.PUSH_REGISTRY && env.REGISTRY_IMAGE_PREFIX }
+            }
+            steps {
+                sh '''
+                    COMMIT_SHORT=$(head -c 7 .ci/source-commit.txt 2>/dev/null || echo "latest")
+                    docker tag "$JOBLINK_WEB_IMAGE" "${REGISTRY_IMAGE_PREFIX}/joblink-web:${COMMIT_SHORT}"
+                    docker tag "$JOBLINK_AI_IMAGE" "${REGISTRY_IMAGE_PREFIX}/joblink-ai:${COMMIT_SHORT}"
+                    docker push "${REGISTRY_IMAGE_PREFIX}/joblink-web:${COMMIT_SHORT}"
+                    docker push "${REGISTRY_IMAGE_PREFIX}/joblink-ai:${COMMIT_SHORT}"
+                '''
+            }
+        }
+        stage('DB migrate & deploy') {
             when { expression { params.DEPLOY } }
             steps {
                 sh 'node scripts/ci-deploy.js deploy'

@@ -3,12 +3,14 @@ import os
 import json
 import re
 import hmac
+import time
+import threading
 import unicodedata
 import joblib
 import numpy as np
 from groq import Groq
 from dotenv import load_dotenv
-from flask import Flask, request, jsonify
+from flask import Flask, Response, g, request, jsonify
 from flask_cors import CORS
 
 # JobLink chi dung PyTorch; tranh Transformers tu nap TensorFlow/Keras 3 khong tuong thich.
@@ -37,6 +39,13 @@ app = Flask(__name__)
 CORS(app)
 
 AI_SERVICE_TOKEN = os.getenv("AI_SERVICE_TOKEN", "")
+AI_METRICS_TOKEN = os.getenv("METRICS_TOKEN", "")
+_AI_STARTED_AT = time.time()
+_AI_METRICS_LOCK = threading.Lock()
+_AI_REQUEST_COUNTS = {}
+_AI_DURATION_SUM = 0.0
+_AI_DURATION_COUNT = 0
+
 if os.getenv("RENDER", "").lower() == "true":
     missing_render_env = [
         name for name in ("DATABASE_URL", "AI_SERVICE_TOKEN") if not os.getenv(name)
@@ -50,12 +59,37 @@ if os.getenv("RENDER", "").lower() == "true":
 @app.before_request
 def verify_service_token():
     """Chan truy cap truc tiep vao API AI khi da cau hinh shared secret."""
-    if request.method == "OPTIONS" or request.path == "/health" or not AI_SERVICE_TOKEN:
+    g.request_started_at = time.perf_counter()
+    if request.method == "OPTIONS" or request.path == "/health":
+        return None
+    if request.path == "/metrics":
+        if not AI_METRICS_TOKEN:
+            return None
+        provided_metrics = request.headers.get("X-Metrics-Token", "")
+        if not hmac.compare_digest(provided_metrics, AI_METRICS_TOKEN):
+            return jsonify({"error": "Unauthorized metrics scrape."}), 401
+        return None
+    if not AI_SERVICE_TOKEN:
         return None
     provided = request.headers.get("X-JobLink-AI-Token", "")
     if not hmac.compare_digest(provided, AI_SERVICE_TOKEN):
         return jsonify({"error": "Khong co quyen truy cap dich vu AI."}), 401
     return None
+
+
+@app.after_request
+def record_ai_metrics(response):
+    global _AI_DURATION_SUM, _AI_DURATION_COUNT
+    if request.path != "/metrics":
+        started = getattr(g, "request_started_at", None)
+        elapsed = max(0.0, time.perf_counter() - started) if started is not None else 0.0
+        endpoint = request.path or "/"
+        key = (request.method or "GET", endpoint, str(response.status_code))
+        with _AI_METRICS_LOCK:
+            _AI_REQUEST_COUNTS[key] = _AI_REQUEST_COUNTS.get(key, 0) + 1
+            _AI_DURATION_SUM += elapsed
+            _AI_DURATION_COUNT += 1
+    return response
 
 
 def get_db():
@@ -637,6 +671,46 @@ def health():
             "chatbot_documents": len(rag_documents)
         }
     })
+
+
+@app.route("/metrics", methods=["GET"])
+def metrics():
+    mode = "lightweight" if LIGHTWEIGHT_MODE else "full"
+    uptime = max(0.0, time.time() - _AI_STARTED_AT)
+    with _AI_METRICS_LOCK:
+        counts_snapshot = list(_AI_REQUEST_COUNTS.items())
+        duration_sum = _AI_DURATION_SUM
+        duration_count = _AI_DURATION_COUNT
+    lines = [
+        "# HELP joblink_ai_mode_info AI service deployment mode metadata.",
+        "# TYPE joblink_ai_mode_info gauge",
+        f'joblink_ai_mode_info{{service="joblink-ai",mode="{mode}",matching_backend="{matching_backend}"}} 1',
+        "# HELP joblink_ai_uptime_seconds AI service process uptime in seconds.",
+        "# TYPE joblink_ai_uptime_seconds gauge",
+        f"joblink_ai_uptime_seconds {uptime:.3f}",
+        "# HELP joblink_ai_rag_documents Number of loaded RAG FAQ documents.",
+        "# TYPE joblink_ai_rag_documents gauge",
+        f"joblink_ai_rag_documents {len(rag_documents)}",
+        "# HELP joblink_ai_requests_total Total HTTP requests handled by JobLink AI.",
+        "# TYPE joblink_ai_requests_total counter",
+    ]
+    if not counts_snapshot:
+        lines.append('joblink_ai_requests_total{method="GET",endpoint="/health",status="200"} 0')
+    else:
+        for (method, endpoint, status), count in counts_snapshot:
+            safe_ep = endpoint.replace('"', '\\"')
+            lines.append(
+                f'joblink_ai_requests_total{{method="{method}",endpoint="{safe_ep}",status="{status}"}} {count}'
+            )
+    lines.extend([
+        "# HELP joblink_ai_request_duration_seconds_sum Total AI request duration in seconds.",
+        "# TYPE joblink_ai_request_duration_seconds_sum counter",
+        f"joblink_ai_request_duration_seconds_sum {duration_sum:.6f}",
+        "# HELP joblink_ai_request_duration_seconds_count Total timed AI requests.",
+        "# TYPE joblink_ai_request_duration_seconds_count counter",
+        f"joblink_ai_request_duration_seconds_count {duration_count}",
+    ])
+    return Response("\n".join(lines) + "\n", mimetype="text/plain; version=0.0.4; charset=utf-8")
 
 @app.route("/chat", methods=["POST"])
 def chat():

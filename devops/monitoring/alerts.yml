@@ -1,5 +1,5 @@
 groups:
-  - name: joblink-availability
+  - name: joblink-availability-and-slo
     rules:
       - alert: JobLinkServiceDown
         expr: probe_success{job="joblink-probes"} == 0
@@ -9,6 +9,7 @@ groups:
         annotations:
           summary: 'JobLink {{ $labels.service }} is unavailable'
           description: '{{ $labels.instance }} has failed probes for at least 30 seconds.'
+
       - alert: JobLinkProbeMissing
         expr: up{job="joblink-probes"} == 0
         for: 30s
@@ -16,6 +17,8 @@ groups:
           severity: warning
         annotations:
           summary: 'Cannot collect probe for {{ $labels.service }}'
+          description: 'Blackbox target {{ $labels.service }} could not be scraped for 30 seconds.'
+
       - alert: JobLinkSlowResponse
         expr: probe_duration_seconds{job="joblink-probes",service!="mysql"} > 2
         for: 1m
@@ -23,3 +26,24 @@ groups:
           severity: warning
         annotations:
           summary: 'JobLink {{ $labels.service }} response exceeds 2 seconds'
+          description: 'Endpoint {{ $labels.instance }} latency stayed above 2s for 1 minute.'
+
+      - alert: JobLinkHighErrorRate
+        expr: sum(rate(joblink_http_errors_total{status_class="5xx"}[2m])) > 0.2
+        for: 1m
+        labels:
+          severity: critical
+          service: web
+        annotations:
+          summary: 'JobLink Web 5xx error rate elevated'
+          description: 'Web backend is returning more than 0.2 HTTP 5xx errors/sec over 2 minutes.'
+
+      - alert: JobLinkHighMemoryUsage
+        expr: nodejs_resident_memory_bytes{job="joblink-web-metrics"} > 419430400
+        for: 2m
+        labels:
+          severity: warning
+          service: web
+        annotations:
+          summary: 'JobLink Web RSS memory exceeds 400 MiB'
+          description: 'Node.js container resident memory stayed above 400 MiB for 2 minutes.'

@@ -30,3 +30,7 @@ artifacts/midterm-demo/*
 !artifacts/midterm-demo/persistence-result.json
 !artifacts/midterm-demo/rollback-check.json
 !artifacts/midterm-demo/webhook-verification.json
+!artifacts/final-demo/
+artifacts/final-demo/*
+!artifacts/final-demo/verification.json
+!artifacts/final-demo/slides-check.json

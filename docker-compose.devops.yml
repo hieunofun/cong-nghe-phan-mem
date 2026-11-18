@@ -1,5 +1,11 @@
 # Run through: node scripts/devops-demo.js up
 # Application containers and their existing volumes stay in docker-compose.yml.
+x-devops-logging: &devops-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   jenkins:
     build:
@@ -27,6 +33,7 @@ services:
       retries: 36
       start_period: 60s
     mem_limit: 768m
+    logging: *devops-logging
     networks:
       - joblink-network
 
@@ -43,6 +50,29 @@ services:
       timeout: 5s
       retries: 12
     mem_limit: 64m
+    logging: *devops-logging
+    networks:
+      - joblink-network
+
+  alertmanager:
+    image: prom/alertmanager:v0.28.1
+    container_name: joblink-alertmanager
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+      - --storage.path=/alertmanager
+    ports:
+      - "127.0.0.1:9093:9093"
+    volumes:
+      - ./devops/monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager_data:/alertmanager
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:9093/-/healthy"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    mem_limit: 64m
+    logging: *devops-logging
     networks:
       - joblink-network
 
@@ -62,13 +92,17 @@ services:
       - ./devops/monitoring/alerts.yml:/etc/prometheus/alerts.yml:ro
       - prometheus_data:/prometheus
     depends_on:
-      - blackbox
+      blackbox:
+        condition: service_healthy
+      alertmanager:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:9090/-/ready"]
       interval: 10s
       timeout: 5s
       retries: 18
     mem_limit: 256m
+    logging: *devops-logging
     networks:
       - joblink-network
 
@@ -101,6 +135,7 @@ services:
       retries: 18
       start_period: 15s
     mem_limit: 512m
+    logging: *devops-logging
     networks:
       - joblink-network
 
@@ -111,3 +146,5 @@ volumes:
     name: joblink_prometheus_data
   grafana_data:
     name: joblink_grafana_data
+  alertmanager_data:
+    name: joblink_alertmanager_data

@@ -1,14 +1,15 @@
 {
   "uid": "joblink-overview",
-  "title": "JobLink — Giám sát triển khai",
+  "title": "JobLink — Giám sát toàn diện (Full-Stack Observability)",
   "tags": [
     "joblink",
-    "midterm",
-    "docker"
+    "final",
+    "docker",
+    "observability"
   ],
   "timezone": "Asia/Ho_Chi_Minh",
   "schemaVersion": 39,
-  "version": 2,
+  "version": 3,
   "refresh": "10s",
   "time": {
     "from": "now-15m",
@@ -18,45 +19,25 @@
   "panels": [
     {
       "id": 1,
-      "title": "Web / Express",
+      "title": "Gateway / Nginx",
       "type": "stat",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "joblink-prometheus"
-      },
-      "gridPos": {
-        "x": 0,
-        "y": 0,
-        "w": 6,
-        "h": 4
-      },
+      "datasource": { "type": "prometheus", "uid": "joblink-prometheus" },
+      "gridPos": { "x": 0, "y": 0, "w": 4, "h": 4 },
       "targets": [
         {
-          "expr": "probe_success{job=\"joblink-probes\",service=\"web\"}",
+          "expr": "probe_success{job=\"joblink-probes\",service=\"gateway\"}",
           "legendFormat": "{{service}}",
           "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "joblink-prometheus"
-          }
+          "datasource": { "type": "prometheus", "uid": "joblink-prometheus" }
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "green",
-                "value": 1
-              }
+              { "color": "red", "value": null },
+              { "color": "green", "value": 1 }
             ]
           },
           "min": 0,
@@ -65,14 +46,8 @@
             {
               "type": "value",
               "options": {
-                "0": {
-                  "text": "DOWN",
-                  "color": "red"
-                },
-                "1": {
-                  "text": "UP",
-                  "color": "green"
-                }
+                "0": { "text": "DOWN", "color": "red" },
+                "1": { "text": "UP", "color": "green" }
               }
             }
           ]
@@ -80,13 +55,7 @@
         "overrides": []
       },
       "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
         "colorMode": "background",
         "graphMode": "none",
         "textMode": "value",
@@ -95,45 +64,25 @@
     },
     {
       "id": 2,
-      "title": "AI / Flask",
+      "title": "Web / Express (Prod)",
       "type": "stat",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "joblink-prometheus"
-      },
-      "gridPos": {
-        "x": 6,
-        "y": 0,
-        "w": 6,
-        "h": 4
-      },
+      "datasource": { "type": "prometheus", "uid": "joblink-prometheus" },
+      "gridPos": { "x": 4, "y": 0, "w": 5, "h": 4 },
       "targets": [
         {
-          "expr": "probe_success{job=\"joblink-probes\",service=\"ai\"}",
+          "expr": "probe_success{job=\"joblink-probes\",service=\"web\"}",
           "legendFormat": "{{service}}",
           "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "joblink-prometheus"
-          }
+          "datasource": { "type": "prometheus", "uid": "joblink-prometheus" }
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "green",
-                "value": 1
-              }
+              { "color": "red", "value": null },
+              { "color": "green", "value": 1 }
             ]
           },
           "min": 0,
@@ -142,14 +91,8 @@
             {
               "type": "value",
               "options": {
-                "0": {
-                  "text": "DOWN",
-                  "color": "red"
-                },
-                "1": {
-                  "text": "UP",
-                  "color": "green"
-                }
+                "0": { "text": "DOWN", "color": "red" },
+                "1": { "text": "UP", "color": "green" }
               }
             }
           ]
@@ -157,13 +100,7 @@
         "overrides": []
       },
       "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
         "colorMode": "background",
         "graphMode": "none",
         "textMode": "value",
@@ -172,45 +109,25 @@
     },
     {
       "id": 3,
-      "title": "MySQL TCP",
+      "title": "AI / Gunicorn WSGI",
       "type": "stat",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "joblink-prometheus"
-      },
-      "gridPos": {
-        "x": 12,
-        "y": 0,
-        "w": 6,
-        "h": 4
-      },
+      "datasource": { "type": "prometheus", "uid": "joblink-prometheus" },
+      "gridPos": { "x": 9, "y": 0, "w": 5, "h": 4 },
       "targets": [
         {
-          "expr": "probe_success{job=\"joblink-probes\",service=\"mysql\"}",
+          "expr": "probe_success{job=\"joblink-probes\",service=\"ai\"}",
           "legendFormat": "{{service}}",
           "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "joblink-prometheus"
-          }
+          "datasource": { "type": "prometheus", "uid": "joblink-prometheus" }
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "green",
-                "value": 1
-              }
+              { "color": "red", "value": null },
+              { "color": "green", "value": 1 }
             ]
           },
           "min": 0,
@@ -219,14 +136,8 @@
             {
               "type": "value",
               "options": {
-                "0": {
-                  "text": "DOWN",
-                  "color": "red"
-                },
-                "1": {
-                  "text": "UP",
-                  "color": "green"
-                }
+                "0": { "text": "DOWN", "color": "red" },
+                "1": { "text": "UP", "color": "green" }
               }
             }
           ]
@@ -234,13 +145,7 @@
         "overrides": []
       },
       "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
         "colorMode": "background",
         "graphMode": "none",
         "textMode": "value",
@@ -249,45 +154,25 @@
     },
     {
       "id": 4,
-      "title": "Web → MySQL / Jobs API",
+      "title": "MySQL 8.0 TCP",
       "type": "stat",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "joblink-prometheus"
-      },
-      "gridPos": {
-        "x": 18,
-        "y": 0,
-        "w": 6,
-        "h": 4
-      },
+      "datasource": { "type": "prometheus", "uid": "joblink-prometheus" },
+      "gridPos": { "x": 14, "y": 0, "w": 5, "h": 4 },
       "targets": [
         {
-          "expr": "probe_success{job=\"joblink-probes\",service=\"database-api\"}",
+          "expr": "probe_success{job=\"joblink-probes\",service=\"mysql\"}",
           "legendFormat": "{{service}}",
           "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "joblink-prometheus"
-          }
+          "datasource": { "type": "prometheus", "uid": "joblink-prometheus" }
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "green",
-                "value": 1
-              }
+              { "color": "red", "value": null },
+              { "color": "green", "value": 1 }
             ]
           },
           "min": 0,
@@ -296,14 +181,8 @@
             {
               "type": "value",
               "options": {
-                "0": {
-                  "text": "DOWN",
-                  "color": "red"
-                },
-                "1": {
-                  "text": "UP",
-                  "color": "green"
-                }
+                "0": { "text": "DOWN", "color": "red" },
+                "1": { "text": "UP", "color": "green" }
               }
             }
           ]
@@ -311,13 +190,7 @@
         "overrides": []
       },
       "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
         "colorMode": "background",
         "graphMode": "none",
         "textMode": "value",
@@ -326,192 +199,107 @@
     },
     {
       "id": 5,
-      "title": "Thời gian phản hồi / Response time",
+      "title": "Web → MySQL / Jobs API",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "joblink-prometheus" },
+      "gridPos": { "x": 19, "y": 0, "w": 5, "h": 4 },
+      "targets": [
+        {
+          "expr": "probe_success{job=\"joblink-probes\",service=\"database-api\"}",
+          "legendFormat": "{{service}}",
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "joblink-prometheus" }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "green", "value": 1 }
+            ]
+          },
+          "min": 0,
+          "max": 1,
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": { "text": "DOWN", "color": "red" },
+                "1": { "text": "UP", "color": "green" }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "id": 6,
+      "title": "Thời gian phản hồi / Probe Response Time",
       "type": "timeseries",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "joblink-prometheus"
-      },
-      "gridPos": {
-        "x": 0,
-        "y": 4,
-        "w": 12,
-        "h": 8
-      },
+      "datasource": { "type": "prometheus", "uid": "joblink-prometheus" },
+      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 7 },
       "targets": [
         {
           "expr": "probe_duration_seconds{job=\"joblink-probes\"}",
           "legendFormat": "{{service}}",
           "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "joblink-prometheus"
-          }
+          "datasource": { "type": "prometheus", "uid": "joblink-prometheus" }
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "green",
-                "value": 1
-              }
-            ]
-          },
+          "color": { "mode": "palette-classic" },
           "unit": "s"
         },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "ai"
-            },
-            "properties": [
-              {
-                "id": "custom.lineStyle",
-                "value": {
-                  "fill": "solid"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "web"
-            },
-            "properties": [
-              {
-                "id": "custom.lineStyle",
-                "value": {
-                  "fill": "dash",
-                  "dash": [
-                    10,
-                    5
-                  ]
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "database-api"
-            },
-            "properties": [
-              {
-                "id": "custom.lineStyle",
-                "value": {
-                  "fill": "dash",
-                  "dash": [
-                    3,
-                    3
-                  ]
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "mysql"
-            },
-            "properties": [
-              {
-                "id": "custom.lineStyle",
-                "value": {
-                  "fill": "dash",
-                  "dash": [
-                    1,
-                    4
-                  ]
-                }
-              }
-            ]
-          }
-        ]
+        "overrides": []
       },
       "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom"
-        },
-        "tooltip": {
-          "mode": "multi"
-        }
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "multi" }
       }
     },
     {
-      "id": 6,
-      "title": "Lịch sử trạng thái / Availability",
+      "id": 7,
+      "title": "Lịch sử trạng thái / Availability Timeline",
       "type": "state-timeline",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "joblink-prometheus"
-      },
-      "gridPos": {
-        "x": 12,
-        "y": 4,
-        "w": 12,
-        "h": 8
-      },
+      "datasource": { "type": "prometheus", "uid": "joblink-prometheus" },
+      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 7 },
       "targets": [
         {
           "expr": "probe_success{job=\"joblink-probes\"}",
           "legendFormat": "{{service}}",
           "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "joblink-prometheus"
-          }
+          "datasource": { "type": "prometheus", "uid": "joblink-prometheus" }
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "green",
-                "value": 1
-              }
+              { "color": "red", "value": null },
+              { "color": "green", "value": 1 }
             ]
           },
           "min": 0,
           "max": 1,
-          "custom": {
-            "lineWidth": 0,
-            "fillOpacity": 80,
-            "spanNulls": false
-          },
+          "custom": { "lineWidth": 0, "fillOpacity": 85, "spanNulls": false },
           "mappings": [
             {
               "type": "value",
               "options": {
-                "0": {
-                  "text": "DOWN",
-                  "color": "red"
-                },
-                "1": {
-                  "text": "UP",
-                  "color": "green"
-                }
+                "0": { "text": "DOWN", "color": "red" },
+                "1": { "text": "UP", "color": "green" }
               }
             }
           ]
@@ -520,62 +308,127 @@
       },
       "options": {
         "mergeValues": true,
-        "showValue": "auto",
-        "alignValue": "center",
-        "rowHeight": 0.8,
-        "legend": {
-          "showLegend": false
-        },
-        "tooltip": {
-          "mode": "single"
-        }
+        "showValue": "never",
+        "rowHeight": 0.82,
+        "legend": { "showLegend": true, "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "single" }
       }
     },
     {
-      "id": 7,
-      "title": "Tỷ lệ kiểm tra thành công / Last 15 min",
+      "id": 8,
+      "title": "Lưu lượng ứng dụng / White-Box Request Rate (RPS)",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "joblink-prometheus" },
+      "gridPos": { "x": 0, "y": 11, "w": 8, "h": 7 },
+      "targets": [
+        {
+          "expr": "sum(rate(joblink_http_requests_total[1m]))",
+          "legendFormat": "Web RPS",
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "joblink-prometheus" }
+        },
+        {
+          "expr": "sum(rate(joblink_ai_requests_total[1m]))",
+          "legendFormat": "AI RPS",
+          "refId": "B",
+          "datasource": { "type": "prometheus", "uid": "joblink-prometheus" }
+        },
+        {
+          "expr": "sum(rate(joblink_http_errors_total{status_class=\"5xx\"}[1m])) or vector(0)",
+          "legendFormat": "Web 5xx/s",
+          "refId": "C",
+          "datasource": { "type": "prometheus", "uid": "joblink-prometheus" }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "unit": "reqps" },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "multi" }
+      }
+    },
+    {
+      "id": 9,
+      "title": "Độ trễ API nội tại / Web p95 Latency",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "joblink-prometheus" },
+      "gridPos": { "x": 8, "y": 11, "w": 8, "h": 7 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(joblink_http_request_duration_seconds_bucket[2m])))",
+          "legendFormat": "Web p95",
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "joblink-prometheus" }
+        },
+        {
+          "expr": "nodejs_eventloop_lag_seconds",
+          "legendFormat": "Event Loop Lag",
+          "refId": "B",
+          "datasource": { "type": "prometheus", "uid": "joblink-prometheus" }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "unit": "s" },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "multi" }
+      }
+    },
+    {
+      "id": 10,
+      "title": "Bộ nhớ Node.js / Container Memory (RSS & Heap)",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "joblink-prometheus" },
+      "gridPos": { "x": 16, "y": 11, "w": 8, "h": 7 },
+      "targets": [
+        {
+          "expr": "nodejs_resident_memory_bytes",
+          "legendFormat": "RSS Memory",
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "joblink-prometheus" }
+        },
+        {
+          "expr": "nodejs_heap_used_bytes",
+          "legendFormat": "V8 Heap Used",
+          "refId": "B",
+          "datasource": { "type": "prometheus", "uid": "joblink-prometheus" }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "unit": "bytes" },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "multi" }
+      }
+    },
+    {
+      "id": 11,
+      "title": "Tỷ lệ kiểm tra thành công / Last 15 min Availability",
       "type": "bargauge",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "joblink-prometheus"
-      },
-      "gridPos": {
-        "x": 0,
-        "y": 12,
-        "w": 12,
-        "h": 6
-      },
+      "datasource": { "type": "prometheus", "uid": "joblink-prometheus" },
+      "gridPos": { "x": 0, "y": 18, "w": 12, "h": 6 },
       "targets": [
         {
           "expr": "100 * avg_over_time(probe_success{job=\"joblink-probes\"}[15m])",
           "legendFormat": "{{service}}",
           "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "joblink-prometheus"
-          }
+          "datasource": { "type": "prometheus", "uid": "joblink-prometheus" }
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 95
-              },
-              {
-                "color": "green",
-                "value": 99
-              }
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 95 },
+              { "color": "green", "value": 99 }
             ]
           },
           "unit": "percent",
@@ -586,58 +439,32 @@
       },
       "options": {
         "orientation": "horizontal",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
         "displayMode": "gradient",
         "showUnfilled": true
       }
     },
     {
-      "id": 8,
-      "title": "Cảnh báo / Active alerts",
+      "id": 12,
+      "title": "Cảnh báo đang kích hoạt / Active Alerts",
       "type": "stat",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "joblink-prometheus"
-      },
-      "gridPos": {
-        "x": 12,
-        "y": 12,
-        "w": 12,
-        "h": 6
-      },
+      "datasource": { "type": "prometheus", "uid": "joblink-prometheus" },
+      "gridPos": { "x": 12, "y": 18, "w": 6, "h": 6 },
       "targets": [
         {
           "expr": "sum(ALERTS{alertname=~\"JobLink.*\",alertstate=\"firing\"}) or vector(0)",
-          "legendFormat": "Alerts",
+          "legendFormat": "Firing",
           "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "joblink-prometheus"
-          }
+          "datasource": { "type": "prometheus", "uid": "joblink-prometheus" }
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 1
-              }
+              { "color": "green", "value": null },
+              { "color": "red", "value": 1 }
             ]
           },
           "decimals": 0
@@ -645,20 +472,46 @@
         "overrides": []
       },
       "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value"
+      }
+    },
+    {
+      "id": 13,
+      "title": "Alertmanager đã gửi / Webhook Notifications",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "joblink-prometheus" },
+      "gridPos": { "x": 18, "y": 18, "w": 6, "h": 6 },
+      "targets": [
+        {
+          "expr": "sum(joblink_alert_notifications_total) or vector(0)",
+          "legendFormat": "Delivered",
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "joblink-prometheus" }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "blue", "value": null },
+              { "color": "green", "value": 1 }
+            ]
+          },
+          "decimals": 0
         },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
         "colorMode": "background",
         "graphMode": "none",
         "textMode": "value"
       }
     }
   ],
-  "annotations": {
-    "list": []
-  }
+  "annotations": { "list": [] }
 }

@@ -25,3 +25,27 @@ tests:
       - eval_time: 60s
         alertname: JobLinkServiceDown
         exp_alerts: []
+
+  - name: High Node.js RSS memory triggers warning after 2 minutes and resolves
+    interval: 30s
+    input_series:
+      - series: 'nodejs_resident_memory_bytes{job="joblink-web-metrics",service="web",instance="web:3000"}'
+        values: '104857600 500000000 500000000 500000000 500000000 500000000 120000000'
+    alert_rule_test:
+      - eval_time: 1m
+        alertname: JobLinkHighMemoryUsage
+        exp_alerts: []
+      - eval_time: 2m30s
+        alertname: JobLinkHighMemoryUsage
+        exp_alerts:
+          - exp_labels:
+              job: joblink-web-metrics
+              service: web
+              instance: web:3000
+              severity: warning
+            exp_annotations:
+              summary: JobLink Web RSS memory exceeds 400 MiB
+              description: Node.js container resident memory stayed above 400 MiB for 2 minutes.
+      - eval_time: 3m
+        alertname: JobLinkHighMemoryUsage
+        exp_alerts: []

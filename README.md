@@ -1,180 +1,156 @@
-# JobLink — Nền tảng tuyển dụng nhân sự
+# JobLink — Nền tảng Tuyển dụng Nhân sự Tích hợp AI & Hệ thống DevOps Tự động hóa
 
-> Triển khai backend Vercel, frontend/AI Render và Supabase: xem [VERCEL_RENDER_DEPLOY.md](./VERCEL_RENDER_DEPLOY.md).
+> **Đồ án Cuối kỳ học phần Triển khai phần mềm (INFO3004):** Xem hướng dẫn kiến trúc và vận hành đầy đủ tại **[FINAL_DEMO.md](./FINAL_DEMO.md)** và kịch bản bảo vệ trực tiếp tại **[DEMO_FLOW.md](./DEMO_FLOW.md)**.
 >
-> Bản triển khai Render cũ: https://joblink-web.onrender.com · AI health: https://joblink-ai.onrender.com/health
->
-> Bản phát hành chính thức: [v1.0.0 Final](./docs/RELEASE_v1.0.0.md)
+> **Triển khai Cloud (Vercel + Render + Supabase):** Xem **[VERCEL_RENDER_DEPLOY.md](./VERCEL_RENDER_DEPLOY.md)** · Bản phát hành nền tảng: **[v1.0.0 Final](./docs/RELEASE_v1.0.0.md)**.
 
-Một nền tảng tuyển dụng kiểu TopCV, xây dựng bằng **Node.js / Express / MySQL hoặc Supabase PostgreSQL** cho backend và **HTML / CSS / JavaScript thuần** cho frontend. Hỗ trợ 3 vai trò: **Ứng viên**, **Doanh nghiệp**, **Quản trị viên (Admin)**.
+JobLink là nền tảng tuyển dụng kết nối **Ứng viên**, **Doanh nghiệp** và **Quản trị viên (Admin)**, kết hợp dịch vụ AI chấm điểm độ phù hợp CV song ngữ Việt–Anh và Chatbot tư vấn việc làm theo thời gian thực. Dự án được đóng gói và tự động hóa triển khai hoàn chỉnh theo chuẩn **Production DevSecOps**.
 
-## Tính năng chính
+---
 
-**Ứng viên:** đăng ký/đăng nhập, cập nhật hồ sơ (kỹ năng, kinh nghiệm, học vấn), tải lên CV và ảnh đại diện, tự động dùng CV hồ sơ khi ứng tuyển, tùy chọn bật/tắt tự động ứng tuyển tin mới theo ngưỡng AI, tìm kiếm/lọc việc làm, lưu tin yêu thích, theo dõi trạng thái hiện tại và toàn bộ lịch sử xử lý hồ sơ.
+## 1. Kiến trúc Hệ thống & Triển khai Phần mềm
 
-**Doanh nghiệp:** đăng ký hồ sơ công ty (cần Admin duyệt), đăng/sửa/xoá/đóng tin tuyển dụng, quản lý ứng viên theo dạng pipeline (Mới ứng tuyển → Đang xem xét → Phỏng vấn → Đã nhận/Đã từ chối), cập nhật hồ sơ công ty + logo.
-
-**Admin:** duyệt/từ chối hồ sơ doanh nghiệp, khoá/mở khoá tài khoản, quản lý toàn bộ tin tuyển dụng, quản lý danh mục ngành nghề, xem thống kê tổng quan hệ thống.
-
-## Công nghệ sử dụng
-
-- **Backend:** Node.js, Express, MySQL (mysql2) hoặc Supabase PostgreSQL (pg), JWT (jsonwebtoken), bcryptjs, multer (upload file)
-- **Frontend:** HTML/CSS/JavaScript thuần (không dùng framework), thiết kế responsive
-- **Database:** MySQL 8.0 hoặc Supabase PostgreSQL
-- **AI chatbot:** Flask AI service, Groq API, RAG từ FAQ nội bộ + dữ liệu JobLink realtime trong MySQL/Supabase; đề xuất việc làm bằng thẻ có liên kết trực tiếp.
-- **AI CV:** đọc nội dung Unicode từ PDF/DOCX và chấm điểm song ngữ Việt–Anh bằng chuẩn hóa kỹ năng, chức danh và từ đồng nghĩa.
-
-## Yêu cầu hệ thống
-
-- Node.js >= 20
-- MySQL >= 8.0 (hoặc MariaDB tương thích)
-- npm
-
-## Hướng dẫn cài đặt
-
-### 1. Cài đặt MySQL và tạo database
-
-Neu muon dung Supabase thay vi MySQL, xem file `SUPABASE_SETUP.md`.
-
-Nếu chưa có MySQL, cài đặt theo hệ điều hành của bạn rồi đăng nhập vào MySQL với quyền root:
-
-```bash
-mysql -u root -p
+```text
+Git Push (main) ──► GitHub Actions CI (64 Node Tests + Python AI Tests + npm audit + Promtool)
+       │
+       └──► Signed HMAC Webhook ──► Jenkins Pipeline (8 Stages + Auto-Rollback)
+                                           │
+                                           ▼
+     [Browser] ──► Nginx Gateway (:8088, Rate-Limit, Gzip, Security Headers)
+                         │
+                         ▼
+                   JobLink Web (:3000, Node 22 Non-root, NODE_ENV=production, /metrics)
+                    ├──► JobLink AI (:5000, Python 3.11 + Gunicorn WSGI, Token Auth, /metrics)
+                    └──► MySQL 8.0 (:3306, utf8mb4, Named Volumes, Idempotent Migration & Backup)
+                                           ▲
+                                           │
+     [Observability] Blackbox + White-box Prometheus (:9090) ──► Grafana 13 Panels (:3001)
+                                           │
+                                           └──► Alertmanager (:9093) ──► Webhook Sink / Discord
 ```
 
-Tạo database và user riêng cho dự án (có thể đổi mật khẩu nếu muốn):
+### Điểm nổi bật về Kỹ thuật Triển khai (DevOps / SRE)
+- **Container hóa chuẩn Production (`Dockerfile`, `Dockerfile.ai`, `devops/nginx/Dockerfile`):** Tách biệt hoàn toàn dịch vụ, chạy dưới quyền **non-root** (`node` / `appuser`), AI vận hành bằng **Gunicorn WSGI** đa luồng kèm xác thực nội bộ `X-JobLink-AI-Token`, hỗ trợ `SIGTERM` graceful shutdown và xoay vòng log `json-file` (`10MB x 3`).
+- **Reverse Proxy Gateway (`Nginx 1.27`):** Đứng trước ứng dụng tại cổng `8088`, nén Gzip, gắn HTTP Security Headers, chống brute-force đăng nhập bằng `limit_req_zone` và chặn truy cập từ bên ngoài vào các đường dẫn nội bộ (`/metrics`, `/internal/*`).
+- **CI/CD Hai tầng & Tự động Rollback (`Jenkinsfile` + `.github/workflows/ci.yml`):** Kết hợp GitHub Actions trên đám mây và Jenkins 8 stages nhận sự kiện qua Webhook ký số HMAC-SHA256. Tự động kiểm thử 16 luồng nghiệp vụ sau deploy (`scripts/docker-check.js`) và tự động khôi phục bộ 3 image ổn định trước đó nếu phát hiện lỗi.
+- **Full-Stack Observability (`Prometheus` + `Blackbox` + `Grafana` + `Alertmanager`):** Kết hợp 5 probes kiểm tra ngoài vỏ với **White-box `/metrics`** nội tại (RPS, 5xx rate, p95 latency, RSS/Heap memory, Event Loop lag), tự nạp dashboard 13 panels và điều phối cảnh báo `[FIRING]` / `[RESOLVED]` tự động qua Alertmanager.
+- **Vận hành Day-2 (`scripts/apply-mysql-migration.js`, `scripts/db-backup.js`):** Tự động nâng cấp schema MySQL an toàn không mất dữ liệu và sao lưu/phục hồi cơ sở dữ liệu có kiểm tra toàn vẹn mã băm SHA-256.
 
-```sql
-CREATE DATABASE joblink_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER 'joblink_user'@'localhost' IDENTIFIED BY 'joblink_password';
-GRANT ALL PRIVILEGES ON joblink_db.* TO 'joblink_user'@'localhost';
-FLUSH PRIVILEGES;
-EXIT;
+---
+
+## 2. Khởi chạy Nhanh bằng Docker & DevOps Stack (Khuyên dùng)
+
+Yêu cầu: **Docker Desktop** (WSL 2) và **Node.js >= 22** cho CLI điều phối.
+
+```powershell
+# 1. Khởi chạy toàn bộ 9 dịch vụ (App + Nginx + Jenkins + Prometheus + Alertmanager + Grafana)
+npm run devops:up
+
+# 2. Xem mật khẩu quản trị tự sinh cho Jenkins và Grafana
+node scripts/devops-demo.js credentials
+
+# 3. Chạy kiểm tra tổng thể (16 smoke checks ứng dụng + 11 checks giám sát + trạng thái Jenkins)
+npm run devops:check
+
+# 4. Bật tunnel HTTPS nhận GitHub Webhook tự động khi git push (tùy chọn khi demo trực tuyến)
+node scripts/webhook-demo.js start
 ```
 
-Sau đó import schema (tạo bảng + seed sẵn 8 ngành nghề):
+| Thành phần | URL trên máy triển khai |
+|---|---|
+| **Cổng ứng dụng qua Nginx Gateway** | **http://localhost:8088** |
+| **Ứng dụng Web trực tiếp** | http://localhost:3000 |
+| **Jenkins Pipeline UI** | http://localhost:8080 |
+| **Grafana Observability Dashboard** | http://localhost:3001/d/joblink-overview |
+| **Prometheus Alerts & Targets** | http://localhost:9090/alerts |
+| **Alertmanager UI** | http://localhost:9093 |
 
-```bash
-mysql -u joblink_user -p joblink_db < database/schema.sql
+Nếu chỉ muốn chạy cụm ứng dụng cơ bản (`mysql`, `ai`, `web`, `gateway`) không kèm Jenkins/Monitoring:
+
+```powershell
+docker compose up -d --build --wait --wait-timeout 180
+node scripts/docker-check.js
 ```
 
-### 2. Cấu hình biến môi trường
+---
 
-Sao chép file mẫu và chỉnh sửa nếu cần (đặc biệt nếu bạn đổi mật khẩu DB ở bước trên):
+## 3. Tính năng Sản phẩm theo 3 Vai trò
 
-```bash
-cp .env.example .env
-```
+- **Ứng viên:** Đăng ký/đăng nhập, quản lý hồ sơ chuyên môn, tải lên CV (PDF/DOCX Unicode) & ảnh đại diện, bật/tắt tự động ứng tuyển theo ngưỡng điểm AI, tìm kiếm/lọc việc làm phân trang, lưu tin và theo dõi toàn bộ lịch sử vòng đời đơn ứng tuyển.
+- **Doanh nghiệp:** Quản lý hồ sơ công ty, đăng/sửa/đóng tin tuyển dụng, quản lý gói dịch vụ & thanh toán VietQR, tìm kiếm kho CV, lọc ứng viên và chấm điểm mức độ phù hợp bằng AI theo từng tin.
+- **Quản trị viên (Admin):** Duyệt doanh nghiệp mới, duyệt giao dịch nâng cấp gói, khóa/mở tài khoản, quản lý danh mục ngành nghề và theo dõi thống kê toàn hệ thống.
 
-Nội dung `.env` mặc định:
-
-```
-PORT=3000
-DB_HOST=localhost
-DB_USER=joblink_user
-DB_PASSWORD=joblink_password
-DB_NAME=joblink_db
-JWT_SECRET=doi_thanh_mot_chuoi_bi_mat_rieng_cua_ban
-JWT_EXPIRES_IN=7d
-AI_SERVICE_URL=http://localhost:5000
-GROQ_API_KEY=your_groq_api_key
-GROQ_MODEL=qwen/qwen3.8-27b
-```
-
-**Lưu ý:** Hãy đổi `JWT_SECRET` thành một chuỗi ngẫu nhiên riêng nếu triển khai thực tế.
-
-### 3. Cài đặt dependencies
-
-```bash
-npm install
-```
-
-### 4. Tạo dữ liệu mẫu (admin, doanh nghiệp, ứng viên, tin tuyển dụng demo)
-
-```bash
-npm run seed
-```
-
-Lệnh này sẽ tự động tạo các tài khoản demo (xem danh sách bên dưới) nếu chưa tồn tại — chạy lại nhiều lần không gây lỗi trùng dữ liệu.
-
-### 5. Khởi động server
-
-```bash
-npm start
-```
-
-Hoặc chạy ở chế độ phát triển (tự khởi động lại khi sửa code) nếu đã cài `nodemon`:
-
-```bash
-npm run dev
-```
-
-Server sẽ chạy tại: **http://localhost:3000**
-
-Cài dependency và chạy dịch vụ AI trong một cửa sổ terminal khác:
-
-```bash
-python -m pip install -r ai_service/requirements.txt
-npm run ai
-```
-
-Dịch vụ AI sẽ chạy tại: **http://localhost:5000**
-
-## Tài khoản demo
+### Tài khoản mẫu (tự động khởi tạo khi chạy lần đầu)
 
 | Vai trò | Email | Mật khẩu | Ghi chú |
 |---|---|---|---|
-| Admin | admin@joblink.vn | Admin@123 | Quản trị toàn hệ thống |
-| Doanh nghiệp | hr@vietsoft.vn | Company@123 | VietSoft Solutions — đã được duyệt |
-| Doanh nghiệp | tuyendung@greenmart.vn | Company@123 | GreenMart Retail — đã được duyệt |
-| Ứng viên | candidate@joblink.vn | Candidate@123 | Nguyen Van A |
+| **Admin** | `admin@joblink.vn` | `Admin@123` | Quản trị toàn hệ thống |
+| **Doanh nghiệp** | `hr@vietsoft.vn` | `Company@123` | VietSoft Solutions — đã duyệt |
+| **Doanh nghiệp 2** | `tuyendung@greenmart.vn` | `Company@123` | GreenMart Retail — đã duyệt |
+| **Ứng viên** | `candidate@joblink.vn` | `Candidate@123` | Nguyễn Văn A |
 
-## Cấu trúc thư mục
+---
 
+## 4. Chạy Thủ công trên Môi trường Phát triển (Local Không Docker)
+
+1. Tạo database MySQL 8.0 (`utf8mb4`) và nạp `database/schema.sql` (hoặc cấu hình Supabase theo [SUPABASE_SETUP.md](./SUPABASE_SETUP.md)).
+2. Sao chép file cấu hình mẫu và cài đặt thư viện:
+   ```bash
+   cp .env.example .env
+   npm install
+   npm run seed
+   ```
+3. Chạy backend Node.js và dịch vụ AI:
+   ```bash
+   npm run dev
+   # Mở terminal thứ hai cho AI service:
+   python -m pip install -r ai_service/requirements.render.txt pymysql
+   npm run ai
+   ```
+
+---
+
+## 5. Kiểm thử, Bảo mật & Vận hành
+
+```bash
+npm test                  # Chạy 64 automated tests (Node.js)
+npm run test:ai           # Chạy kiểm thử AI matching song ngữ Việt - Anh
+npm audit                 # Kiểm tra lỗ hổng thư viện (0 vulnerabilities)
+npm run mysql:migrate     # Chạy nâng cấp schema MySQL an toàn (idempotent)
+npm run db:backup         # Sao lưu MySQL kèm mã kiểm chứng SHA-256
+npm run db:restore        # Phục hồi bản sao lưu MySQL gần nhất
+npm run devops:stop       # Dừng toàn bộ containers an toàn, bảo toàn named volumes
 ```
-recruitment-platform/
-├── server.js                 # Entry point Express app
-├── config/db.js              # Kết nối MySQL pool
-├── database/
-│   ├── schema.sql            # Schema + seed danh mục ngành nghề
-│   └── seed.js                # Script tạo tài khoản/tin demo
-├── middleware/                # JWT auth, phân quyền, upload file (multer)
-├── models/                    # Truy vấn DB (1 file / 1 bảng chính)
-├── controllers/                # Logic xử lý nghiệp vụ
-├── routes/                    # Định nghĩa API endpoint
-├── public/                    # Frontend tĩnh (HTML/CSS/JS thuần)
-│   ├── css/style.css
-│   ├── js/                    # Logic JS cho từng trang
-│   └── *.html                 # Các trang giao diện
-└── uploads/                    # Nơi lưu CV, logo, avatar đã upload
+
+---
+
+## 6. Cấu trúc Thư mục Chính
+
+```text
+joblink-platform/
+├── server.js                       # Express entrypoint (/health, /ready, /metrics, API, Security headers)
+├── ai_service/                     # Dịch vụ AI Python (Flask + Gunicorn WSGI, RAG FAQ, CV Matcher)
+├── config/ · controllers/ · models/# Phân tách tầng kết nối DB (MySQL/PG), nghiệp vụ và truy vấn
+├── middleware/ · routes/ · utils/  # JWT RBAC, upload 4MB, Prometheus metrics collector
+├── public/                         # Giao diện tĩnh responsive (HTML / CSS / JS thuần)
+├── database/ · supabase/           # Schema MySQL gốc, dữ liệu mẫu và các bản migration
+├── Dockerfile · Dockerfile.ai      # Đóng gói Production non-root cho Web và AI
+├── docker-compose.yml              # Cụm container ứng dụng (MySQL, AI, Web, Nginx Gateway)
+├── docker-compose.devops.yml       # Cụm DevOps (Jenkins, Blackbox, Prometheus, Alertmanager, Grafana)
+├── Jenkinsfile                     # Pipeline CI/CD tự động hóa 8 stages kèm Auto-Rollback
+├── devops/                         # Cấu hình Nginx, Jenkins Groovy init, Prometheus/Alertmanager & Grafana
+├── scripts/                        # CLI điều phối DevOps, HMAC Webhook, Smoke/Monitoring checks, Backup
+├── tests/                          # 14 bộ kiểm thử tự động (64 test cases)
+└── docs/ · FINAL_DEMO.md           # Bộ tài liệu kiến trúc, API, kiểm thử và hướng dẫn vận hành
 ```
 
-## API Endpoints (tóm tắt)
+---
 
-Tất cả endpoint có tiền tố `/api`. Các route cần đăng nhập sẽ yêu cầu header `Authorization: Bearer <token>`.
+## 7. Thành viên Thực hiện
 
-- `POST /auth/register/candidate`, `POST /auth/register/company`, `POST /auth/login`, `GET /auth/me`
-- `GET /jobs`, `GET /jobs/featured`, `GET /jobs/:id` (public) — `POST/PUT/DELETE /jobs` (doanh nghiệp)
-- `POST /applications/:jobId` (ứng viên ứng tuyển) — `GET /applications/job/:jobId`, `PUT /applications/:id/status` (doanh nghiệp) — `GET /applications/:id/history` (ứng viên sở hữu đơn hoặc doanh nghiệp nhận đơn)
-- `GET/PUT /candidates/me`, `POST /candidates/me/cv`, `POST /candidates/me/avatar`, `GET /candidates/me/applications`, `GET/POST/DELETE /candidates/me/saved-jobs`
-- `GET/PUT /companies/me/profile`, `POST /companies/me/logo`, `GET /companies/:id` (public)
-- `GET /admin/stats`, `GET/PUT /admin/companies`, `GET/PUT /admin/users`, `GET/DELETE /admin/jobs`, `GET/POST/DELETE /admin/categories`
-- `GET /categories` (public)
+- **Hiếu** — [@hieunofun](https://github.com/hieunofun)
+- **Nguyên** — [@Nguyen16112006](https://github.com/Nguyen16112006)
+- **Phương Anh** — [@Phuonganh149](https://github.com/Phuonganh149)
+- **Huy** — `Huyday` (Triển khai Docker, CI/CD Jenkins, Webhook & Hệ thống Giám sát)
 
-## Ghi chú quan trọng
-
-- Trên production, CV/logo/avatar được lưu bằng Supabase Storage; thư mục `uploads/` chỉ dùng cho môi trường local.
-- Mỗi đơn ứng tuyển giữ CV đã nộp tại thời điểm gửi; thay CV hồ sơ sau đó không làm mất CV mà doanh nghiệp đã nhận.
-- Tự động ứng tuyển mặc định tắt; ứng viên phải có CV, chủ động bật và chọn ngưỡng phù hợp. Đơn tự động được đánh dấu `auto_match` và lưu điểm AI trong lịch sử.
-- Mật khẩu được mã hoá bằng bcrypt trước khi lưu vào database.
-- Doanh nghiệp đăng ký mới sẽ ở trạng thái `pending` và **không thể đăng tin** cho đến khi Admin duyệt.
-- Render Free có thể sleep khi không có traffic; request đầu tiên sau thời gian nghỉ có thể mất khoảng 20–60 giây.
-- Dự án này được xây dựng cho mục đích học tập (đồ án môn học), thương hiệu "JobLink" không liên quan đến TopCV hay bất kỳ sản phẩm thương mại nào.
-
-## Thành viên
-
-- Hiếu — [@hieunofun](https://github.com/hieunofun)
-- Nguyên — [@Nguyen16112006](https://github.com/Nguyen16112006)
-- Phương Anh — [@Phuonganh149](https://github.com/Phuonganh149)
-
-Chi tiết đóng góp và bằng chứng GitHub xem tại [CONTRIBUTORS.md](./CONTRIBUTORS.md).
+Chi tiết phân công và cách đối chiếu lịch sử đóng góp trên Git xem tại [CONTRIBUTORS.md](./CONTRIBUTORS.md).

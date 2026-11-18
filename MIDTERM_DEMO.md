@@ -1,6 +1,8 @@
-# JobLink — Demo giữa kỳ INFO3004
+# JobLink — Demo giữa kỳ INFO3004 (Tài liệu lưu trữ mốc Giữa kỳ)
 
-Phạm vi: sản phẩm triển khai đến Docker, SCM/CI/CD, giám sát và PowerPoint.
+> **Cập nhật Đồ án Cuối kỳ:** Toàn bộ kiến trúc nâng cấp chuẩn Production (Nginx Reverse Proxy Gateway `:8088`, Jenkins 8 stages, Non-root & Gunicorn WSGI, White-box `/metrics` + Alertmanager và Day-2 DB Backup/Migration) đã được cập nhật đầy đủ tại **[FINAL_DEMO.md](./FINAL_DEMO.md)** và **[DEMO_FLOW.md](./DEMO_FLOW.md)**.
+
+Phạm vi mốc giữa kỳ: sản phẩm triển khai đến Docker, SCM/CI/CD, giám sát và PowerPoint.
 Báo cáo Word, bảng phân công và tự đánh giá thành viên được làm riêng sau.
 
 ## 1. Chạy toàn bộ demo

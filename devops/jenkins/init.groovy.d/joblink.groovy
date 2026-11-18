@@ -30,23 +30,22 @@ def strategy = new FullControlOnceLoggedInAuthorizationStrategy()
 strategy.setAllowAnonymousRead(false)
 instance.setAuthorizationStrategy(strategy)
 instance.setNumExecutors(1)
-instance.setSystemMessage('JobLink — local Docker / CI/CD demo')
+instance.setSystemMessage('JobLink — INFO3004 Final Software Deployment CI/CD')
 
-// The repository is mounted read-only, so uncommitted work can be demonstrated.
-// Restart Jenkins after changing Jenkinsfile to refresh this job definition.
 def pipelineFile = new File('/opt/joblink/Jenkinsfile')
 if (pipelineFile.exists()) {
     def job = instance.getItem('joblink-local')
     if (job == null) {
         job = instance.createProject(WorkflowJob, 'joblink-local')
     }
-    job.setDescription('Kiểm thử → build → triển khai Docker → smoke checks. LOCAL dùng bản mã nguồn hiện tại; SCM dùng Git URL/branch được nhập khi chạy.')
+    job.setDescription('8-Stage Pipeline: Source → Node tests → Security & config audit → Build images → AI & non-root checks → Registry publish → DB migrate & deploy → Smoke checks + Auto-Rollback.')
     if (job.getProperty(ParametersDefinitionProperty) == null) {
         job.addProperty(new ParametersDefinitionProperty([
             new ChoiceParameterDefinition('SOURCE_MODE', ['LOCAL', 'SCM'] as String[], 'LOCAL: source trên máy; SCM: Git URL / branch.'),
-            new StringParameterDefinition('GIT_URL', 'https://github.com/hieunofun/cong-nghe-phan-mem.git', 'Repository có các file Docker / DevOps mới.'),
+            new StringParameterDefinition('GIT_URL', 'https://github.com/hieunofun/cong-nghe-phan-mem.git', 'Repository nhóm.'),
             new StringParameterDefinition('GIT_BRANCH', 'main', 'Nhánh cần triển khai.'),
-            new BooleanParameterDefinition('DEPLOY', true, 'Triển khai Web / AI sau kiểm thử.')
+            new BooleanParameterDefinition('DEPLOY', true, 'Triển khai Web / AI / Gateway sau kiểm thử.'),
+            new BooleanParameterDefinition('PUSH_REGISTRY', false, 'Đẩy image lên Container Registry khi cấu hình.')
         ]))
     }
     job.setDefinition(new CpsFlowDefinition(pipelineFile.getText('UTF-8'), true))
@@ -65,7 +64,7 @@ scm.branches = [new hudson.plugins.git.BranchSpec('*/main')]
 def definition = new CpsScmFlowDefinition(scm, 'Jenkinsfile')
 definition.setLightweight(true)
 scmJob.setDefinition(definition)
-scmJob.setDescription('GitHub main → Jenkinsfile từ SCM → tests → Docker build / deploy. GitHub webhook gọi job này với SHA và delivery ID.')
+scmJob.setDescription('GitHub main → Jenkinsfile từ SCM → 8 stages kiểm thử / bảo mật / Docker build / DB migrate & deploy / smoke checks + auto-rollback.')
 if (scmJob.getProperty(ParametersDefinitionProperty) == null) {
     scmJob.addProperty(new ParametersDefinitionProperty([
         new ChoiceParameterDefinition('SOURCE_MODE', ['SCM', 'LOCAL'] as String[], 'SCM mặc định cho job nhận webhook.'),
@@ -73,7 +72,8 @@ if (scmJob.getProperty(ParametersDefinitionProperty) == null) {
         new StringParameterDefinition('GIT_BRANCH', 'main', 'Nhánh triển khai.'),
         new StringParameterDefinition('GIT_COMMIT', '', 'SHA từ webhook; trống = đầu nhánh.'),
         new StringParameterDefinition('WEBHOOK_DELIVERY', '', 'GitHub delivery ID.'),
-        new BooleanParameterDefinition('DEPLOY', true, 'Triển khai sau kiểm thử.')
+        new BooleanParameterDefinition('DEPLOY', true, 'Triển khai sau kiểm thử.'),
+        new BooleanParameterDefinition('PUSH_REGISTRY', false, 'Đẩy image lên Container Registry khi cấu hình.')
     ]))
 }
 scmJob.save()

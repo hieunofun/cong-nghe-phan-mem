@@ -1,18 +1,17 @@
 # Contributors
 
-JobLink là sản phẩm của nhóm ba thành viên. Danh sách dưới đây dùng đúng GitHub handle để người chấm có thể đối chiếu Issues, commits và Pull Requests.
+JobLink được phát triển và triển khai hoàn chỉnh bởi nhóm sinh viên với lịch sử đóng góp minh bạch trên Git (Issues, Pull Requests và Commits).
 
-| Thành viên | GitHub | Bằng chứng tiêu biểu |
+| Thành viên | Tài khoản Git / GitHub | Phạm vi đóng góp chính |
 |---|---|---|
-| Hiếu | [@hieunofun](https://github.com/hieunofun) | Issues #1, #6, #9, #11, #15, #21; release, AI và production hardening; PR #16–#20 |
-| Nguyên | [@Nguyen16112006](https://github.com/Nguyen16112006) | Issues #7, #10, #13; các commit và chức năng được ghi nhận trong lịch sử repository |
-| Phương Anh | [@Phuonganh149](https://github.com/Phuonganh149) | Issues #2, #5, #8, #12; phân tích, sơ đồ và giao diện được ghi nhận trong repository |
+| **Hiếu** | [@hieunofun](https://github.com/hieunofun) | Kiến trúc Backend/AI, xác thực & phân quyền, tích hợp Supabase/Render/Vercel, kiểm thử hồi quy, quản lý phát hành (Issues #1, #6, #9, #11, #15, #21; PR #16–#22) |
+| **Nguyên** | [@Nguyen16112006](https://github.com/Nguyen16112006) (`DucNguyen`) | Nghiệp vụ tuyển dụng, quản lý tin đăng, xử lý dữ liệu và chức năng phía doanh nghiệp/ứng viên (Issues #7, #10, #13) |
+| **Phương Anh** | [@Phuonganh149](https://github.com/Phuonganh149) | Phân tích yêu cầu, thiết kế sơ đồ, giao diện người dùng (UI/UX) cho các vai trò (Issues #2, #5, #8, #12) |
+| **Huy** | `Huyday` | Đóng gói Docker & Nginx Gateway, tự động hóa Jenkins CI/CD 8 bước, HMAC GitHub Webhook, Prometheus/Grafana/Alertmanager, Backup/Migration và chuẩn bị demo INFO3004 |
 
-## Cách kiểm chứng
+## Cách kiểm chứng trên Repository
 
-- Issues: https://github.com/hieunofun/cong-nghe-phan-mem/issues
-- Pull Requests: https://github.com/hieunofun/cong-nghe-phan-mem/pulls
-- Contributors: https://github.com/hieunofun/cong-nghe-phan-mem/graphs/contributors
-- Final release readiness: https://github.com/hieunofun/cong-nghe-phan-mem/issues/21
-
-Việc ghi tên trong tài liệu này không thay thế lịch sử Git. Commit author, Issue author/assignee và Pull Request trên GitHub vẫn là bằng chứng đóng góp chính.
+- **Lịch sử Commits theo tác giả:** `git shortlog -sn --all`
+- **Issues:** https://github.com/hieunofun/cong-nghe-phan-mem/issues
+- **Pull Requests:** https://github.com/hieunofun/cong-nghe-phan-mem/pulls
+- **Contributors Graph:** https://github.com/hieunofun/cong-nghe-phan-mem/graphs/contributors

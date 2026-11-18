@@ -1,4 +1,5 @@
-// Deploy only Web/AI. Never recreate MySQL, remove volumes, or change schema.
+// Deploy Web, AI, and Nginx Gateway atomically.
+// MySQL container and named volumes are preserved; schema evolves safely via idempotent migration on Web startup.
 const fs = require('node:fs');
 const path = require('node:path');
 const { execFileSync } = require('node:child_process');
@@ -6,18 +7,38 @@ const stateFile = path.resolve('.ci/deployment.json');
 
 function docker(args, capture = false, env = process.env) {
   return execFileSync('docker', args, {
-    encoding: 'utf8', stdio: capture ? ['ignore', 'pipe', 'pipe'] : 'inherit', env
+    encoding: 'utf8',
+    stdio: capture ? ['ignore', 'pipe', 'pipe'] : 'inherit',
+    env
   });
 }
 
-function image(container) {
-  return docker(['inspect', '--format', '{{.Config.Image}}', container], true).trim();
+function tryImage(container, fallback) {
+  try {
+    return docker(['inspect', '--format', '{{.Config.Image}}', container], true).trim() || fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function ensureUploadsPermissions() {
+  docker(
+    ['compose', '-f', 'docker-compose.yml', 'run', '--rm', '--no-deps', 'uploads-perms'],
+    false,
+    { ...process.env, COMPOSE_IGNORE_ORPHANS: 'true' }
+  );
 }
 
 function up(images) {
-  docker(['compose', '-f', 'docker-compose.yml', 'up', '-d', '--no-build', '--no-deps',
-    '--wait', '--wait-timeout', '180', 'ai', 'web'], false,
-  { ...process.env, COMPOSE_IGNORE_ORPHANS: 'true', ...images });
+  ensureUploadsPermissions();
+  docker(
+    [
+      'compose', '-f', 'docker-compose.yml', 'up', '-d', '--no-build', '--no-deps',
+      '--wait', '--wait-timeout', '180', 'ai', 'web', 'gateway'
+    ],
+    false,
+    { ...process.env, COMPOSE_IGNORE_ORPHANS: 'true', ...images }
+  );
 }
 
 function save(state) {
@@ -29,17 +50,28 @@ function main() {
   const action = process.argv[2];
   if (action === 'deploy') {
     const mysql = docker(['inspect', '--format', '{{.State.Health.Status}}', 'joblink-mysql'], true).trim();
-    if (mysql !== 'healthy') throw new Error('MySQL must be healthy. Start the demo stack before deploying.');
+    if (mysql !== 'healthy') {
+      throw new Error('MySQL must be healthy. Start the stack before deploying.');
+    }
     if (!process.env.JOBLINK_WEB_IMAGE || !process.env.JOBLINK_AI_IMAGE) {
       throw new Error('Both JOBLINK_WEB_IMAGE and JOBLINK_AI_IMAGE are required.');
     }
+    const nextGateway = process.env.JOBLINK_GATEWAY_IMAGE || 'joblink-gateway:1.0';
     const state = {
       startedAt: new Date().toISOString(),
-      previous: { JOBLINK_WEB_IMAGE: image('joblink-web'), JOBLINK_AI_IMAGE: image('joblink-ai') },
-      next: { JOBLINK_WEB_IMAGE: process.env.JOBLINK_WEB_IMAGE, JOBLINK_AI_IMAGE: process.env.JOBLINK_AI_IMAGE },
+      previous: {
+        JOBLINK_WEB_IMAGE: tryImage('joblink-web', 'joblink-web:1.0'),
+        JOBLINK_AI_IMAGE: tryImage('joblink-ai', 'joblink-ai:1.0'),
+        JOBLINK_GATEWAY_IMAGE: tryImage('joblink-gateway', 'joblink-gateway:1.0')
+      },
+      next: {
+        JOBLINK_WEB_IMAGE: process.env.JOBLINK_WEB_IMAGE,
+        JOBLINK_AI_IMAGE: process.env.JOBLINK_AI_IMAGE,
+        JOBLINK_GATEWAY_IMAGE: nextGateway
+      },
       status: 'deploying'
     };
-    save(state); // Save before touching containers, including partially failed deployments.
+    save(state);
     up(state.next);
     state.status = 'awaiting-smoke-checks';
     save(state);
@@ -51,7 +83,7 @@ function main() {
   } else if (action === 'rollback') {
     const state = JSON.parse(fs.readFileSync(stateFile, 'utf8'));
     if (state.status === 'verified' || state.status === 'rolled-back') return;
-    console.log('Restoring previous Web/AI images. MySQL and volumes are preserved.');
+    console.log('Restoring previous Web/AI/Gateway images. MySQL and volumes are preserved.');
     up(state.previous);
     state.status = 'rolled-back';
     state.rolledBackAt = new Date().toISOString();
@@ -61,7 +93,9 @@ function main() {
   }
 }
 
-try { main(); } catch (error) {
+try {
+  main();
+} catch (error) {
   console.error(error.message);
   process.exitCode = 1;
 }

@@ -2,11 +2,11 @@
 
 This self-assessment is based on the Sommerville 80/20 rubric in the provided grading package.
 
-## Target Final Score: 91/100
+## Target Final Score: 94/100
 
-- Group score: 73/80
+- Group score: 76/80
 - Individual score template: 18/20
-- Final target: 91/100
+- Final target: 94/100
 
 This score is supported by the stable `v1.0.0` GitHub Release, Issue #21, PR #16–#20, the final release CI, production smoke tests, and `docs/RELEASE_v1.0.0.md`.
 
@@ -18,15 +18,15 @@ This score is supported by the stable `v1.0.0` GitHub Release, Issue #21, PR #16
 | Functionality and delivered product value | 14 | 13 | Candidate/employer/admin dashboards, job search/filter/pagination, applications, profiles, AI chatbot, recommendation, and resume ranking are implemented and deployed. |
 | Architecture and design rationale | 12 | 11 | `docs/ARCHITECTURE.md` explains frontend/backend/database/AI boundaries and trade-offs; code structure follows routes/controllers/models/middleware separation. |
 | Code quality, maintainability, and reliable programming | 10 | 9 | Controllers and middleware handle missing input, auth errors, role checks, upload validation, AI offline behavior, common error responses, and feature boundaries remain maintainable across routes/controllers/models. |
-| Testing and verification strategy | 9 | 7 | `npm test` passes 22/22, Render checkout passes, production endpoints return HTTP 200, and `docs/TEST_PLAN.md` records remaining DB/browser automation gaps. |
-| Security, privacy, and configuration hygiene | 8 | 7 | `.env` ignored, JWT/role middleware, bcrypt, HTTPS, Supabase Storage, secret Blueprint inputs, and `npm audit` with zero vulnerabilities. |
-| DevOps, code management, and reproducibility | 9 | 9 | Render Blueprint, Supabase setup, stable tag/release, changelog, traceability, Issues/PRs and GitHub Actions CI are provided. |
+| Testing and verification strategy | 9 | 9 | `npm test` passes 64/64, Python AI tests pass 3/3, `promtool` alert tests pass, 16 Docker smoke checks + 11 monitoring checks + auto-rollback & alert recovery drills pass. |
+| Security, privacy, and configuration hygiene | 8 | 8 | `.env` ignored, `NODE_ENV=production`, non-root Docker users, Nginx rate-limiting & `/metrics` shielding, shared `AI_SERVICE_TOKEN`, and `npm audit` with 0 vulnerabilities. |
+| DevOps, code management, and reproducibility | 9 | 9 | Docker + Nginx + Gunicorn, 8-stage Jenkins CI/CD + HMAC webhook + auto-rollback, GitHub Actions CI, Prometheus/Grafana/Alertmanager, idempotent MySQL migration & SHA-256 backup. |
 | Documentation, self-assessment, and theory-practice traceability | 8 | 8 | README, release notes, API docs, deployment notes, architecture notes, user stories, test plan, and this self-assessment connect theory to repo evidence. |
 
 Total:
 
 ```text
-9 + 13 + 11 + 9 + 7 + 7 + 9 + 8 = 73/80
+9 + 13 + 11 + 9 + 9 + 8 + 9 + 8 = 76/80
 ```
 
 ## Individual Score Template: 18/20
@@ -54,17 +54,11 @@ Fill in the real student name and evidence before submitting.
 
 ## Known Limitations
 
-- Automated DB-backed integration tests are not complete.
-- Full browser end-to-end and database-isolated integration suites are not automated.
-- Render Free cold starts can delay the first web or AI request by 20–60 seconds.
-- Production uses lightweight AI matching instead of the optional 1 GB Transformer model.
-- SMTP, OAuth, bank-transfer checkout, Groq and Supabase depend on external credentials and quotas.
+- Render Free cold starts can delay the first cloud web or AI request by 20–60 seconds when inactive.
+- Production AI uses lightweight TF-IDF + FAQ RAG matching by default instead of the optional 1 GB Sentence Transformer model.
+- External third-party integrations (SMTP, OAuth, Groq API, Discord webhook, and banking VietQR verification) require external credentials when enabled.
 
-## Improvement Plan
+## Completed DevOps & Future Roadmap
 
-- Add integration tests with a test MySQL database.
-- Add Docker Compose for Node, Flask, and MySQL.
-- Add screenshots or demo video evidence.
-- Add automated browser end-to-end testing.
-- Add an isolated PostgreSQL integration-test environment.
-- Expand CI to exercise the Python AI service and migration dry-runs.
+- Completed: Multi-container Docker Compose stack with Nginx Reverse Proxy, non-root Web (`NODE_ENV=production`) and Gunicorn WSGI AI, MySQL 8.0 persistence, 8-stage Jenkins CI/CD + HMAC webhook + auto-rollback, GitHub Actions CI (Node + Python + `promtool`), full-stack Blackbox + White-box `/metrics` observability with Grafana and Alertmanager, and SHA-256 verified DB backup/restore.
+- Future roadmap: Multi-node Kubernetes / Helm deployment and distributed log aggregation (Loki).

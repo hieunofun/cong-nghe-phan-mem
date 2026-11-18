@@ -1,4 +1,5 @@
-// One entry point for the local midterm demo. Requires Node >=22 and Docker Desktop.
+// Unified CLI entry point for the JobLink INFO3004 Final Software Deployment stack.
+// Requires Node >= 22 and Docker Desktop.
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
@@ -8,7 +9,7 @@ const root = path.resolve(__dirname, '..');
 const secretFile = path.join(root, '.devops', 'credentials.env');
 const project = path.basename(root).toLowerCase().replace(/[^a-z0-9_-]/g, '-');
 const jenkins = 'http://127.0.0.1:8080';
-const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function credentials(create = false) {
   if (!fs.existsSync(secretFile)) {
@@ -16,23 +17,32 @@ function credentials(create = false) {
     fs.mkdirSync(path.dirname(secretFile), { recursive: true });
     fs.writeFileSync(secretFile, [
       `JENKINS_ADMIN_PASSWORD=${crypto.randomBytes(18).toString('hex')}`,
-      `GRAFANA_ADMIN_PASSWORD=${crypto.randomBytes(18).toString('hex')}`, ''
+      `GRAFANA_ADMIN_PASSWORD=${crypto.randomBytes(18).toString('hex')}`,
+      ''
     ].join('\n'), { mode: 0o600, flag: 'wx' });
     console.log('Created local credentials in .devops/credentials.env (excluded from Git/images).');
   }
   return Object.fromEntries(fs.readFileSync(secretFile, 'utf8').split(/\r?\n/)
-    .filter(line => /^[A-Z_]+=/.test(line)).map(line => {
+    .filter((line) => /^[A-Z_]+=/.test(line)).map((line) => {
       const index = line.indexOf('=');
       return [line.slice(0, index), line.slice(index + 1)];
     }));
 }
 
 function compose(args, capture = false) {
-  return execFileSync('docker', ['compose', '--project-name', project, '--env-file', secretFile,
-    '-f', 'docker-compose.yml', '-f', 'docker-compose.devops.yml', ...args], {
-    cwd: root, env: { ...process.env, COMPOSE_PROJECT_NAME: project }, encoding: 'utf8',
-    stdio: capture ? ['ignore', 'pipe', 'pipe'] : 'inherit'
-  });
+  return execFileSync(
+    'docker',
+    [
+      'compose', '--project-name', project, '--env-file', secretFile,
+      '-f', 'docker-compose.yml', '-f', 'docker-compose.devops.yml', ...args
+    ],
+    {
+      cwd: root,
+      env: { ...process.env, COMPOSE_PROJECT_NAME: project },
+      encoding: 'utf8',
+      stdio: capture ? ['ignore', 'pipe', 'pipe'] : 'inherit'
+    }
+  );
 }
 
 async function jenkinsRequest(endpoint, options = {}) {
@@ -42,7 +52,8 @@ async function jenkinsRequest(endpoint, options = {}) {
     headers: {
       Authorization: `Basic ${Buffer.from(`admin:${config.JENKINS_ADMIN_PASSWORD}`).toString('base64')}`,
       ...options.headers
-    }, signal: AbortSignal.timeout(20000)
+    },
+    signal: AbortSignal.timeout(20000)
   });
   if (!response.ok) throw new Error(`Jenkins ${endpoint}: HTTP ${response.status}`);
   return response;
@@ -51,14 +62,22 @@ async function jenkinsRequest(endpoint, options = {}) {
 async function triggerBuild() {
   const job = process.argv.includes('--local') ? 'joblink-local' : 'joblink-scm';
   const crumbResponse = await jenkinsRequest('/crumbIssuer/api/json');
-  const cookie = crumbResponse.headers.getSetCookie().map(item => item.split(';')[0]).join('; ');
+  const cookie = crumbResponse.headers.getSetCookie().map((item) => item.split(';')[0]).join('; ');
   const crumb = await crumbResponse.json();
   const trigger = await jenkinsRequest(`/job/${job}/buildWithParameters`, {
     method: 'POST',
-    headers: { [crumb.crumbRequestField]: crumb.crumb, Cookie: cookie,
-      'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ SOURCE_MODE: job === 'joblink-scm' ? 'SCM' : 'LOCAL', DEPLOY: 'true',
-      GIT_URL: 'https://github.com/hieunofun/cong-nghe-phan-mem.git', GIT_BRANCH: 'main' })
+    headers: {
+      [crumb.crumbRequestField]: crumb.crumb,
+      Cookie: cookie,
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    body: new URLSearchParams({
+      SOURCE_MODE: job === 'joblink-scm' ? 'SCM' : 'LOCAL',
+      DEPLOY: 'true',
+      PUSH_REGISTRY: 'false',
+      GIT_URL: 'https://github.com/hieunofun/cong-nghe-phan-mem.git',
+      GIT_BRANCH: 'main'
+    })
   });
   const location = trigger.headers.get('location');
   if (!location) throw new Error('Jenkins did not return a queue location.');
@@ -86,7 +105,9 @@ async function triggerBuild() {
     if (!result.building && result.result) {
       await captureBuild(job, build.number);
       console.log(`Jenkins build #${result.number}: ${result.result}`);
-      if (result.result !== 'SUCCESS') throw new Error('Jenkins pipeline failed. See artifacts/midterm-demo/jenkins-console.log.');
+      if (result.result !== 'SUCCESS') {
+        throw new Error('Jenkins pipeline failed. See artifacts/final-demo/jenkins-console.log.');
+      }
       return;
     }
     await sleep(3000);
@@ -99,13 +120,20 @@ async function captureBuild(job = 'joblink-scm', number = 'lastBuild') {
   const result = await (await jenkinsRequest(`${buildPath}/api/json`)).json();
   if (result.building) throw new Error('Build is still running. Wait for SUCCESS before capturing evidence.');
   const log = await (await jenkinsRequest(`${buildPath}/consoleText`)).text();
-  const output = path.join(root, 'artifacts', 'midterm-demo');
-  fs.mkdirSync(output, { recursive: true });
-  fs.writeFileSync(path.join(output, 'jenkins-console.log'), log);
-  fs.writeFileSync(path.join(output, 'jenkins-build.json'), `${JSON.stringify({
-    job, number: result.number, result: result.result, duration: result.duration,
-    timestamp: result.timestamp, url: `http://localhost:8080/job/${job}/${result.number}/`
-  }, null, 2)}\n`);
+  const payload = {
+    job,
+    number: result.number,
+    result: result.result,
+    duration: result.duration,
+    timestamp: result.timestamp,
+    url: `http://localhost:8080/job/${job}/${result.number}/`
+  };
+  for (const folder of ['final-demo', 'midterm-demo']) {
+    const output = path.join(root, 'artifacts', folder);
+    fs.mkdirSync(output, { recursive: true });
+    fs.writeFileSync(path.join(output, 'jenkins-console.log'), log);
+    fs.writeFileSync(path.join(output, 'jenkins-build.json'), `${JSON.stringify(payload, null, 2)}\n`);
+  }
   console.log(`Captured ${job} #${result.number}: ${result.result}`);
 }
 
@@ -119,8 +147,9 @@ async function main() {
       throw new Error('Docker Engine is not ready. Open Docker Desktop; for the known E: disk permission issue, run it as administrator.');
     }
     compose(['up', '-d', '--build', '--wait', '--wait-timeout', '360']);
-    console.log('Web: http://localhost:3000 | Jenkins: http://localhost:8080');
-    console.log('Grafana: http://localhost:3001/d/joblink-overview | Prometheus: http://localhost:9090');
+    console.log('Gateway (Nginx): http://localhost:8088 | Web Direct: http://localhost:3000');
+    console.log('Jenkins: http://localhost:8080 | Grafana: http://localhost:3001/d/joblink-overview');
+    console.log('Prometheus: http://localhost:9090 | Alertmanager: http://localhost:9093');
     console.log('Passwords: node scripts/devops-demo.js credentials');
   } else if (action === 'status') {
     credentials();
@@ -130,11 +159,13 @@ async function main() {
     if (fs.existsSync(path.join(root, '.devops/webhook-state.json'))) {
       execFileSync(process.execPath, ['scripts/webhook-demo.js', 'stop'], { cwd: root, stdio: 'inherit' });
     }
-    compose(['stop']); // Keep containers and every named volume.
+    compose(['stop']);
   } else if (action === 'credentials') {
     const config = credentials();
     console.log(`Jenkins: admin / ${config.JENKINS_ADMIN_PASSWORD}`);
     console.log(`Grafana: admin / ${config.GRAFANA_ADMIN_PASSWORD}`);
+  } else if (action === 'backup') {
+    execFileSync(process.execPath, ['scripts/db-backup.js', 'backup'], { cwd: root, stdio: 'inherit' });
   } else if (action === 'build') {
     await triggerBuild();
   } else if (action === 'capture') {
@@ -144,14 +175,16 @@ async function main() {
     execFileSync(process.execPath, ['scripts/monitoring-check.js'], { cwd: root, stdio: 'inherit' });
     const job = process.argv.includes('--local') ? 'joblink-local' : 'joblink-scm';
     const result = await (await jenkinsRequest(`/job/${job}/lastBuild/api/json`)).json();
-    if (result.building || result.result !== 'SUCCESS') throw new Error('The latest Jenkins pipeline has not completed successfully.');
+    if (result.building || result.result !== 'SUCCESS') {
+      throw new Error('The latest Jenkins pipeline has not completed successfully.');
+    }
     console.log(`PASS Jenkins ${job} latest build #${result.number}: SUCCESS`);
   } else {
-    console.log('Usage: node scripts/devops-demo.js up|status|build|capture|check|credentials|stop [--local]');
+    console.log('Usage: node scripts/devops-demo.js up|status|build|capture|check|backup|credentials|stop [--local]');
   }
 }
 
-main().catch(error => {
+main().catch((error) => {
   console.error(`FAIL: ${error.message}`);
   process.exitCode = 1;
 });
