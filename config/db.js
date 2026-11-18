@@ -120,6 +120,9 @@ async function testConnection() {
   }
 }
 
-testConnection();
+const isNodeTestRunner = process.execArgv.includes('--test') || process.env.NODE_TEST_CONTEXT !== undefined;
+if (!isNodeTestRunner) {
+  testConnection();
+}
 
 module.exports = pool;

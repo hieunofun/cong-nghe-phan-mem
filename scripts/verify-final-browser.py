@@ -81,13 +81,13 @@ def devops_screens(browser):
     for out_dir in (FINAL_OUT, MIDTERM_OUT):
         page.screenshot(
             path=str(out_dir / 'jenkins-pipeline.png'),
-            clip={'x': clip_x, 'y': clip_y, 'width': clip_w, 'height': 370}
+            clip={'x': clip_x, 'y': clip_y, 'width': clip_w, 'height': 272}
         )
     print('PASS browser: Jenkins 8-stage pipeline screenshot captured')
     context.close()
 
     # 2. Grafana 13-Panel Dashboard
-    context = browser.new_context(viewport={'width': 1600, 'height': 1320}, color_scheme='dark')
+    context = browser.new_context(viewport={'width': 1600, 'height': 1160}, color_scheme='dark')
     page = context.new_page()
     page.goto('http://localhost:3001/login', wait_until='networkidle')
     page.locator('input[name="user"]').fill('admin')
@@ -104,14 +104,14 @@ def devops_screens(browser):
     context.close()
 
     # 3. Prometheus 5 Alert Rules
-    context = browser.new_context(viewport={'width': 1440, 'height': 960})
+    context = browser.new_context(viewport={'width': 1440, 'height': 520})
     page = context.new_page()
-    page.goto('http://localhost:9090/alerts', wait_until='networkidle', timeout=60000)
+    page.goto('http://localhost:9090/alerts', wait_until='domcontentloaded', timeout=60000)
     page.get_by_text('JobLinkServiceDown', exact=False).first.wait_for(timeout=30000)
     page.get_by_text('JobLinkHighMemoryUsage', exact=False).first.wait_for(timeout=30000)
     time.sleep(1.5)
     for out_dir in (FINAL_OUT, MIDTERM_OUT):
-        page.screenshot(path=str(out_dir / 'prometheus-alerts.png'), full_page=True)
+        page.screenshot(path=str(out_dir / 'prometheus-alerts.png'), full_page=False)
     print('PASS browser: Prometheus 5 alert rules screenshot captured')
     context.close()
 

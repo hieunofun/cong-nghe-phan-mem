@@ -32,5 +32,9 @@ artifacts/midterm-demo/*
 !artifacts/midterm-demo/webhook-verification.json
 !artifacts/final-demo/
 artifacts/final-demo/*
+!artifacts/final-demo/jenkins-pipeline.png
+!artifacts/final-demo/grafana-dashboard.png
+!artifacts/final-demo/prometheus-alerts.png
+!artifacts/final-demo/browser-checks.json
 !artifacts/final-demo/verification.json
 !artifacts/final-demo/slides-check.json
