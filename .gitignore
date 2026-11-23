@@ -16,6 +16,7 @@ ai_service/models/cv_job_matching/
 .vercel
 .ci/
 .devops/
+.scannerwork/
 __pycache__/
 # Keep local exports/logs out of Git; publish only the small evidence set used by slides.
 artifacts/*

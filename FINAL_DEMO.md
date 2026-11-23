@@ -99,6 +99,8 @@ Khi có `git push origin main`, GitHub gửi sự kiện qua HTTPS tunnel vào `
 - **SonarQube:** Khởi chạy profile `sonar` trên máy Jenkins, dùng `SONAR_HOST_URL=http://sonarqube:9000` và Jenkins credential `joblink-sonar-token`. Bật `RUN_SONARQUBE` để Jenkins chờ Quality Gate trước khi build image.
 - **`joblink-ssh-deploy`:** Bật `DEPLOY_REMOTE` và chọn Registry, VPS cùng `PUBLIC_URL`. Job đẩy ba image theo SHA, kết nối SSH bằng credential `joblink-prod-ssh` và xác thực `known_hosts`. Sau smoke test, job kiểm tra `/gateway-health` và `/ready` trả `200`, `/metrics` trả `403`, rồi mới xác nhận rollout. Nếu kiểm tra lỗi, job gọi rollback trên VPS.
 - **URL trình diễn:** [JobLink trên Google Cloud](http://136.110.25.226/). Với registry demo `127.0.0.1:5011/joblink`, duy trì SSH reverse tunnel từ VPS về registry trong lúc đẩy và kéo image.
+- **Kết quả Google Cloud ngày 23/11/2026:** `joblink-ssh-deploy #2` đạt `SUCCESS` với commit `9fe0e3c`. Bản dựng xác nhận `16/16` smoke checks và ghi `verified` sau khi kiểm tra URL công khai.
+- **Kết quả SonarQube ngày 23/11/2026:** Stage phân tích trong `joblink-ssh-deploy #3` ghi `QUALITY GATE STATUS: PASSED` cho commit `09355ca`. Lượt chạy dùng SonarQube trên VPS qua tunnel SSH. Mở `http://127.0.0.1:19000/dashboard?id=joblink-nhom02` từ máy trình chiếu khi tunnel đang chạy.
 
 ---
 

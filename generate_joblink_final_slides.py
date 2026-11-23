@@ -58,6 +58,8 @@ def picture(slide, filename, x, y, w, h):
 
 def create(date, group='Nhóm 02 · Lớp 24IT3', lecturer='Đặng Quốc Hữu'):
     evidence = json.loads((FINAL_EVIDENCE / 'verification.json').read_text(encoding='utf-8'))
+    sonar_result_file = DEFENSE_EVIDENCE / 'jenkins-sonar-result.json'
+    sonar_result = json.loads(sonar_result_file.read_text(encoding='utf-8')) if sonar_result_file.exists() else {}
     vps_monitoring = DEFENSE_EVIDENCE / 'vps-monitoring.log'
     if vps_monitoring.exists():
         checked = re.search(r'(\d+)/\1 full-stack monitoring checks passed', vps_monitoring.read_text(encoding='utf-8'))
@@ -169,7 +171,10 @@ def create(date, group='Nhóm 02 · Lớp 24IT3', lecturer='Đặng Quốc Hữu
     ]):
         x, y = .75 + (i % 4) * 2.98, 1.92 + (i // 4) * 1.98
         card(s, x, y, 2.75, 1.75, title, detail, size=16, title_size=19)
-    takeaway(s, 'Có thể bật SonarQube Quality Gate sau bước kiểm toán, trước khi build image.')
+    if sonar_result.get('qualityGate'):
+        takeaway(s, f'SonarQube Quality Gate {sonar_result["qualityGate"]} trong bản dựng Jenkins #{sonar_result["number"]}.')
+    else:
+        takeaway(s, 'Có thể bật SonarQube Quality Gate sau bước kiểm toán, trước khi build image.')
 
     # 9 — Auto-rollback mechanism
     s = d.body(prs, 'Cơ chế Tự động Rollback khi triển khai lỗi', '03 / AN TOÀN PHÁT HÀNH')

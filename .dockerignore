@@ -26,12 +26,16 @@ __pycache__
 artifacts
 .ci
 .devops
+.scannerwork
 devops
 Jenkinsfile
+Jenkinsfile.ssh-deploy
+sonar-project.properties
 docker-compose*.yml
 scripts/devops-demo.js
 scripts/ci-deploy.js
 scripts/ci-source.sh
+scripts/ci-sonar.sh
 scripts/monitoring-check.js
 generate_joblink_midterm_slides.py
 scripts/verify-midterm-browser.py
