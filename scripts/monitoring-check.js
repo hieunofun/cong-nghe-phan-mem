@@ -33,9 +33,9 @@ async function main() {
   }
 
   const targets = await json(prometheus, '/api/v1/targets');
-  assert.equal(targets.data.activeTargets.length, 10, 'Expected 10 active scrape targets');
-  assert.ok(targets.data.activeTargets.every((item) => item.health === 'up'), 'All 10 scrape targets must be UP');
-  console.log('PASS Prometheus: 10/10 scrape targets UP (blackbox + white-box + alertmanager)');
+  assert.ok(targets.data.activeTargets.length >= 12, 'Expected at least 12 active scrape targets (including node-exporter and cadvisor)');
+  assert.ok(targets.data.activeTargets.every((item) => item.health === 'up'), 'All active scrape targets must be UP');
+  console.log(`PASS Prometheus: ${targets.data.activeTargets.length}/${targets.data.activeTargets.length} scrape targets UP (blackbox + white-box + node-exporter + cadvisor + alertmanager)`);
 
   const webSeries = await json(
     prometheus,

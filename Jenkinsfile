@@ -13,8 +13,9 @@ pipeline {
         string(name: 'GIT_BRANCH', defaultValue: 'main', description: 'Nhánh cần kiểm thử và triển khai.')
         string(name: 'GIT_COMMIT', defaultValue: '', description: 'SHA từ webhook; để trống để lấy commit mới nhất của nhánh.')
         string(name: 'WEBHOOK_DELIVERY', defaultValue: '', description: 'Mã delivery GitHub để đối chiếu lần chạy tự động.')
+        booleanParam(name: 'RUN_SONARQUBE', defaultValue: false, description: 'Chạy phân tích mã tĩnh SonarQube (SAST) và kiểm tra Quality Gate khi SONAR_HOST_URL được cấu hình.')
         booleanParam(name: 'DEPLOY', defaultValue: true, description: 'Triển khai Web/AI/Gateway sau khi qua toàn bộ cổng chất lượng.')
-        booleanParam(name: 'PUSH_REGISTRY', defaultValue: false, description: 'Tùy chọn đẩy Docker image lên Registry (cần cấu hình REGISTRY_IMAGE_PREFIX).')
+        booleanParam(name: 'PUSH_REGISTRY', defaultValue: false, description: 'Tùy chọn đẩy 3 Docker images (web, ai, gateway) lên Registry (cần cấu hình REGISTRY_IMAGE_PREFIX).')
     }
 
     triggers { pollSCM('H/5 * * * *') }
@@ -77,6 +78,25 @@ pipeline {
                 '''
             }
         }
+        stage('SonarQube analysis') {
+            when {
+                expression { return params.RUN_SONARQUBE }
+            }
+            steps {
+                withCredentials([string(credentialsId: 'joblink-sonar-token', variable: 'SONAR_TOKEN')]) {
+                    sh '''
+                        : "${SONAR_HOST_URL:?Set SONAR_HOST_URL in Jenkins}"
+                        docker run --rm --network joblink-network \
+                            -e SONAR_HOST_URL -e SONAR_TOKEN \
+                            --volumes-from "$HOSTNAME":ro -w "$WORKSPACE" \
+                            sonarsource/sonar-scanner-cli:11 \
+                            -Dsonar.working.directory=/tmp/sonar-work \
+                            -Dsonar.qualitygate.wait=true > .ci/sonarqube.log 2>&1 || { cat .ci/sonarqube.log; exit 1; }
+                        cat .ci/sonarqube.log
+                    '''
+                }
+            }
+        }
         stage('Build images') {
             steps {
                 sh 'docker compose -f docker-compose.yml build web ai gateway'
@@ -102,8 +122,10 @@ pipeline {
                     COMMIT_SHORT=$(head -c 7 .ci/source-commit.txt 2>/dev/null || echo "latest")
                     docker tag "$JOBLINK_WEB_IMAGE" "${REGISTRY_IMAGE_PREFIX}/joblink-web:${COMMIT_SHORT}"
                     docker tag "$JOBLINK_AI_IMAGE" "${REGISTRY_IMAGE_PREFIX}/joblink-ai:${COMMIT_SHORT}"
+                    docker tag "$JOBLINK_GATEWAY_IMAGE" "${REGISTRY_IMAGE_PREFIX}/joblink-gateway:${COMMIT_SHORT}"
                     docker push "${REGISTRY_IMAGE_PREFIX}/joblink-web:${COMMIT_SHORT}"
                     docker push "${REGISTRY_IMAGE_PREFIX}/joblink-ai:${COMMIT_SHORT}"
+                    docker push "${REGISTRY_IMAGE_PREFIX}/joblink-gateway:${COMMIT_SHORT}"
                 '''
             }
         }

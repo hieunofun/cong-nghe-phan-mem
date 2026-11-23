@@ -116,9 +116,9 @@ services:
       JWT_SECRET: ${JWT_SECRET:-joblink_docker_jwt_secret_2026_xyz}
       JWT_EXPIRES_IN: 7d
       SESSION_SECRET: ${SESSION_SECRET:-joblink_docker_session_secret_2026_abc}
-      BASE_URL: http://localhost:3000
-      FRONTEND_URL: http://localhost:3000
-      CORS_ORIGINS: http://localhost:8088,http://127.0.0.1:8088,http://127.0.0.1:3000
+      BASE_URL: ${BASE_URL:-http://localhost:3000}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8088,http://127.0.0.1:8088,http://127.0.0.1:3000,http://136.110.25.226,http://136.110.25.226:8088}
       AI_SERVICE_URL: http://ai:5000
       AI_SERVICE_TOKEN: ${AI_SERVICE_TOKEN:-joblink_internal_ai_token_2026}
       DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL:-}
@@ -149,7 +149,8 @@ services:
       web:
         condition: service_healthy
     ports:
-      - "127.0.0.1:${GATEWAY_PORT:-8088}:80"
+      - "${GATEWAY_BIND_HOST:-0.0.0.0}:${GATEWAY_PORT:-8088}:80"
+      - "${GATEWAY_PUBLIC_BIND:-127.0.0.1:18088}:80"
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/gateway-health"]
       interval: 10s

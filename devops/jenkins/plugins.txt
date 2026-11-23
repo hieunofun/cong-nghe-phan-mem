@@ -4,3 +4,4 @@ pipeline-stage-view
 git
 junit
 timestamper
+ssh-agent

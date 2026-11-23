@@ -72,9 +72,23 @@ if (scmJob.getProperty(ParametersDefinitionProperty) == null) {
         new StringParameterDefinition('GIT_BRANCH', 'main', 'Nhánh triển khai.'),
         new StringParameterDefinition('GIT_COMMIT', '', 'SHA từ webhook; trống = đầu nhánh.'),
         new StringParameterDefinition('WEBHOOK_DELIVERY', '', 'GitHub delivery ID.'),
+        new BooleanParameterDefinition('RUN_SONARQUBE', false, 'Bật phân tích mã tĩnh SonarQube khi cấu hình SONAR_HOST_URL.'),
         new BooleanParameterDefinition('DEPLOY', true, 'Triển khai sau kiểm thử.'),
-        new BooleanParameterDefinition('PUSH_REGISTRY', false, 'Đẩy image lên Container Registry khi cấu hình.')
+        new BooleanParameterDefinition('PUSH_REGISTRY', false, 'Đẩy 3 images (web, ai, gateway) lên Container Registry khi cấu hình.')
     ]))
 }
 scmJob.save()
+
+// Remote Linux server deployment pipeline over SSH + Container Registry
+def sshJob = instance.getItem('joblink-ssh-deploy')
+if (sshJob == null) {
+    sshJob = instance.createProject(WorkflowJob, 'joblink-ssh-deploy')
+}
+def sshScm = new GitSCM(remoteUrl)
+sshScm.branches = [new hudson.plugins.git.BranchSpec('*/main')]
+def sshDef = new CpsScmFlowDefinition(sshScm, 'Jenkinsfile.ssh-deploy')
+sshDef.setLightweight(true)
+sshJob.setDefinition(sshDef)
+sshJob.setDescription('Remote Public Server CD: Build + Verify -> Push 3 images to Registry -> Deploy & Smoke Check over SSH -> Remote Auto-Rollback.')
+sshJob.save()
 instance.save()

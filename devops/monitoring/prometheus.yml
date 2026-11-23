@@ -23,6 +23,18 @@ scrape_configs:
     static_configs:
       - targets: ['alertmanager:9093']
 
+  # Giám sát tài nguyên máy chủ Host (CPU, RAM, Disk, Network) qua Node Exporter
+  - job_name: node-exporter
+    static_configs:
+      - targets: ['node-exporter:9100']
+        labels: { service: host }
+
+  # Giám sát tài nguyên từng Docker Container (CPU, RAM Working Set, I/O) qua cAdvisor
+  - job_name: cadvisor
+    static_configs:
+      - targets: ['cadvisor:8080']
+        labels: { service: docker-containers }
+
   # White-box metrics nội tại của ứng dụng Web (Node.js Express)
   - job_name: joblink-web-metrics
     metrics_path: /metrics

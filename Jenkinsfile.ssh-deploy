@@ -1,0 +1,175 @@
+// Pipeline thứ 2: Triển khai JobLink lên máy chủ Linux public qua SSH và Container Registry.
+pipeline {
+    agent any
+    options {
+        skipDefaultCheckout(true)
+        disableConcurrentBuilds()
+        timestamps()
+        timeout(time: 30, unit: 'MINUTES')
+        buildDiscarder(logRotator(numToKeepStr: '10', artifactNumToKeepStr: '5'))
+    }
+    parameters {
+        string(name: 'GIT_URL', defaultValue: 'https://github.com/hieunofun/cong-nghe-phan-mem.git', description: 'Repository Git chính thức của Nhóm 02.')
+        string(name: 'GIT_BRANCH', defaultValue: 'main', description: 'Nhánh cần build và triển khai lên server public.')
+        string(name: 'GIT_COMMIT', defaultValue: '', description: 'SHA commit 40 ký tự từ Webhook (để trống = mới nhất).')
+        string(name: 'REGISTRY_IMAGE_PREFIX', defaultValue: 'ghcr.io/hieunofun', description: 'Tiền tố Container Registry (GHCR hoặc Docker Hub).')
+        string(name: 'PROD_SSH_HOST', defaultValue: '136.110.25.226', description: 'Địa chỉ IP hoặc tên miền máy chủ Linux public (GCP asia-southeast1-a).')
+        string(name: 'PROD_SSH_USER', defaultValue: 'ubuntu', description: 'Tài khoản triển khai không phải root trên máy chủ Linux.')
+        string(name: 'PROD_APP_DIR', defaultValue: '/opt/joblink', description: 'Thư mục chứa docker-compose.yml và .env trên máy chủ đích.')
+        string(name: 'SSH_CREDENTIALS_ID', defaultValue: 'joblink-prod-ssh', description: 'ID khóa SSH ED25519 trong Jenkins Credentials.')
+        string(name: 'PUBLIC_URL', defaultValue: 'http://136.110.25.226', description: 'URL công khai dùng kiểm chứng sau triển khai (vd: http://136.110.25.226).')
+        booleanParam(name: 'RUN_SONARQUBE', defaultValue: false, description: 'Bật phân tích mã tĩnh SonarQube Quality Gate trước khi đóng gói.')
+        booleanParam(name: 'DEPLOY_REMOTE', defaultValue: false, description: 'Đẩy ảnh lên Registry và thực thi triển khai qua SSH.')
+    }
+    environment {
+        JOBLINK_WEB_IMAGE = "joblink-web:${BUILD_TAG}"
+        JOBLINK_AI_IMAGE = "joblink-ai:${BUILD_TAG}"
+        JOBLINK_GATEWAY_IMAGE = "joblink-gateway:${BUILD_TAG}"
+        AI_LIGHTWEIGHT_MODE = 'true'
+        CI = 'true'
+    }
+    stages {
+        stage('Source') {
+            steps {
+                deleteDir()
+                script {
+                    if (params.DEPLOY_REMOTE && ![params.REGISTRY_IMAGE_PREFIX, params.PROD_SSH_HOST, params.PUBLIC_URL].every { it?.trim() }) {
+                        error('Triển khai từ xa yêu cầu REGISTRY_IMAGE_PREFIX, PROD_SSH_HOST và PUBLIC_URL.')
+                    }
+                    def revision = params.GIT_COMMIT?.trim()
+                    if (revision && !(revision ==~ /[0-9a-fA-F]{40}/)) {
+                        error('GIT_COMMIT phải là SHA Git gồm 40 ký tự hex.')
+                    }
+                    checkout([$class: 'GitSCM',
+                        branches: [[name: revision ?: "*/${params.GIT_BRANCH}"]],
+                        userRemoteConfigs: [[url: params.GIT_URL]]])
+                    sh 'mkdir -p .ci && git rev-parse HEAD > .ci/source-commit.txt'
+                    currentBuild.description = "SSH-Deploy ${params.GIT_BRANCH} ${readFile('.ci/source-commit.txt').trim().take(7)}"
+                }
+            }
+        }
+        stage('Node tests') {
+            steps {
+                sh 'npm ci --no-audit --no-fund'
+                sh 'node --test --test-reporter=junit --test-reporter-destination=.ci/node-tests.xml tests/*.test.js'
+            }
+        }
+        stage('Security & config audit') {
+            steps {
+                sh 'npm audit --omit=dev --audit-level=high > .ci/npm-audit.txt 2>&1'
+                sh 'docker compose -f docker-compose.yml config -q'
+            }
+        }
+        stage('SonarQube analysis') {
+            when {
+                expression { return params.RUN_SONARQUBE }
+            }
+            steps {
+                withCredentials([string(credentialsId: 'joblink-sonar-token', variable: 'SONAR_TOKEN')]) {
+                    sh '''
+                        : "${SONAR_HOST_URL:?Set SONAR_HOST_URL in Jenkins}"
+                        docker run --rm --network joblink-network \
+                            -e SONAR_HOST_URL -e SONAR_TOKEN \
+                            --volumes-from "$HOSTNAME":ro -w "$WORKSPACE" \
+                            sonarsource/sonar-scanner-cli:11 \
+                            -Dsonar.working.directory=/tmp/sonar-work \
+                            -Dsonar.qualitygate.wait=true > .ci/sonarqube.log 2>&1 || { cat .ci/sonarqube.log; exit 1; }
+                        cat .ci/sonarqube.log
+                    '''
+                }
+            }
+        }
+        stage('Build & verify images') {
+            steps {
+                sh 'docker compose -f docker-compose.yml build web ai gateway'
+                sh 'docker run --rm --network none "$JOBLINK_AI_IMAGE" python -m unittest ai_service.test_multilingual_matching'
+                sh '''
+                    WEB_UID=$(docker run --rm --network none --entrypoint id "$JOBLINK_WEB_IMAGE" -u)
+                    AI_UID=$(docker run --rm --network none --entrypoint id "$JOBLINK_AI_IMAGE" -u)
+                    test "$WEB_UID" != "0" && test "$AI_UID" != "0"
+                '''
+            }
+        }
+        stage('Registry publish') {
+            when {
+                expression { return params.DEPLOY_REMOTE }
+            }
+            steps {
+                sh '''
+                    SHA=$(head -c 7 .ci/source-commit.txt)
+                    for ENTRY in "web=$JOBLINK_WEB_IMAGE" "ai=$JOBLINK_AI_IMAGE" "gateway=$JOBLINK_GATEWAY_IMAGE"; do
+                        SVC=${ENTRY%%=*}
+                        SRC_IMG=${ENTRY#*=}
+                        docker tag "$SRC_IMG" "${REGISTRY_IMAGE_PREFIX}/joblink-${SVC}:${SHA}"
+                        docker push "${REGISTRY_IMAGE_PREFIX}/joblink-${SVC}:${SHA}"
+                    done
+                '''
+            }
+        }
+        stage('Remote SSH deploy & smoke checks') {
+            when {
+                expression { return params.DEPLOY_REMOTE }
+            }
+            steps {
+                sshagent(credentials: [params.SSH_CREDENTIALS_ID]) {
+                    sh '''
+                        SHA=$(head -c 7 .ci/source-commit.txt)
+                        touch .ci/remote-deploy-started
+                        ssh -o StrictHostKeyChecking=yes -o BatchMode=yes \
+                            "${PROD_SSH_USER}@${PROD_SSH_HOST}" \
+                            "set -e
+                             cd '${PROD_APP_DIR}'
+                             export JOBLINK_WEB_IMAGE='${REGISTRY_IMAGE_PREFIX}/joblink-web:${SHA}'
+                             export JOBLINK_AI_IMAGE='${REGISTRY_IMAGE_PREFIX}/joblink-ai:${SHA}'
+                             export JOBLINK_GATEWAY_IMAGE='${REGISTRY_IMAGE_PREFIX}/joblink-gateway:${SHA}'
+                             docker compose pull ai web gateway
+                             node scripts/ci-deploy.js deploy
+                             node scripts/docker-check.js"
+                    '''
+                }
+            }
+        }
+        stage('Public endpoint verification') {
+            when {
+                expression { return params.DEPLOY_REMOTE }
+            }
+            steps {
+                sh '''
+                    curl -fsS "${PUBLIC_URL%/}/gateway-health"
+                    curl -fsS "${PUBLIC_URL%/}/ready"
+                    STATUS=$(curl -s -o /dev/null -w '%{http_code}' "${PUBLIC_URL%/}/metrics")
+                    echo "External /metrics HTTP status: ${STATUS}"
+                    test "$STATUS" = "403"
+                '''
+                sshagent(credentials: [params.SSH_CREDENTIALS_ID]) {
+                    sh '''
+                        ssh -o StrictHostKeyChecking=yes -o BatchMode=yes \
+                            "${PROD_SSH_USER}@${PROD_SSH_HOST}" \
+                            "cd '${PROD_APP_DIR}' && node scripts/ci-deploy.js confirm"
+                    '''
+                }
+            }
+        }
+    }
+    post {
+        unsuccessful {
+            script {
+                if (params.DEPLOY_REMOTE && params.PROD_SSH_HOST?.trim() && fileExists('.ci/remote-deploy-started')) {
+                    sshagent(credentials: [params.SSH_CREDENTIALS_ID]) {
+                        sh '''
+                            ssh -o StrictHostKeyChecking=yes -o BatchMode=yes \
+                                "${PROD_SSH_USER}@${PROD_SSH_HOST}" \
+                                "cd '${PROD_APP_DIR}' && if [ -f .ci/deployment.json ]; then node scripts/ci-deploy.js rollback; fi"
+                        '''
+                    }
+                }
+            }
+        }
+        always {
+            junit testResults: '.ci/node-tests.xml', allowEmptyResults: true
+        }
+        cleanup {
+            archiveArtifacts artifacts: '.ci/*', allowEmptyArchive: true
+        }
+    }
+}

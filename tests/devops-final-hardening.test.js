@@ -41,6 +41,10 @@ test('Docker Compose stacks configure log rotation, shared AI token, Nginx gatew
 
   assert.match(devopsCompose, /alertmanager:/);
   assert.match(devopsCompose, /prom\/alertmanager:/);
+  assert.match(devopsCompose, /node-exporter:/);
+  assert.match(devopsCompose, /prom\/node-exporter:/);
+  assert.match(devopsCompose, /cadvisor:/);
+  assert.match(devopsCompose, /sonarqube:/);
   assert.match(devopsCompose, /max-size:\s*"10m"/);
 });
 
@@ -61,6 +65,8 @@ test('Prometheus, Alertmanager, and Grafana configurations cover white-box and b
   const dashboard = JSON.parse(read('devops/grafana/dashboards/joblink-overview.json'));
 
   assert.match(prom, /targets:\s*\['alertmanager:9093'\]/);
+  assert.match(prom, /job_name:\s*node-exporter/);
+  assert.match(prom, /job_name:\s*cadvisor/);
   assert.match(prom, /job_name:\s*joblink-web-metrics/);
   assert.match(prom, /job_name:\s*joblink-ai-metrics/);
   assert.match(prom, /service:\s*gateway/);
@@ -70,7 +76,9 @@ test('Prometheus, Alertmanager, and Grafana configurations cover white-box and b
     'JobLinkProbeMissing',
     'JobLinkSlowResponse',
     'JobLinkHighErrorRate',
-    'JobLinkHighMemoryUsage'
+    'JobLinkHighMemoryUsage',
+    'JobLinkHostHighCPU',
+    'JobLinkContainerHighMemory'
   ]) {
     assert.match(alerts, new RegExp(`alert:\\s*${rule}`));
   }
@@ -78,16 +86,22 @@ test('Prometheus, Alertmanager, and Grafana configurations cover white-box and b
   assert.match(alertmanager, /http:\/\/web:3000\/internal\/alert-webhook/);
   assert.match(alertmanager, /send_resolved:\s*true/);
   assert.equal(dashboard.panels.length, 13);
+
+  const infraDashboard = JSON.parse(read('devops/grafana/dashboards/joblink-infrastructure.json'));
+  assert.ok(infraDashboard.panels.length >= 6);
 });
 
-test('Jenkinsfile and GitHub Actions enforce 8-stage pipeline, security audit, and rollback', () => {
+test('Jenkinsfile, Jenkinsfile.ssh-deploy, SonarQube, and GitHub Actions enforce full DevSecOps CD', () => {
   const jenkins = read('Jenkinsfile');
+  const sshJenkins = read('Jenkinsfile.ssh-deploy');
+  const sonarProps = read('sonar-project.properties');
   const ghActions = read('.github/workflows/ci.yml');
 
   for (const stage of [
     'Source',
     'Node tests',
     'Security & config audit',
+    'SonarQube analysis',
     'Build images',
     'AI & container checks',
     'Registry publish',
@@ -96,7 +110,19 @@ test('Jenkinsfile and GitHub Actions enforce 8-stage pipeline, security audit, a
   ]) {
     assert.match(jenkins, new RegExp(`stage\\('${stage}'\\)`));
   }
+  assert.match(jenkins, /joblink-gateway:\$\{COMMIT_SHORT\}/);
   assert.match(jenkins, /node scripts\/ci-deploy\.js rollback/);
+
+  assert.match(sshJenkins, /sshagent\(credentials:/);
+  assert.match(sshJenkins, /StrictHostKeyChecking=yes/);
+  assert.match(sshJenkins, /JOBLINK_GATEWAY_IMAGE/);
+  assert.match(sshJenkins, /node scripts\/ci-deploy\.js rollback/);
+  const privateSmoke = sshJenkins.indexOf('node scripts/docker-check.js');
+  const publicCheck = sshJenkins.indexOf('test "$STATUS" = "403"');
+  const confirm = sshJenkins.indexOf('node scripts/ci-deploy.js confirm');
+  assert.ok(privateSmoke >= 0 && privateSmoke < publicCheck && publicCheck < confirm);
+
+  assert.match(sonarProps, /sonar\.projectKey=joblink-nhom02/);
 
   assert.match(ghActions, /npm audit --audit-level=high/);
   assert.match(ghActions, /ai_service\.test_multilingual_matching/);

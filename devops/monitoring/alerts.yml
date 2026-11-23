@@ -47,3 +47,23 @@ groups:
         annotations:
           summary: 'JobLink Web RSS memory exceeds 400 MiB'
           description: 'Node.js container resident memory stayed above 400 MiB for 2 minutes.'
+
+      - alert: JobLinkHostHighCPU
+        expr: (1 - avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[2m]))) * 100 > 85
+        for: 2m
+        labels:
+          severity: warning
+          service: host
+        annotations:
+          summary: 'Host CPU utilization exceeds 85%'
+          description: 'Node Exporter reports sustained host CPU usage above 85% for 2 minutes.'
+
+      - alert: JobLinkContainerHighMemory
+        expr: container_memory_working_set_bytes{name=~"joblink-.*"} > 536870912
+        for: 2m
+        labels:
+          severity: warning
+          service: docker-containers
+        annotations:
+          summary: 'Container {{ $labels.name }} memory exceeds 512 MiB'
+          description: 'cAdvisor reports container {{ $labels.name }} working-set memory above 512 MiB for 2 minutes.'

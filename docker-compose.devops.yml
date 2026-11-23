@@ -20,6 +20,7 @@ services:
       JENKINS_ADMIN_ID: admin
       JENKINS_ADMIN_PASSWORD: ${JENKINS_ADMIN_PASSWORD:?Run node scripts/devops-demo.js up first}
       JOBLINK_COMPOSE_PROJECT: ${COMPOSE_PROJECT_NAME:-trienkhaiphanmemcki}
+      SONAR_HOST_URL: ${SONAR_HOST_URL:-http://sonarqube:9000}
     ports:
       - "127.0.0.1:8080:8080"
     volumes:
@@ -50,6 +51,74 @@ services:
       timeout: 5s
       retries: 12
     mem_limit: 64m
+    logging: *devops-logging
+    networks:
+      - joblink-network
+
+  node-exporter:
+    image: prom/node-exporter:v1.9.1
+    container_name: joblink-node-exporter
+    restart: unless-stopped
+    command:
+      - --path.procfs=/host/proc
+      - --path.sysfs=/host/sys
+      - --path.rootfs=/rootfs
+      - --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)
+    ports:
+      - "127.0.0.1:9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:9100/metrics"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    mem_limit: 64m
+    logging: *devops-logging
+    networks:
+      - joblink-network
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    container_name: joblink-cadvisor
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8081:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8080/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    mem_limit: 128m
+    logging: *devops-logging
+    networks:
+      - joblink-network
+
+  sonarqube:
+    image: sonarqube:lts-community
+    container_name: joblink-sonarqube
+    profiles: ["sonar"]
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:9000:9000"
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+      - sonarqube_logs:/opt/sonarqube/logs
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:9000/api/system/status"]
+      interval: 15s
+      timeout: 5s
+      retries: 24
+      start_period: 60s
+    mem_limit: 2g
     logging: *devops-logging
     networks:
       - joblink-network
@@ -95,6 +164,10 @@ services:
       blackbox:
         condition: service_healthy
       alertmanager:
+        condition: service_healthy
+      node-exporter:
+        condition: service_healthy
+      cadvisor:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:9090/-/ready"]
@@ -148,3 +221,9 @@ volumes:
     name: joblink_grafana_data
   alertmanager_data:
     name: joblink_alertmanager_data
+  sonarqube_data:
+    name: joblink_sonarqube_data
+  sonarqube_extensions:
+    name: joblink_sonarqube_extensions
+  sonarqube_logs:
+    name: joblink_sonarqube_logs
