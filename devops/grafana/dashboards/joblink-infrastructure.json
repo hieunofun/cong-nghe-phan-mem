@@ -49,7 +49,7 @@
       "gridPos": { "x": 0, "y": 7, "w": 8, "h": 5 },
       "targets": [
         {
-          "expr": "(node_filesystem_avail_bytes{mountpoint=\"/rootfs\"} / node_filesystem_size_bytes{mountpoint=\"/rootfs\"}) * 100",
+          "expr": "(node_filesystem_avail_bytes{job=\"node-exporter\",mountpoint=\"/\"} / node_filesystem_size_bytes{job=\"node-exporter\",mountpoint=\"/\"}) * 100",
           "legendFormat": "Disk Free %",
           "refId": "A",
           "datasource": { "type": "prometheus", "uid": "joblink-prometheus" }

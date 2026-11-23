@@ -84,16 +84,7 @@ pipeline {
             }
             steps {
                 withCredentials([string(credentialsId: 'joblink-sonar-token', variable: 'SONAR_TOKEN')]) {
-                    sh '''
-                        : "${SONAR_HOST_URL:?Set SONAR_HOST_URL in Jenkins}"
-                        docker run --rm --network joblink-network \
-                            -e SONAR_HOST_URL -e SONAR_TOKEN \
-                            --volumes-from "$HOSTNAME":ro -w "$WORKSPACE" \
-                            sonarsource/sonar-scanner-cli:11 \
-                            -Dsonar.working.directory=/tmp/sonar-work \
-                            -Dsonar.qualitygate.wait=true > .ci/sonarqube.log 2>&1 || { cat .ci/sonarqube.log; exit 1; }
-                        cat .ci/sonarqube.log
-                    '''
+                    sh 'sh scripts/ci-sonar.sh > .ci/sonarqube.log 2>&1 || { cat .ci/sonarqube.log; exit 1; }; cat .ci/sonarqube.log'
                 }
             }
         }

@@ -49,18 +49,33 @@ async function main() {
   assert.equal(aiSeries.data.result.length, 1, 'Missing white-box AI mode metric');
   console.log('PASS White-box metrics ingested from both Web and AI services');
 
+  const filesystem = await json(
+    prometheus,
+    `/api/v1/query?query=${encodeURIComponent('node_filesystem_avail_bytes{job="node-exporter",mountpoint="/"}')}`
+  );
+  assert.ok(filesystem.data.result.length > 0, 'Missing root filesystem metrics from Node Exporter');
+  const containerMemory = await json(
+    prometheus,
+    `/api/v1/query?query=${encodeURIComponent('container_memory_working_set_bytes{job="cadvisor",name="joblink-web"}')}`
+  );
+  assert.ok(containerMemory.data.result.length > 0, 'cAdvisor does not report metrics for the Web container');
+  console.log('PASS Infrastructure metrics present for the root filesystem and Web container');
+
   const rules = await json(prometheus, '/api/v1/rules');
   const alerts = rules.data.groups.flatMap((group) => group.rules);
-  for (const name of [
+  const expectedAlerts = [
     'JobLinkServiceDown',
     'JobLinkProbeMissing',
     'JobLinkSlowResponse',
     'JobLinkHighErrorRate',
-    'JobLinkHighMemoryUsage'
-  ]) {
+    'JobLinkHighMemoryUsage',
+    'JobLinkHostHighCPU',
+    'JobLinkContainerHighMemory'
+  ];
+  for (const name of expectedAlerts) {
     assert.ok(alerts.some((rule) => rule.name === name && rule.health === 'ok'), `Missing alert rule ${name}`);
   }
-  console.log('PASS Prometheus: 5/5 alert rules loaded and healthy');
+  console.log(`PASS Prometheus: ${expectedAlerts.length}/${expectedAlerts.length} alert rules loaded and healthy`);
 
   const amStatus = await json(alertmanager, '/api/v2/status');
   assert.ok(amStatus.cluster?.status === 'ready' || amStatus.versionInfo, 'Alertmanager is not ready');
@@ -75,22 +90,26 @@ async function main() {
   ).match(/^GRAFANA_ADMIN_PASSWORD=(.+)$/m)?.[1].trim();
   assert.ok(password, 'Grafana admin password is required');
   const headers = { Authorization: `Basic ${Buffer.from(`admin:${password}`).toString('base64')}` };
-  const dashboard = await json(grafana, '/api/dashboards/uid/joblink-overview', headers);
-  const expected = JSON.parse(fs.readFileSync(
-    path.resolve(__dirname, '../devops/grafana/dashboards/joblink-overview.json'),
-    'utf8'
-  ));
-  assert.equal(dashboard.dashboard.title, expected.title, 'Grafana has an outdated dashboard title');
-  assert.equal(dashboard.dashboard.panels.length, expected.panels.length);
-  for (const panel of expected.panels) {
-    const actual = dashboard.dashboard.panels.find((item) => item.id === panel.id);
-    assert.equal(actual?.title, panel.title, `Dashboard panel ${panel.id} is outdated`);
-    assert.equal(actual?.type, panel.type, `Dashboard panel ${panel.id} has the wrong visualization`);
+  const summaries = [];
+  for (const uid of ['joblink-overview', 'joblink-infrastructure']) {
+    const { dashboard } = await json(grafana, `/api/dashboards/uid/${uid}`, headers);
+    const expected = JSON.parse(fs.readFileSync(
+      path.resolve(__dirname, `../devops/grafana/dashboards/${uid}.json`),
+      'utf8'
+    ));
+    assert.equal(dashboard.title, expected.title, `${uid} has an outdated dashboard title`);
+    assert.equal(dashboard.panels.length, expected.panels.length, `${uid} panel count`);
+    for (const panel of expected.panels) {
+      const actual = dashboard.panels.find((item) => item.id === panel.id);
+      assert.equal(actual?.title, panel.title, `${uid} panel ${panel.id} is outdated`);
+      assert.equal(actual?.type, panel.type, `${uid} panel ${panel.id} has the wrong visualization`);
+    }
+    summaries.push(`${uid} (${expected.panels.length} panels)`);
   }
   const datasource = await json(grafana, '/api/datasources/uid/joblink-prometheus/health', headers);
   assert.equal(datasource.status, 'OK');
-  console.log(`PASS Grafana: ${expected.panels.length}-panel dashboard provisioned and Prometheus datasource connected`);
-  console.log('11/11 full-stack monitoring checks passed.');
+  console.log(`PASS Grafana: ${summaries.join(', ')} provisioned and Prometheus datasource connected`);
+  console.log('12/12 full-stack monitoring checks passed.');
 }
 
 main().catch((error) => {
