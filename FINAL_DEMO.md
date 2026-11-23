@@ -5,7 +5,9 @@ Hệ thống hoàn thiện toàn bộ chu trình **DevSecOps & Production Deploy
 
 ---
 
-## 1. Kiến trúc Triển khai Hoàn chỉnh (9 Containers / 2 Compose Stacks)
+## 1. Kiến trúc triển khai
+
+Máy ảo Google Cloud chạy 10 container thường trực (4 ứng dụng, 6 giám sát). Jenkins chạy trên máy điều phối. SonarQube được bật qua profile `sonar` để phân tích mã nguồn.
 
 ```text
 [Người dùng / Trình duyệt]
@@ -34,11 +36,14 @@ Hệ thống hoàn thiện toàn bộ chu trình **DevSecOps & Production Deploy
 
 [Tầng CI/CD & Full-Stack Observability — docker-compose.devops.yml]
  • GitHub Push (main) ──► Cloudflare HTTPS Tunnel ──► Signed HMAC Receiver (127.0.0.1:9010)
- • joblink-jenkins (127.0.0.1:8080)    : Pipeline 8 stages + JUnit + Smoke Check + Auto-Rollback
- • joblink-blackbox (internal:9115)    : 5 HTTP/TCP probes (Gateway, Web, AI, MySQL, DB API)
- • joblink-prometheus (127.0.0.1:9090) : 10 scrape targets (Blackbox + White-box /metrics) + 5 rules
- • joblink-alertmanager (127.0.0.1:9093): Điều phối [FIRING] / [RESOLVED] tới Webhook Sink & Discord
- • joblink-grafana (127.0.0.1:3001)    : Provisioning-as-Code Dashboard 13 panels realtime
+ • joblink-jenkins (127.0.0.1:8080)      : Pipeline local + Jenkinsfile.ssh-deploy + Auto-Rollback
+ • joblink-blackbox (internal:9115)      : 5 HTTP/TCP probes (Gateway, Web, AI, MySQL, DB API)
+ • joblink-node-exporter (127.0.0.1:9100): Giám sát tài nguyên Host (CPU, RAM, Disk, Network)
+ • joblink-cadvisor (127.0.0.1:8081)     : Giám sát tài nguyên từng Container (CPU, RAM, Net I/O)
+ • joblink-prometheus (127.0.0.1:9090)   : 12 scrape targets (4 lớp) + 7 alert rules
+ • joblink-alertmanager (127.0.0.1:9093) : Điều phối [FIRING] / [RESOLVED] tới Webhook Sink & Discord
+ • joblink-grafana (127.0.0.1:3001)      : Provisioning-as-Code 2 Dashboards (13 + 6 panels)
+ • joblink-sonarqube (--profile sonar)   : Phân tích mã tĩnh SAST (:9000) theo sonar-project.properties
 ```
 
 ---
@@ -89,6 +94,12 @@ Khi có `git push origin main`, GitHub gửi sự kiện qua HTTPS tunnel vào `
 
 **Cơ chế Tự động Rollback:** Nếu bước 7 hoặc 8 thất bại (hoặc timeout), khối `post.unsuccessful` tự động gọi `node scripts/ci-deploy.js rollback` khôi phục bộ 3 image ổn định liền trước, giữ nguyên MySQL/volumes, lưu bằng chứng vào `deployment.json` và giữ trạng thái build `FAILURE`.
 
+### 3.3. SonarQube và pipeline SSH lên Google Cloud
+
+- **SonarQube:** Khởi chạy profile `sonar` trên máy Jenkins, dùng `SONAR_HOST_URL=http://sonarqube:9000` và Jenkins credential `joblink-sonar-token`. Bật `RUN_SONARQUBE` để Jenkins chờ Quality Gate trước khi build image.
+- **`joblink-ssh-deploy`:** Bật `DEPLOY_REMOTE` và chọn Registry, VPS cùng `PUBLIC_URL`. Job đẩy ba image theo SHA, kết nối SSH bằng credential `joblink-prod-ssh` và xác thực `known_hosts`. Sau smoke test, job kiểm tra `/gateway-health` và `/ready` trả `200`, `/metrics` trả `403`, rồi mới xác nhận rollout. Nếu kiểm tra lỗi, job gọi rollback trên VPS.
+- **URL trình diễn:** [JobLink trên Google Cloud](http://136.110.25.226/). Với registry demo `127.0.0.1:5011/joblink`, duy trì SSH reverse tunnel từ VPS về registry trong lúc đẩy và kéo image.
+
 ---
 
 ## 4. Điểm nhấn Bảo mật Triển khai (DevSecOps Hardening)
@@ -100,15 +111,17 @@ Khi có `git push origin main`, GitHub gửi sự kiện qua HTTPS tunnel vào `
 
 ---
 
-## 5. Giám sát Toàn diện (Blackbox + White-Box + Alertmanager)
+## 5. Giám sát ứng dụng, máy chủ và container
 
-Không chỉ dừng ở kiểm tra sống/chết bên ngoài, hệ thống thu thập **10 scrape targets** vào Prometheus mỗi 10 giây:
+Prometheus thu thập **12 scrape targets** mỗi 10 giây:
 - **5 Blackbox Probes:** `gateway` (`/gateway-health`), `web` (`/health`), `ai` (`/health`), `mysql` (TCP `3306`), và `database-api` (`/api/jobs?limit=1`).
 - **White-box Metrics nội tại (`/metrics`):**
   - `joblink-web`: Tổng request theo route/status (`joblink_http_requests_total`), tỷ lệ lỗi `4xx`/`5xx`, histogram độ trễ API p95 (`joblink_http_request_duration_seconds`), bộ nhớ RSS/Heap (`nodejs_resident_memory_bytes`), độ trễ Event Loop (`nodejs_eventloop_lag_seconds`).
   - `joblink-ai`: Lưu lượng xử lý AI (`joblink_ai_requests_total`), thời gian xử lý cộng dồn và số lượng tài liệu RAG.
-- **5 Luật Cảnh báo & Điều phối qua Alertmanager:**
+- **Node Exporter và cAdvisor:** Thu thập tài nguyên máy chủ và từng container. Grafana nạp `joblink-overview` (13 panel) và `joblink-infrastructure` (6 panel).
+- **7 luật cảnh báo và Alertmanager:**
   - `JobLinkServiceDown`, `JobLinkProbeMissing`, `JobLinkSlowResponse`, `JobLinkHighErrorRate` (5xx), `JobLinkHighMemoryUsage` (> 400 MiB).
+  - `JobLinkHostHighCPU` (> 85% trong 2 phút) và `JobLinkContainerHighMemory` (> 512 MiB trong 2 phút).
   - Khi sự cố xảy ra hoặc hồi phục, **Alertmanager (`:9093`)** tự động bắn webhook `[FIRING]` và `[RESOLVED]` tới sink nội bộ `/internal/alert-webhook` (đếm trên panel 13 của Grafana) và chuyển tiếp sang **Discord / Slack** nếu cấu hình `DISCORD_WEBHOOK_URL`.
 
 Kiểm tra nhanh toàn bộ hệ thống giám sát và diễn tập sự cố:
@@ -151,5 +164,15 @@ npm run devops:stop
 | **Quản trị viên (Admin)** | `admin@joblink.vn` | `Admin@123` |
 
 - **Slide Bảo vệ Cuối kỳ (24 trang):** `JobLink_Final_Presentation.pptx` (sinh tự động bằng `py -3.14 generate_joblink_final_slides.py`).
+- **Minh chứng trên máy trình chiếu:** `artifacts/defense-2026-11-23/` có bản báo cáo và ảnh/log thực nghiệm. Trình bày kết quả rollback và cảnh báo từ bộ minh chứng, thực hiện diễn tập chịu lỗi trên môi trường thử.
 - **Kịch bản thuyết trình & thao tác trực tiếp 25–30 phút:** xem [DEMO_FLOW.md](./DEMO_FLOW.md).
 - **Triển khai Cloud thay thế (Vercel + Render + Supabase):** xem [VERCEL_RENDER_DEPLOY.md](./VERCEL_RENDER_DEPLOY.md).
+
+| Người trình bày | Thao tác chính | Minh chứng mở sẵn |
+|---|---|---|
+| Nguyễn Doãn Huy | Giải thích Dockerfile, Compose và Nginx Gateway | `docker compose ps`, `/gateway-health` và `/metrics` |
+| Trần Đức Nguyên | Trình bày GitHub Actions, Jenkins và SonarQube | CI run, Jenkins stage view và kết quả Quality Gate |
+| Nguyễn Trần Tuấn Khôi | Demo VPS, deployment theo SHA và rollback | URL Google Cloud, log SSH, bản sao lưu SHA-256 |
+| Phan Văn Hiếu | Trình diễn chatbot và chấm CV | Luồng ứng viên, kết quả 3 kiểm thử AI |
+| Niê Phương Anh | Mở Prometheus và hai dashboard Grafana | 12 targets, 7 luật, tài nguyên máy chủ và container |
+| Nguyễn Quang Trung | Kiểm thử và tổng kết nghiệm thu | Log 64 Node tests, 16 smoke checks và 12 kiểm tra giám sát |

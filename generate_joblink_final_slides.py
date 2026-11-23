@@ -2,6 +2,7 @@
 from pathlib import Path
 import argparse
 import json
+import re
 import sys
 
 shared_packages = Path('E:/site-packages')
@@ -16,6 +17,8 @@ import generate_joblink_slides as d
 ROOT = Path(__file__).resolve().parent
 FINAL_EVIDENCE = ROOT / 'artifacts' / 'final-demo'
 MIDTERM_EVIDENCE = ROOT / 'artifacts' / 'midterm-demo'
+DEFENSE_EVIDENCE = ROOT / 'artifacts' / 'defense-2026-11-23'
+PUBLIC_URL = 'http://136.110.25.226'
 TOTAL = 24
 d.TOTAL = TOTAL
 
@@ -33,7 +36,9 @@ def card(slide, x, y, w, h, title, detail, size=19, title_size=22):
 
 
 def picture(slide, filename, x, y, w, h):
-    file = FINAL_EVIDENCE / filename
+    file = DEFENSE_EVIDENCE / filename
+    if not file.exists():
+        file = FINAL_EVIDENCE / filename
     if not file.exists():
         file = MIDTERM_EVIDENCE / filename
     if not file.exists():
@@ -53,6 +58,11 @@ def picture(slide, filename, x, y, w, h):
 
 def create(date, group='Nhóm 02 · Lớp 24IT3', lecturer='Đặng Quốc Hữu'):
     evidence = json.loads((FINAL_EVIDENCE / 'verification.json').read_text(encoding='utf-8'))
+    vps_monitoring = DEFENSE_EVIDENCE / 'vps-monitoring.log'
+    if vps_monitoring.exists():
+        checked = re.search(r'(\d+)/\1 full-stack monitoring checks passed', vps_monitoring.read_text(encoding='utf-8'))
+        if checked:
+            evidence['monitoringChecks'] = int(checked[1])
     prs = Presentation(ROOT / 'Slides Template.pptx')
     for _ in range(len(prs.slides)):
         rel = prs.slides._sldIdLst[0].rId
@@ -81,9 +91,9 @@ def create(date, group='Nhóm 02 · Lớp 24IT3', lecturer='Đặng Quốc Hữu
     for i, (title, detail) in enumerate([
         ('Bài toán', '3 vai trò\n& AI CV'),
         ('Kiến trúc', 'Nginx + Web\n+ AI + MySQL'),
-        ('CI / CD', 'GitHub CI\n& Jenkins 8 bước'),
+        ('CI / CD', 'GitHub Actions\n& Jenkins SSH'),
         ('DevSecOps', 'Non-root, Prod\n& 0 lỗ hổng'),
-        ('Giám sát', 'Blackbox +\nWhite-box / Alert'),
+        ('Giám sát', 'Ứng dụng, Host,\nContainers & Alert'),
         ('Vận hành', 'DB Migrate\n& Backup SHA')
     ]):
         x = .72 + i * 1.98
@@ -123,19 +133,19 @@ def create(date, group='Nhóm 02 · Lớp 24IT3', lecturer='Đặng Quốc Hữu
     d.arrow(s, 10.0, 3.52, 10.0, 3.92)
     takeaway(s, 'Truy cập bên ngoài đi qua Nginx Gateway; các container giao tiếp nội bộ an toàn.')
 
-    # 6 — 9-container stack
-    s = d.body(prs, 'Hệ sinh thái 9 Containers (App + DevOps)', '02 / CÔNG NGHỆ TRIỂN KHAI')
+    # 6 — Public application and monitoring stack
+    s = d.body(prs, '10 container trên VPS Google Cloud', '02 / CÔNG NGHỆ TRIỂN KHAI')
     for i, (title, detail) in enumerate([
         ('Nginx 1.27', 'Reverse Proxy · Tường lửa route'),
         ('Node.js 22 Alpine', 'Express Production · /metrics'),
         ('Python 3.11 Slim', 'Gunicorn WSGI · CV/RAG AI'),
         ('MySQL 8.0', 'InnoDB utf8mb4 · Backup SHA'),
-        ('GitHub + Jenkins', 'CI 2 tầng · Pipeline 8 bước'),
-        ('Prometheus Stack', 'Blackbox · Grafana · Alertmanager')
+        ('Giám sát ứng dụng', 'Prometheus · Blackbox · Grafana · Alertmanager'),
+        ('Giám sát hạ tầng', 'Node Exporter · cAdvisor')
     ]):
         x, y = .8 + (i % 3) * 4.03, 1.9 + (i // 3) * 1.98
-        card(s, x, y, 3.65, 1.78, title, detail, size=17, title_size=20)
-    takeaway(s, 'Đồng thời tương thích triển khai Cloud phân tách trên Vercel + Render + Supabase.')
+        card(s, x, y, 3.65, 1.78, title, detail, size=16, title_size=20)
+    takeaway(s, 'VPS chạy 4 dịch vụ ứng dụng và 6 dịch vụ giám sát. Jenkins chạy trên máy điều phối.')
 
     # 7 — SCM & Two-tier CI
     s = d.body(prs, 'Quản lý mã nguồn & CI hai tầng', '03 / SCM & GITHUB ACTIONS')
@@ -145,8 +155,8 @@ def create(date, group='Nhóm 02 · Lớp 24IT3', lecturer='Đặng Quốc Hữu
          'Push nhánh main kích hoạt tức thì:\n• Xác thực chữ ký HMAC-SHA256\n• Chống gửi trùng delivery / SHA\n• Không lộ cổng quản trị Jenkins ra ngoài', size=18)
     takeaway(s, 'Đảm bảo mã nguồn đạt chuẩn kiểm thử và bảo mật trước khi đưa vào môi trường chạy.')
 
-    # 8 — 8-stage Jenkins pipeline
-    s = d.body(prs, 'Pipeline Jenkins tự động hóa 8 bước', '03 / JENKINS CI/CD')
+    # 8 — Jenkins stages and quality checks
+    s = d.body(prs, 'Pipeline Jenkins và cổng chất lượng', '03 / JENKINS CI/CD')
     for i, (title, detail) in enumerate([
         ('1. Source', 'Checkout đúng SHA'),
         ('2. Node tests', '64 tests + JUnit'),
@@ -159,20 +169,24 @@ def create(date, group='Nhóm 02 · Lớp 24IT3', lecturer='Đặng Quốc Hữu
     ]):
         x, y = .75 + (i % 4) * 2.98, 1.92 + (i // 4) * 1.98
         card(s, x, y, 2.75, 1.75, title, detail, size=16, title_size=19)
-    takeaway(s, 'Bất kỳ cổng chất lượng nào lỗi đều chặn đứng trước khi ảnh hưởng người dùng.')
+    takeaway(s, 'Có thể bật SonarQube Quality Gate sau bước kiểm toán, trước khi build image.')
 
     # 9 — Auto-rollback mechanism
     s = d.body(prs, 'Cơ chế Tự động Rollback khi triển khai lỗi', '03 / AN TOÀN PHÁT HÀNH')
     card(s, .8, 1.95, 5.6, 3.65, 'Trước khi cập nhật',
          'ci-deploy.js lưu lại bộ 3 image tags\nổn định hiện hành (web, ai, gateway)\nvào .ci/deployment.json trước khi\nthay thế bất kỳ container nào.', size=19)
-    card(s, 6.9, 1.95, 5.6, 3.65, 'Khi Deploy / Smoke lỗi',
-         'Khối post.unsuccessful tự động khôi phục\nđúng bộ image trước đó, giữ nguyên\nMySQL và dữ liệu upload, đồng thời\nghi nhận trạng thái rolled-back.', size=19)
-    takeaway(s, 'Đã kiểm thử thực tế bằng kịch bản cố ý gây lỗi smoke check: tự phục hồi 100%.')
+    card(s, 6.9, 1.95, 5.6, 3.65, 'Khi kiểm tra sau deploy lỗi',
+         'Pipeline SSH gọi rollback ngay trên VPS,\nkhôi phục 3 image trước đó, giữ MySQL\nvà dữ liệu upload. Trạng thái được\nghi vào deployment.json.', size=19)
+    takeaway(s, 'Chỉ xác nhận deploy sau khi smoke test và kiểm tra URL công khai đều đạt.')
 
     # 10 — Real Jenkins visual
     s = d.body(prs, 'Bằng chứng thực thi Pipeline trên Jenkins', '03 / KẾT QUẢ CI/CD')
-    picture(s, 'jenkins-pipeline.png', .8, 1.65, 11.7, 4.35)
-    takeaway(s, 'Lưu trữ đầy đủ JUnit XML, log kiểm toán bảo mật, smoke log và mã SHA commit.')
+    if (DEFENSE_EVIDENCE / 'jenkins-ssh-success.png').exists():
+        picture(s, 'jenkins-ssh-success.png', .8, 1.65, 11.7, 4.35)
+        takeaway(s, 'Job joblink-ssh-deploy · Registry, SSH, smoke test và kiểm tra URL công khai.')
+    else:
+        picture(s, 'jenkins-pipeline.png', .8, 1.65, 11.7, 4.35)
+        takeaway(s, 'Bản dựng joblink-scm #8 · Pipeline triển khai cục bộ.')
 
     # 11 — Hardened Dockerfiles
     s = d.body(prs, 'Đóng gói Container chuẩn Production', '04 / HARDENED DOCKERFILES')
@@ -218,25 +232,25 @@ def create(date, group='Nhóm 02 · Lớp 24IT3', lecturer='Đặng Quốc Hữu
            .85, 4.75, 11.6, .85, size=20, color=d.NAVY, bold=True)
     takeaway(s, 'Cảnh báo vận hành: Không chạy docker compose down -v để tránh xóa dữ liệu.', color=d.RED)
 
-    # 15 — One-command runbook
-    s = d.body(prs, 'Điều phối toàn bộ hệ thống bằng CLI thống nhất', '04 / LỆNH TRIỂN KHAI')
-    d.command(s, 'npm run devops:up', .8, 1.95, 11.7, .95, size=26)
-    d.command(s, 'node scripts/webhook-demo.js start\nnpm run devops:check', .8, 3.25, 11.7, 1.45, size=24)
-    d.text(s, 'up: dựng 9 dịch vụ   ·   webhook: mở tunnel ký số   ·   check: kiểm tra 28 hạng mục',
-           .85, 5.15, 11.6, .6, size=20, color=d.NAVY, bold=True)
-    takeaway(s, 'Tra cứu mật khẩu tự sinh: node scripts/devops-demo.js credentials')
+    # 15 — Remote deployment runbook
+    s = d.body(prs, 'Triển khai qua SSH lên Google Cloud', '04 / TRIỂN KHAI PUBLIC')
+    card(s, .8, 1.95, 5.6, 3.65, 'Jenkins → Registry → VPS',
+         'Build 3 image web, AI và Nginx Gateway.\nGắn thẻ theo SHA rồi đẩy lên registry.\nSSH vào VPS để tải image và rollout.', size=19)
+    card(s, 6.9, 1.95, 5.6, 3.65, 'Kiểm tra từ Internet',
+         f'{PUBLIC_URL}\n/gateway-health và /ready → HTTP 200\n/metrics → HTTP 403', size=19)
+    takeaway(s, 'Jenkins xác thực khóa máy chủ SSH và lưu kết quả kiểm tra vào nhật ký bản dựng.')
 
     # 16 — Full-stack observability architecture
-    s = d.body(prs, 'Kiến trúc Giám sát Toàn diện (Blackbox + White-box)', '05 / OBSERVABILITY')
+    s = d.body(prs, 'Giám sát ứng dụng, máy chủ và container', '05 / OBSERVABILITY')
     for x, title, detail in [
-        (.75, 'Thu thập 2 chiều', '5 Blackbox Probes\n+ /metrics nội tại\nWeb & AI (10s/lần)'),
-        (4.8, 'Prometheus :9090', 'Lưu trữ chuỗi thời gian\n10 scrape targets UP\nĐánh giá 5 luật cảnh báo'),
-        (8.85, 'Hiển thị & Báo động', 'Grafana :3001 (13 panels)\nAlertmanager :9093\nWebhook Sink / Discord')
+        (.75, 'Thu thập 4 lớp', 'Blackbox probes\nWeb & AI /metrics\nNode Exporter · cAdvisor'),
+        (4.8, 'Prometheus :9090', '12/12 targets UP trên VPS\n7 luật cảnh báo\nChu kỳ thu thập 10 giây'),
+        (8.85, 'Dashboard & Cảnh báo', 'Grafana: 2 dashboard\nỨng dụng và hạ tầng\nAlertmanager: webhook')
     ]:
         card(s, x, 2.1, 3.65, 2.55, title, detail, size=18, title_size=20)
     d.arrow(s, 4.42, 3.35, 4.77, 3.35)
     d.arrow(s, 8.47, 3.35, 8.82, 3.35)
-    d.text(s, 'Khắc phục triệt để điểm mù chỉ kiểm tra ngoài vỏ: đo trực tiếp RPS, lỗi 5xx, độ trễ p95 và RAM.',
+    d.text(s, 'Đối chiếu lỗi HTTP và độ trễ p95 với CPU máy chủ, RAM và CPU của từng container.',
            .85, 5.05, 11.6, .75, size=19, color=d.NAVY, bold=True)
     takeaway(s, 'Toàn bộ datasource, dashboard và alert rules được quản lý bằng mã nguồn (IaC).')
 
@@ -250,23 +264,21 @@ def create(date, group='Nhóm 02 · Lớp 24IT3', lecturer='Đặng Quốc Hữu
 
     # 18 — Grafana screenshot
     s = d.body(prs, 'Dashboard giám sát trực quan trên Grafana', '05 / GRAFANA PROVISIONING')
-    picture(s, 'grafana-dashboard.png', .8, 1.6, 11.7, 4.45)
-    takeaway(s, 'http://localhost:3001/d/joblink-overview · Tự nạp 13 panels ngay khi khởi động.')
+    dashboard = 'joblink-overview.png' if (DEFENSE_EVIDENCE / 'joblink-overview.png').exists() else 'grafana-dashboard.png'
+    picture(s, dashboard, .8, 1.6, 11.7, 4.45)
+    takeaway(s, 'JobLink Overview có 13 panel. JobLink Infrastructure có 6 panel cho host và container.')
 
-    # 19 — 5 Alerts + Alertmanager
-    s = d.body(prs, '5 Luật cảnh báo & Điều phối qua Alertmanager', '05 / ALERTING PIPELINE')
+    # 19 — Application and infrastructure alerts
+    s = d.body(prs, '7 luật cảnh báo và luồng Alertmanager', '05 / ALERTING PIPELINE')
     for i, (title, detail) in enumerate([
-        ('ServiceDown', 'Mất kết nối > 30s'),
-        ('ProbeMissing', 'Lỗi thu probe > 30s'),
-        ('Slow API', 'Phản hồi > 2s (1m)'),
-        ('High 5xx', 'Lỗi HTTP 5xx tăng'),
-        ('High RAM', 'RAM Node > 400 MiB')
+        ('Độ sẵn sàng', 'ServiceDown · ProbeMissing'),
+        ('Chất lượng API', 'SlowResponse · HighErrorRate'),
+        ('Bộ nhớ', 'HighMemoryUsage · ContainerHighMemory'),
+        ('CPU máy chủ', 'HostHighCPU: trên 85% trong 2 phút')
     ]):
-        x = .72 + i * 2.38
-        card(s, x, 2.0, 2.22, 2.15, title, detail, size=16, title_size=17)
-    d.text(s, 'Sự cố → Prometheus FIRING → Alertmanager (:9093) → Webhook Sink & Discord → Khôi phục RESOLVED',
-           .8, 4.68, 11.7, .85, size=18, color=d.NAVY, bold=True)
-    takeaway(s, 'Đã kiểm thử tự động cả hai chiều FIRING và RESOLVED qua verify-alert-recovery.js.')
+        x, y = .8 + (i % 2) * 6.05, 1.88 + (i // 2) * 1.85
+        card(s, x, y, 5.65, 1.64, title, detail, size=16, title_size=20)
+    takeaway(s, 'Prometheus báo FIRING hoặc RESOLVED → Alertmanager → webhook nhận cảnh báo.')
 
     # 20 — Day-2 Operations
     s = d.body(prs, 'Quy trình Vận hành Day-2: Migration, Backup & Log', '06 / DAY-2 OPERATIONS')
@@ -295,28 +307,27 @@ def create(date, group='Nhóm 02 · Lớp 24IT3', lecturer='Đặng Quốc Hữu
     takeaway(s, 'Mọi chỉ số trên slide đều được trích xuất trực tiếp từ bộ kiểm thử tự động.')
 
     # 22 — Demo credentials
-    s = d.body(prs, 'Tài khoản Demo trực tiếp qua Nginx Gateway', 'DEMO / http://localhost:8088')
-    for i, (role, email, password) in enumerate([
-        ('Ứng viên', 'candidate@joblink.vn', 'Candidate@123'),
-        ('Doanh nghiệp', 'hr@vietsoft.vn', 'Company@123'),
-        ('Quản trị viên', 'admin@joblink.vn', 'Admin@123')
+    s = d.body(prs, 'Ba luồng nghiệp vụ trên bản demo', f'DEMO / {PUBLIC_URL}')
+    for i, (role, action) in enumerate([
+        ('Ứng viên', 'Tìm việc và chấm điểm CV bằng AI'),
+        ('Doanh nghiệp', 'Xem dashboard và hồ sơ ứng viên'),
+        ('Quản trị viên', 'Xem dashboard và kiểm duyệt tin đăng')
     ]):
         y = 2.0 + i * 1.14
         d.panel(s, .8, y, 11.7, .94, d.CYAN if i % 2 == 0 else d.WHITE)
         d.text(s, role, 1.02, y + .23, 2.6, .5, size=21, color=d.NAVY, bold=True)
-        d.text(s, email, 3.85, y + .23, 4.65, .5, size=21, font='Consolas')
-        d.text(s, password, 9.03, y + .23, 3.15, .5, size=21, font='Consolas')
+        d.text(s, action, 3.85, y + .23, 8.1, .5, size=20)
     takeaway(s, 'Trình tự demo: Tìm việc → Đăng nhập 3 vai trò → Chấm điểm CV & Chatbot AI.')
 
     # 23 — Live demo sequence
     s = d.body(prs, 'Trình tự Bảo vệ & Demo Trực tiếp (25–30 phút)', 'DEMO / KỊCH BẢN THAO TÁC')
     for i, value in enumerate([
-        'Push thay đổi lên main → xem HMAC Webhook (202) & Jenkins tự chạy 8 bước',
-        'Xem Dockerfile non-root, tường lửa Nginx Gateway (:8088) chặn /metrics (403)',
-        'Xác nhận build SUCCESS, đối chiếu mã SHA & revision mới tại /demo-release.json',
-        'Trải nghiệm 3 vai trò người dùng, Chatbot tư vấn việc làm & AI chấm điểm CV',
-        'Dừng/bật lại container AI → xem Grafana, Prometheus & Alertmanager gửi cảnh báo',
-        'Thực hiện sao lưu cơ sở dữ liệu kèm kiểm chứng SHA-256 bằng npm run db:backup'
+        'Nguyễn Doãn Huy · Dockerfile, Compose, non-root và Nginx Gateway',
+        'Trần Đức Nguyên · GitHub Actions, Jenkins và SonarQube',
+        'Nguyễn Trần Tuấn Khôi · Pipeline SSH, URL VPS, backup và rollback',
+        'Phan Văn Hiếu · AI Service, chatbot và chấm điểm CV',
+        'Niê Phương Anh · Prometheus, Grafana, Node Exporter và cAdvisor',
+        'Nguyễn Quang Trung · Kiểm thử 3 vai trò, smoke test và nghiệm thu'
     ]):
         y = 1.66 + i * .72
         d.text(s, f'{i+1:02}', .85, y, .7, .55, size=23, color=d.BLUE, bold=True)
@@ -326,7 +337,7 @@ def create(date, group='Nhóm 02 · Lớp 24IT3', lecturer='Đặng Quốc Hữu
     # 24 — Summary & close
     s = d.body(prs, 'Tổng kết Đồ án Triển khai Phần mềm', 'KẾT LUẬN / INFO3004')
     card(s, .8, 1.95, 5.6, 3.65, 'Kết quả đạt được',
-         '• Đóng gói 9 containers chuẩn Production\n• CI/CD 2 tầng + Webhook ký số + Rollback\n• Bảo mật Non-root, Nginx Gateway, 0 CVE\n• Giám sát Blackbox + White-box + Alerting\n• Tự động hóa DB Migration & Backup SHA', size=18)
+         '• 10 container hoạt động trên VPS Google Cloud\n• Pipeline Jenkins qua SSH và rollback\n• Web/AI chạy non-root, Nginx chặn /metrics\n• 12 targets UP, 7 luật, 2 dashboard\n• MySQL migration và backup SHA-256', size=17)
     card(s, 6.9, 1.95, 5.6, 3.65, 'Hướng phát triển tiếp theo',
          '• Mở rộng điều phối đa node trên Kubernetes\n  (Helm Charts & Horizontal Pod Autoscaler)\n• Bổ sung thu thập log tập trung bằng Loki\n• Tích hợp chứng chỉ TLS tự động Let\'s Encrypt\n  khi triển khai tên miền thực tế', size=18)
     takeaway(s, 'Xin cảm ơn Thầy và Hội đồng đã lắng nghe!')
